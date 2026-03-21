@@ -1,0 +1,92 @@
+export type Sentiment = "Positive" | "Mixed" | "Negative" | "NoReviews";
+
+export type Review = {
+  _id?: string;
+  author: string;
+  text: string;
+  date: string;
+  imageUrl?: string | null;
+  likes?: number;
+  userId?: string | null;
+  replies?: ReviewReply[];
+};
+
+export type ReviewReply = {
+  _id?: string;
+  author: string;
+  text: string;
+  date: string;
+  userId?: string | null;
+};
+
+export type PersonCredit = {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  professions: string[];
+};
+
+export type MovieInsight = {
+  imdbId: string;
+  type: string;
+  title: string;
+  year: string;
+  releaseDate?: string;
+  runtime: string;
+  rating: string;
+  language: string;
+  country: string;
+  ageRating: string;
+  poster: string;
+  backdrop: string;
+  overview: string;
+  genres: string[];
+  cast: PersonCredit[];
+  crew: PersonCredit[];
+  summary: string;
+  sentiment: Sentiment;
+  confidence: number;
+  reviews: Review[];
+  communityReviews?: Review[];
+};
+
+export type MovieSearchItem = {
+  imdbId: string;
+  title: string;
+  year: string;
+  poster: string;
+  type: string;
+};
+
+export type AssistantSuggestion = MovieSearchItem;
+
+export type AssistantMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  suggestions?: AssistantSuggestion[];
+};
+
+export type ImdbApiPerson = {
+  id?: string;
+  displayName?: string;
+  primaryImage?: { url?: string };
+  primaryProfessions?: string[];
+};
+
+export type ImdbApiTitleResponse = {
+  id?: string;
+  type?: string;
+  primaryTitle?: string;
+  primaryImage?: { url?: string };
+  startYear?: number;
+  runtimeSeconds?: number;
+  genres?: string[];
+  rating?: { aggregateRating?: number };
+  plot?: string;
+  directors?: ImdbApiPerson[];
+  writers?: ImdbApiPerson[];
+  stars?: ImdbApiPerson[];
+  originCountries?: Array<{ name?: string }>;
+  spokenLanguages?: Array<{ name?: string }>;
+};

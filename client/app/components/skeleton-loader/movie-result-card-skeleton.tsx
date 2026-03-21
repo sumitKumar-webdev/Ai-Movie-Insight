@@ -1,0 +1,18 @@
+import { Card, CardContent } from "@/app/components/ui/card"
+import { Skeleton } from "@/app/components/ui/skeleton"
+
+export default function MovieResultCardSkeleton() {
+  return (
+    <Card className="overflow-hidden border-white/10 bg-white/4 py-0">
+      <div className="flex items-center gap-3 p-2 sm:gap-3.5 sm:p-2.5">
+        <Skeleton className="h-16 w-12 shrink-0 rounded-md bg-white/15 sm:h-20 sm:w-14" />
+
+        <CardContent className="min-w-0 flex-1 space-y-2 p-0">
+          <Skeleton className="h-3 w-20 bg-white/12" />
+          <Skeleton className="h-4 w-3/4 max-w-56 bg-white/15" />
+          <Skeleton className="h-3 w-1/2 max-w-40 bg-white/12" />
+        </CardContent>
+      </div>
+    </Card>
+  )
+}

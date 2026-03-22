@@ -10,12 +10,8 @@ export function successRes(res, statusCode, message, data = {}) {
 export function errorRes(res, statusCode, message, data = null) {
     const payload = {
         message,
+        data: null,
         status: false,
     };
-
-    if (data !== null) {
-        payload.data = data;
-    }
-
     return res.status(statusCode).json(payload);
 }

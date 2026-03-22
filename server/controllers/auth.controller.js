@@ -1,7 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { OAuth2Client } from "google-auth-library";
-import mongoose from "mongoose";
 import User from "../models/User.js";
 import {
   AUTH_COOKIE_NAME,
@@ -20,7 +19,7 @@ import { errorRes, successRes } from "../lib/res.js";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
-const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 
 function sanitizeUser(user) {
   return {
@@ -93,15 +92,11 @@ function clearAuthCookie(res) {
 }
 
 export const register = async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
-    session.startTransaction();
-
     const body = req.body ?? {};
     const name = String(body.name ?? "").trim();
     const email = String(body.email ?? "").trim().toLowerCase();
-    const username = body.username.trim();
+    const username = String(body.username ?? "").trim();
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!name) return errorRes(res, 400, "name is required");
@@ -113,7 +108,7 @@ export const register = async (req, res) => {
       return errorRes(
         res,
         400,
-        "Username must be 3 to 20 characters and use only lowercase letters, numbers, or underscores",
+        "Username must be 3 to 20 characters and use only letters, numbers, or underscores",
       );
     }
 
@@ -123,9 +118,7 @@ export const register = async (req, res) => {
 
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
-    })
-      .lean()
-      .session(session);
+    }).lean();
 
     if (existingUser?.email === email) {
       return errorRes(res, 409, "An account with this email already exists");
@@ -150,7 +143,7 @@ export const register = async (req, res) => {
       emailVerificationExpiresAt: verification.expiresAt,
     });
 
-    await user.save({ session });
+    await user.save();
 
     const delivery = await sendVerificationEmail(
       user.email,
@@ -159,35 +152,31 @@ export const register = async (req, res) => {
     );
     await sendWelcomeEmail(user.email, user.name);
 
-    await session.commitTransaction();
-
     return successRes(res, 201, "Verification email sent", {
       user: sanitizeUser(user),
       requiresVerification: true,
       emailSent: delivery.delivered,
     });
   } catch (error) {
-    await session.abortTransaction();
     const message =
       error instanceof Error ? error.message : "Failed to register user";
     return errorRes(res, 500, message);
-  } finally {
-    await session.endSession();
   }
 };
 
 export const login = async (req, res) => {
   try {
     const body = req.body ?? {};
-    const identifier = String(body.identifier ?? "").trim().toLowerCase();
+    const identifier = String(body.identifier ?? "").trim();
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!identifier || !password) {
       return errorRes(res, 400, "username or email and password are required");
     }
 
+    const normalizedEmail = identifier.toLowerCase();
     const user = await User.findOne({
-      $or: [{ email: identifier }, { username: identifier }],
+      $or: [{ email: normalizedEmail }, { username: identifier }],
     });
 
     if (!user) {
@@ -229,8 +218,6 @@ export const login = async (req, res) => {
 };
 
 export const googleAuth = async (req, res) => {
-  const session = await mongoose.startSession();
-
   try {
     if (!googleClient || !googleClientId) {
       return errorRes(res, 500, "Google sign-in is not configured");
@@ -249,46 +236,40 @@ export const googleAuth = async (req, res) => {
     }
 
     let user;
+    const ticket = await googleClient.verifyIdToken({
+      idToken: googleToken,
+      audience: googleClientId,
+    });
 
-    await session.withTransaction(async () => {
-      const ticket = await googleClient.verifyIdToken({
-        idToken: googleToken,
-        audience: googleClientId,
+    const payload = ticket.getPayload();
+    const googleId = payload?.sub?.trim();
+    const email = payload?.email?.trim().toLowerCase();
+    const name =
+      payload?.name?.trim() || payload?.given_name?.trim() || "Google User";
+    const avatar = payload?.picture?.trim() || null;
+
+    if (!googleId || !email || !payload?.email_verified) {
+      throw new Error("Invalid Google account payload");
+    }
+
+    user = await User.findOne({
+      $or: [{ googleId }, { email }],
+    });
+
+    if (!user) {
+      user = new User({
+        name,
+        email,
+        avatar,
+        username: await generateUniqueUsername(email.split("@")[0] || name),
+        authProvider: ["google"],
+        googleId,
+        isactive: true,
+        emailVerified: true,
       });
 
-      const payload = ticket.getPayload();
-      const googleId = payload?.sub?.trim();
-      const email = payload?.email?.trim().toLowerCase();
-      const name =
-        payload?.name?.trim() ||
-        payload?.given_name?.trim() ||
-        "Google User";
-      const avatar = payload?.picture?.trim() || null;
-
-      if (!googleId || !email || !payload?.email_verified) {
-        throw new Error("Invalid Google account payload");
-      }
-
-      user = await User.findOne({
-        $or: [{ googleId }, { email }],
-      }).session(session);
-
-      if (!user) {
-        user = new User({
-          name,
-          email,
-          avatar,
-          username: await generateUniqueUsername(email.split("@")[0] || name),
-          authProvider: ["google"],
-          googleId,
-          isactive: true,
-          emailVerified: true,
-        });
-
-        await user.save({ session });
-        return;
-      }
-
+      await user.save();
+    } else {
       const providers = Array.isArray(user.authProvider)
         ? user.authProvider
         : user.authProvider
@@ -314,8 +295,8 @@ export const googleAuth = async (req, res) => {
         user.username = await generateUniqueUsername(email.split("@")[0] || name);
       }
 
-      await user.save({ session });
-    });
+      await user.save();
+    }
 
     const token = signAuthToken({
       userId: String(user._id),
@@ -332,8 +313,6 @@ export const googleAuth = async (req, res) => {
         ? error.message
         : "Failed to authenticate with Google";
     return errorRes(res, 500, message);
-  } finally {
-    await session.endSession();
   }
 };
 
@@ -374,7 +353,7 @@ export const verifyEmail = async (req, res) => {
 
 export const checkUsernameAvailability = async (req, res) => {
   try {
-    const username = req.query.username.trim();
+    const username = String(req.query.username ?? "").trim();
 
     if (!username) {
       return errorRes(res, 400, "username is required");
@@ -385,7 +364,7 @@ export const checkUsernameAvailability = async (req, res) => {
         available: false,
         username,
         reason:
-          "Username must be 3 to 20 characters and use only lowercase letters, numbers, or underscores",
+          "Username must be 3 to 20 characters and use only letters, numbers, or underscores",
       });
     }
 

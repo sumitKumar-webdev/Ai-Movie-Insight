@@ -3,19 +3,24 @@ export type Sentiment = "Positive" | "Mixed" | "Negative" | "NoReviews";
 export type Review = {
   _id?: string;
   author: string;
+  username?: string;
   text: string;
   date: string;
   imageUrl?: string | null;
   likes?: number;
+  liked?: boolean;
   userId?: string | null;
+  replyCount?: number;
   replies?: ReviewReply[];
 };
 
 export type ReviewReply = {
   _id?: string;
   author: string;
+  username?: string;
   text: string;
   date: string;
+  likes?: number;
   userId?: string | null;
 };
 
@@ -49,6 +54,11 @@ export type MovieInsight = {
   reviews: Review[];
   communityReviews?: Review[];
 };
+
+export type MovieAiInsight = Pick<
+  MovieInsight,
+  "imdbId" | "title" | "summary" | "sentiment" | "confidence" | "communityReviews"
+>;
 
 export type MovieSearchItem = {
   imdbId: string;

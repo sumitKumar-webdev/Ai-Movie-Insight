@@ -1,6 +1,7 @@
 import {
   AssistantMessage,
   AssistantSuggestion,
+  MovieAiInsight,
   MovieInsight,
   MovieSearchItem,
   Review,
@@ -41,6 +42,21 @@ export async function getMovieByImdbId(imdbId: string): Promise<MovieInsight> {
   return payload.data;
 }
 
+export async function getMovieAiInsightByImdbId(imdbId: string): Promise<MovieAiInsight> {
+  const normalized = imdbId.trim().toLowerCase();
+  if (!IMDB_ID_REGEX.test(normalized)) throw new Error("Invalid IMDb ID");
+
+  const response = await fetch(
+    buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}/insight`),
+    { cache: "no-store" },
+  );
+  const payload = (await response.json()) as { data?: MovieAiInsight; error?: string };
+  if (!response.ok || !payload.data) {
+    throw new Error(payload.error ?? "Movie insight not found");
+  }
+  return payload.data;
+}
+
 export async function getMovieReviews(imdbId: string): Promise<Review[]> {
   const normalized = imdbId.trim().toLowerCase();
   if (!IMDB_ID_REGEX.test(normalized)) return [];
@@ -51,8 +67,12 @@ export async function getMovieReviews(imdbId: string): Promise<Review[]> {
       { cache: "no-store" },
     );
     if (!response.ok) return [];
-    const payload = (await response.json()) as { data?: Review[] };
-    return Array.isArray(payload.data) ? payload.data : [];
+    const payload = (await response.json()) as {
+      data?: {
+        reviews?: Review[];
+      };
+    };
+    return Array.isArray(payload.data?.reviews) ? payload.data.reviews : [];
   } catch {
     return [];
   }

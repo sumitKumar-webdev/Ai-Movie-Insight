@@ -19,6 +19,15 @@ const replySchema = new Schema(
       default: 0,
       min: 0,
     },
+    likedBy: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -53,6 +62,15 @@ const reviewSchema = new Schema(
       type: Number,
       default: 0,
       min: 0,
+    },
+    likedBy: {
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+        },
+      ],
+      default: [],
     },
     replies: {
       type: [replySchema],

@@ -14,7 +14,7 @@ import { Input } from "@/app/components/ui/input";
 import { buildApiUrl } from "@/app/services/api-client";
 import { AuthUser, setAuthenticatedUser } from "@/app/store/auth-store";
 
-const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
+const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 
 const signupSchema = z.object({
   name: z.string().trim().min(1, "Name is required."),
@@ -25,7 +25,7 @@ const signupSchema = z.object({
     .max(20, "Username must be 20 characters or less.")
     .regex(
       USERNAME_PATTERN,
-      "Use lowercase letters, numbers, or underscores only.",
+      "Use letters, numbers, or underscores only.",
     ),
   email: z.email("Enter a valid email address."),
   password: z.string().min(6, "Password must be at least 6 characters long."),
@@ -61,7 +61,7 @@ export default function SignupPage() {
 
   const usernameValue = watch("username");
   const normalizedUsername = useMemo(
-    () => usernameValue.trim().toLowerCase(),
+    () => usernameValue.trim(),
     [usernameValue],
   );
 
@@ -81,12 +81,10 @@ export default function SignupPage() {
     }
 
     if (!USERNAME_PATTERN.test(normalizedUsername)) {
-      setUsernameStatus("invalid");
-      setUsernameMessage(
-        "Use 3-20 lowercase letters, numbers, or underscores.",
-      );
-      return;
-    }
+        setUsernameStatus("invalid");
+        setUsernameMessage("Use 3-20 letters, numbers, or underscores.");
+        return;
+      }
 
     setUsernameStatus("checking");
     setUsernameMessage("Checking username...");
@@ -145,7 +143,7 @@ export default function SignupPage() {
     setNotice("");
     setVerificationUrl("");
 
-    const normalized = username.trim().toLowerCase();
+    const normalized = username.trim();
     if (!USERNAME_PATTERN.test(normalized)) {
       setError("Please choose a valid username.");
       return;

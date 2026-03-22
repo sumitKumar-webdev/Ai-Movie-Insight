@@ -1,0 +1,75 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  Toast,
+  ToastClose,
+  ToastDescription,
+  ToastProvider,
+  ToastTitle,
+  ToastViewport,
+} from "@/app/components/ui/toast";
+import { AppToast, getToastEventName } from "@/app/Hooks/use-toast";
+
+type ToastItem = AppToast & {
+  id: string;
+  open: boolean;
+};
+
+export function Toaster() {
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  useEffect(() => {
+    const eventName = getToastEventName();
+
+    const handleToast = (event: Event) => {
+      const customEvent = event as CustomEvent<AppToast>;
+      const nextToast: ToastItem = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        open: true,
+        duration: customEvent.detail.duration ?? 3000,
+        variant: customEvent.detail.variant ?? "default",
+        title: customEvent.detail.title,
+        description: customEvent.detail.description,
+      };
+
+      setToasts((current) => [...current, nextToast]);
+    };
+
+    window.addEventListener(eventName, handleToast as EventListener);
+    return () => {
+      window.removeEventListener(eventName, handleToast as EventListener);
+    };
+  }, []);
+
+  return (
+    <ToastProvider>
+      {toasts.map((item) => (
+        <Toast
+          key={item.id}
+          open={item.open}
+          duration={item.duration}
+          variant={item.variant}
+          onOpenChange={(open) => {
+            setToasts((current) =>
+              current.map((toast) => (toast.id === item.id ? { ...toast, open } : toast)),
+            );
+
+            if (!open) {
+              window.setTimeout(() => {
+                setToasts((current) => current.filter((toast) => toast.id !== item.id));
+              }, 180);
+            }
+          }}
+        >
+          <div className="grid gap-1">
+            <ToastTitle>{item.title}</ToastTitle>
+            {item.description ? <ToastDescription>{item.description}</ToastDescription> : null}
+          </div>
+          <ToastClose />
+        </Toast>
+      ))}
+      <ToastViewport />
+    </ToastProvider>
+  );
+}

@@ -10,6 +10,7 @@ import { GoogleAuthButton } from "@/app/components/auth/google-auth-button";
 import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
+import { toast } from "@/app/Hooks/use-toast";
 import { setAuthenticatedUser } from "@/app/store/auth-store";
 import { login } from "@/app/services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -57,6 +58,11 @@ export default function LoginPage() {
       }
 
       setAuthenticatedUser(response.data.user);
+      toast({
+        title: "Logged in successfully",
+        description: `Welcome back, ${response.data.user.name}.`,
+        variant: "success",
+      });
       router.replace(safeNext);
       router.refresh();
     } catch {

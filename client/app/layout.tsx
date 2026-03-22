@@ -4,6 +4,7 @@ import "./globals.css";
 import AppHeader from "@/app/components/Header/app-header";
 import AiAssistantLauncher from "@/app/components/ai-assistant-launcher";
 import AuthBootstrap from "@/app/components/auth/auth-bootstrap";
+import { Toaster } from "@/app/components/ui/toaster";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <AuthBootstrap />
         <AppHeader />
         {children}
+        <Toaster />
         <AiAssistantLauncher />
       </body>
     </html>

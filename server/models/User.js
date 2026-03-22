@@ -25,9 +25,8 @@ const UserSchema = new Schema(
       type: String,
       unique: true,
       sparse: true,
-      lowercase: true,
       trim: true,
-      default: null,
+      default: undefined,
     },
     isactive: {
       type: Boolean,
@@ -36,13 +35,13 @@ const UserSchema = new Schema(
     authProvider: {
       type: [String],
       enum: ["local", "google"],
-      default: "local",
+      default: ["local"],
     },
     googleId: {
       type: String,
       unique: true,
       sparse: true,
-      default: null,
+      default: undefined,
     },
     emailVerified: {
       type: Boolean,
@@ -67,7 +66,13 @@ const UserSchema = new Schema(
     passwordHash: {
       type: String,
       required() {
-        return this.authProvider === "local";
+        const providers = Array.isArray(this.authProvider)
+          ? this.authProvider
+          : this.authProvider
+            ? [this.authProvider]
+            : [];
+
+        return providers.includes("local");
       },
       default: null,
     },

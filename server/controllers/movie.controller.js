@@ -142,16 +142,18 @@ function formatMovieInsight(title, fallbackImdbId, options = {}) {
 }
 
 function formatCommunityReview(review) {
-  const name =
-    typeof review?.user?.name === "string" && review.user.name.trim()
-      ? review.user.name.trim()
+  const author =
+    typeof review?.user?.username === "string" && review.user.username.trim()
+      ? review.user.username.trim()
+      : typeof review?.user?.name === "string" && review.user.name.trim()
+        ? review.user.name.trim()
       : "User";
   const message =
     typeof review?.message === "string" && review.message.trim() ? review.message.trim() : "";
 
   return {
     _id: String(review?._id ?? ""),
-    author: name,
+    author,
     text: message,
     date: review?.createdAt ? new Date(review.createdAt).toISOString() : "",
     imageUrl: null,
@@ -161,9 +163,11 @@ function formatCommunityReview(review) {
       ? review.replies.map((reply) => ({
         _id: String(reply?._id ?? ""),
         author:
-          typeof reply?.user?.name === "string" && reply.user.name.trim()
-            ? reply.user.name.trim()
-            : "User",
+          typeof reply?.user?.username === "string" && reply.user.username.trim()
+            ? reply.user.username.trim()
+            : typeof reply?.user?.name === "string" && reply.user.name.trim()
+              ? reply.user.name.trim()
+             : "User",
         text:
           typeof reply?.message === "string" && reply.message.trim()
             ? reply.message.trim()
@@ -173,6 +177,60 @@ function formatCommunityReview(review) {
       }))
       : [],
   };
+}
+
+async function buildMovieAiInsight(imdbId, title) {
+  const communityReviews = await Review.find({
+    movieImdbId: { $regex: `^${escapeRegex(imdbId)}$`, $options: "i" },
+  })
+    .sort({ createdAt: -1 })
+    .populate("user", "name username")
+    .populate("replies.user", "name username")
+    .select("movieImdbId movieTitle message likes createdAt user replies")
+    .lean();
+
+  const formattedReviews = communityReviews.map(formatCommunityReview).filter((review) => review.text);
+  const reviewTexts = communityReviews
+    .map((review) => (typeof review?.message === "string" ? review.message.trim() : ""))
+    .filter(Boolean);
+
+  const fallbackTitle =
+    typeof title === "string" && title.trim()
+      ? title.trim()
+      : communityReviews.find((review) => typeof review?.movieTitle === "string" && review.movieTitle.trim())
+          ?.movieTitle?.trim() || `Movie ${imdbId}`;
+
+  const insight = {
+    imdbId,
+    title: fallbackTitle,
+    summary: "No community reviews yet. Be the first to share what you thought about this movie.",
+    sentiment: "NoReviews",
+    confidence: 0,
+    communityReviews: formattedReviews,
+  };
+
+  if (reviewTexts.length === 0) {
+    return insight;
+  }
+
+  const joinedReviews = reviewTexts
+    .slice(0, 10)
+    .map((text, index) => `Review ${index + 1}: ${text}`)
+    .join("\n\n");
+
+  const ai = await summarizeWithOpenAI(
+    fallbackTitle,
+    joinedReviews,
+    "reviews",
+  ).catch(() => null);
+
+  if (ai?.summary) {
+    insight.summary = ai.summary;
+    insight.confidence = ai.confidence;
+    insight.sentiment = ai.sentiment ?? "Mixed";
+  }
+
+  return insight;
 }
 
 export async function searchMovies(req, res) {
@@ -276,43 +334,41 @@ export async function getMovieByImdbId(request, response) {
       backdrop: backdropFromVideos || title.primaryImage?.url || "",
     });
 
-    const communityReviews = await Review.find({
-      movieImdbId: { $regex: `^${escapeRegex(imdbId)}$`, $options: "i" },
-    })
-      .sort({ createdAt: -1 })
-      .populate("user", "name")
-      .populate("replies.user", "name")
-      .select("message likes createdAt user replies")
-      .lean();
-
-    const reviewTexts = communityReviews
-      .map((review) => (typeof review?.message === "string" ? review.message.trim() : ""))
-      .filter(Boolean);
-    insight.communityReviews = communityReviews.map(formatCommunityReview).filter((review) => review.text);
-
-    if (reviewTexts.length > 0) {
-      const joinedReviews = reviewTexts
-        .slice(0, 10)
-        .map((text, index) => `Review ${index + 1}: ${text}`)
-        .join("\n\n");
-
-      const ai = await summarizeWithOpenAI(
-        insight.title,
-        joinedReviews,
-        "reviews",
-      ).catch(() => null);
-
-      if (ai?.summary) {
-        insight.summary = ai.summary;
-        insight.confidence = ai.confidence;
-        insight.sentiment = ai.sentiment ?? "Mixed";
-      }
-    }
+    const aiInsight = await buildMovieAiInsight(imdbId, insight.title);
+    insight.summary = aiInsight.summary;
+    insight.sentiment = aiInsight.sentiment;
+    insight.confidence = aiInsight.confidence;
+    insight.communityReviews = aiInsight.communityReviews;
 
     return response.status(200).json({ data: insight });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch movie";
+    return response.status(500).json({ error: message });
+  }
+}
+
+export async function getMovieAiInsight(request, response) {
+  try {
+    const imdbId =
+      typeof request.params?.imdbId === "string"
+        ? request.params.imdbId.trim().toLowerCase()
+        : "";
+
+    if (!IMDB_ID_REGEX.test(imdbId)) {
+      return response.status(400).json({ error: "Invalid IMDb ID" });
+    }
+
+    const title =
+      typeof request.query?.title === "string" && request.query.title.trim()
+        ? request.query.title.trim()
+        : "";
+
+    const insight = await buildMovieAiInsight(imdbId, title);
+    return response.status(200).json({ data: insight });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch movie insight";
     return response.status(500).json({ error: message });
   }
 }

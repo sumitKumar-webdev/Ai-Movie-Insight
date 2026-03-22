@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Send, Sparkles } from "lucide-react";
+import { Loader2, Send, Sparkles, X } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
+  DialogClose,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/app/components/ui/dialog";
-import { Input } from "@/app/components/ui/input";
+import { Textarea } from "@/app/components/ui/textarea";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
 import { AssistantMessage } from "@/app/modal/service.modal";
 import { chatWithAssistant } from "@/app/services/movie.service";
@@ -23,6 +24,7 @@ export default function AiAssistantLauncher() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       id: "assistant-welcome",
@@ -63,6 +65,14 @@ export default function AiAssistantLauncher() {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, loading, open]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -124,14 +134,13 @@ export default function AiAssistantLauncher() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed z-[100] inline-flex items-center gap-3 rounded-full border border-white/12 bg-black/55 px-3 py-3 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-cyan-300/35 hover:bg-black/70 hover:shadow-[0_24px_60px_rgba(8,145,178,0.2)]"
+        className="fixed right-4 bottom-4 z-[100] inline-flex items-center gap-2 rounded-full border border-white/12 bg-black/55 px-3 py-3 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-cyan-300/35 hover:bg-black/70 hover:shadow-[0_24px_60px_rgba(8,145,178,0.2)] sm:right-6 sm:bottom-6 sm:gap-3"
         aria-label="Open AI assistant"
-        style={{ right: 24, bottom: 24 }}
       >
-        <span className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-cyan-300/25 bg-[linear-gradient(145deg,rgba(34,211,238,0.22),rgba(15,23,42,0.96))] text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_rgba(6,182,212,0.18)]">
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-cyan-300/25 bg-[linear-gradient(145deg,rgba(34,211,238,0.22),rgba(15,23,42,0.96))] text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_rgba(6,182,212,0.18)] sm:h-11 sm:w-11">
           <Sparkles className="h-5 w-5" />
         </span>
-        <span className="flex flex-col leading-tight">
+        <span className="hidden flex-col leading-tight min-[420px]:flex">
           <span className="text-[10px] font-medium tracking-[0.24em] text-cyan-200/70 uppercase">
             Cine guide
           </span>
@@ -141,28 +150,30 @@ export default function AiAssistantLauncher() {
 
       <DialogContent
         showCloseButton={false}
-        className="flex h-[min(85vh,760px)] w-[min(96vw,64rem)] max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-2xl sm:p-8"
-        style={{
-          maxWidth: "64rem",
-        }}
+        className="flex h-[100dvh] w-[100vw] max-w-none flex-col overflow-hidden rounded-none border-0 bg-white p-0 text-slate-900 shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-slate-200"
       >
-        <DialogHeader className="shrink-0 pr-10 text-left">
-          <p className="text-sm font-medium text-cyan-700">AI Assistant</p>
-          <DialogTitle className="mt-1 text-2xl font-semibold">Movie chat assistant</DialogTitle>
-          <DialogDescription className="mt-2 text-sm text-slate-600">
+        <DialogHeader className="shrink-0 border-b border-slate-200 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16">
+          <p className="text-xs font-semibold tracking-[0.22em] text-cyan-700 uppercase">AI Assistant</p>
+          <DialogTitle className="mt-1 text-xl font-semibold sm:text-2xl">Movie chat assistant</DialogTitle>
+          <DialogDescription className="mt-1 text-sm text-slate-600">
             Ask about a movie and get a description plus up to three suggestions.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-6 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <DialogClose className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 sm:top-4 sm:right-4">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close assistant</span>
+        </DialogClose>
+
+        <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-3 sm:px-6 sm:py-5">
           <div className="space-y-4">
             {messages.map((message) => (
               <div key={message.id} className="space-y-3">
                 <div
                   className={
                     message.role === "user"
-                      ? "ml-auto max-w-[85%] rounded-2xl bg-slate-950 px-4 py-3 text-sm text-white"
-                      : "max-w-[90%] rounded-2xl bg-white px-4 py-3 text-sm text-slate-800 shadow-sm"
+                      ? "ml-auto max-w-[92%] rounded-2xl bg-slate-950 px-4 py-3 text-sm leading-6 text-white sm:max-w-[85%]"
+                      : "max-w-[96%] rounded-2xl bg-white px-4 py-3 text-sm leading-6 text-slate-800 shadow-sm sm:max-w-[90%]"
                   }
                 >
                   {message.content}
@@ -194,24 +205,38 @@ export default function AiAssistantLauncher() {
                 Thinking about movies...
               </div>
             ) : null}
+            <div ref={messagesEndRef} />
           </div>
         </div>
 
-        <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={onSubmit}>
-          <Input
+        <form
+          className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 sm:px-6 sm:py-5"
+          onSubmit={onSubmit}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Textarea
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                event.currentTarget.form?.requestSubmit();
+              }
+            }}
             placeholder="Ask about a movie, genre, actor, or mood..."
-            className="h-12 border-slate-300 bg-white"
+            rows={2}
+            className="min-h-[52px] resize-none border-slate-300 bg-white text-sm leading-6 sm:min-h-[56px]"
           />
-          <Button
-            type="submit"
-            disabled={loading || !input.trim()}
-            className="h-12 bg-slate-950 text-white hover:bg-slate-800"
-          >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-            Send
-          </Button>
+            <Button
+              type="submit"
+              disabled={loading || !input.trim()}
+              className="h-11 w-full bg-slate-950 text-white hover:bg-slate-800 sm:h-12 sm:w-auto sm:min-w-28"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              Send
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-slate-500">Press Enter to send, Shift+Enter for a new line.</p>
         </form>
       </DialogContent>
     </Dialog>

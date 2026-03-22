@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { Badge } from "@/app/components/ui/badge";
 import {
   Card,
@@ -10,8 +10,11 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { getMovieByImdbId } from "@/app/services/movie.service";
-import { MovieInsight } from "@/app/modal/service.modal";
+import {
+  getMovieAiInsightByImdbId,
+  getMovieByImdbId,
+} from "@/app/services/movie.service";
+import { MovieAiInsight, MovieInsight } from "@/app/modal/service.modal";
 import {
   clearAuthState,
   fetchCurrentUser,
@@ -23,74 +26,77 @@ import AIInsightCard from "./components/ai-insight-card";
 import CastCrewSection from "./components/cast-crew-section";
 import ExpandableText from "@/app/components/ExpandableText/ExpandableText";
 import ReviewsSection from "./components/reviews-section";
+import AuthRequiredModal from "@/app/components/auth/auth-required-modal";
 
-async function fetchMovieData(imdbId: string): Promise<MovieInsight> {
-  return getMovieByImdbId(imdbId);
-}
-
-async function loadMoviePageData(
+async function loadMovieDetails(
   imdbId: string,
   setDetailsLoading: (value: boolean) => void,
-  setInsightLoading: (value: boolean) => void,
   setError: (value: string | null) => void,
-  setInsightError: (value: string | null) => void,
   setMovie: (value: MovieInsight | null) => void,
-  setInsight: (
-    value: {
-      sentiment: MovieInsight["sentiment"];
-      summary: string;
-      confidence: number;
-    } | null,
-  ) => void,
 ) {
   if (!imdbId) {
     setDetailsLoading(false);
-    setInsightLoading(false);
     return;
   }
 
   setDetailsLoading(true);
-  setInsightLoading(true);
   setError(null);
-  setInsightError(null);
   setMovie(null);
-  setInsight(null);
 
   try {
-    const movieResponse = await fetchMovieData(imdbId);
+    const movieResponse = await getMovieByImdbId(imdbId);
     setMovie(movieResponse);
-    setInsight({
-      sentiment: movieResponse.sentiment,
-      summary: movieResponse.summary,
-      confidence: movieResponse.confidence,
-    });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Movie not found";
     setError(message);
-    setInsightError(message);
   } finally {
     setDetailsLoading(false);
+  }
+}
+
+async function loadMovieAiInsight(
+  imdbId: string,
+  title: string,
+  setInsightLoading: (value: boolean) => void,
+  setInsightError: (value: string | null) => void,
+  setInsight: (value: MovieAiInsight | null) => void,
+) {
+  if (!imdbId) {
+    setInsightLoading(false);
+    return;
+  }
+
+  setInsightLoading(true);
+  setInsightError(null);
+
+  try {
+    const insightResponse = await getMovieAiInsightByImdbId(imdbId);
+    setInsight({
+      ...insightResponse,
+      title: insightResponse.title || title,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Movie insight not found";
+    setInsightError(message);
+  } finally {
     setInsightLoading(false);
   }
 }
 
 export default function MovieInsightPage() {
   const params = useParams<{ imdbId: string }>();
+  const pathname = usePathname();
   const imdbId = Array.isArray(params.imdbId)
     ? (params.imdbId[0] ?? "")
     : (params.imdbId ?? "");
 
   const [movie, setMovie] = useState<MovieInsight | null>(null);
-  const [aiInsight, setAiInsight] = useState<{
-    sentiment: MovieInsight["sentiment"];
-    summary: string;
-    confidence: number;
-  } | null>(null);
-
+  const [aiInsight, setAiInsight] = useState<MovieAiInsight | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [insightLoading, setInsightLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [insightError, setInsightError] = useState<string | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const currentUserId = useAuthStore((auth) => auth.user?.id ?? "");
 
   useEffect(() => {
@@ -99,42 +105,50 @@ export default function MovieInsightPage() {
     const setDetailsLoadingSafe = (value: boolean) => {
       if (!cancelled) setDetailsLoading(value);
     };
-    const setInsightLoadingSafe = (value: boolean) => {
-      if (!cancelled) setInsightLoading(value);
-    };
     const setErrorSafe = (value: string | null) => {
       if (!cancelled) setError(value);
-    };
-    const setInsightErrorSafe = (value: string | null) => {
-      if (!cancelled) setInsightError(value);
     };
     const setMovieSafe = (value: MovieInsight | null) => {
       if (!cancelled) setMovie(value);
     };
-    const setAiInsightSafe = (
-      value: {
-        sentiment: MovieInsight["sentiment"];
-        summary: string;
-        confidence: number;
-      } | null,
-    ) => {
-      if (!cancelled) setAiInsight(value);
-    };
 
-    void loadMoviePageData(
+    void loadMovieDetails(
       imdbId,
       setDetailsLoadingSafe,
-      setInsightLoadingSafe,
       setErrorSafe,
-      setInsightErrorSafe,
       setMovieSafe,
-      setAiInsightSafe,
     );
 
     return () => {
       cancelled = true;
     };
   }, [imdbId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const setInsightLoadingSafe = (value: boolean) => {
+      if (!cancelled) setInsightLoading(value);
+    };
+    const setInsightErrorSafe = (value: string | null) => {
+      if (!cancelled) setInsightError(value);
+    };
+    const setAiInsightSafe = (value: MovieAiInsight | null) => {
+      if (!cancelled) setAiInsight(value);
+    };
+
+    void loadMovieAiInsight(
+      imdbId,
+      movie?.title ?? "",
+      setInsightLoadingSafe,
+      setInsightErrorSafe,
+      setAiInsightSafe,
+    );
+
+    return () => {
+      cancelled = true;
+    };
+  }, [imdbId, movie?.title]);
 
   const ensureAuthenticated = async () => {
     if (getAuthStoreState().user?.id) {
@@ -187,8 +201,8 @@ export default function MovieInsightPage() {
     <main className="min-h-screen bg-black text-white">
       <InfoSection loading={detailsLoading} movie={movie} />
 
-      <section className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-6 px-4 py-8 md:px-6 xl:grid-cols-[1fr_360px]">
-        <div className="space-y-6 max-w-4xl">
+      <section className="mx-auto grid w-full grid-cols-1 gap-6 px-4 py-8 md:px-20 xl:grid-cols-[1fr_360px]">
+        <div className="max-w-4xl space-y-6">
           <Card className="border-white/10 bg-white/3 text-white">
             <CardHeader>
               {detailsLoading ? (
@@ -249,15 +263,14 @@ export default function MovieInsightPage() {
             ensureAuthenticated={ensureAuthenticated}
             onUnauthorized={() => {
               clearAuthState();
+              setAuthModalOpen(true);
             }}
             onRefreshInsight={async () => {
-              await loadMoviePageData(
+              await loadMovieAiInsight(
                 imdbId,
-                setDetailsLoading,
+                movie?.title ?? "",
                 setInsightLoading,
-                setError,
                 setInsightError,
-                setMovie,
                 setAiInsight,
               );
             }}
@@ -267,11 +280,25 @@ export default function MovieInsightPage() {
         <div className="space-y-6">
           <AIInsightCard
             loading={insightLoading}
-            data={aiInsight}
+            data={
+              aiInsight
+                ? {
+                    sentiment: aiInsight.sentiment,
+                    summary: aiInsight.summary,
+                    confidence: aiInsight.confidence,
+                  }
+                : null
+            }
             error={insightError}
           />
         </div>
       </section>
+
+      <AuthRequiredModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        nextPath={pathname || "/"}
+      />
     </main>
   );
 }

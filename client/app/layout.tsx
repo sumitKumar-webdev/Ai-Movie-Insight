@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
 import AuthBootstrap from "@/app/components/auth/auth-bootstrap";
 import ClientLayout from "@/app/components/client-layout";
@@ -32,7 +33,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthBootstrap />
-        <RouteProgressBar />
+        <Suspense fallback={null}>
+          <RouteProgressBar />
+        </Suspense>
         <ClientLayout>{children}</ClientLayout>
         <Toaster />
       </body>

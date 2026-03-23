@@ -27,7 +27,7 @@ export function Toaster() {
       const nextToast: ToastItem = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         open: true,
-        duration: customEvent.detail.duration ?? 800,
+        duration: customEvent.detail.duration ?? 400,
         variant: customEvent.detail.variant ?? "default",
         title: customEvent.detail.title,
         description: customEvent.detail.description,

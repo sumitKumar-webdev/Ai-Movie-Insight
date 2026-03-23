@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import {
   Toast,
-  ToastClose,
   ToastDescription,
+  ToastIcon,
   ToastProvider,
   ToastTitle,
   ToastViewport,
@@ -27,7 +27,7 @@ export function Toaster() {
       const nextToast: ToastItem = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         open: true,
-        duration: customEvent.detail.duration ?? 3000,
+        duration: customEvent.detail.duration ?? 800,
         variant: customEvent.detail.variant ?? "default",
         title: customEvent.detail.title,
         description: customEvent.detail.description,
@@ -58,15 +58,17 @@ export function Toaster() {
             if (!open) {
               window.setTimeout(() => {
                 setToasts((current) => current.filter((toast) => toast.id !== item.id));
-              }, 180);
+              }, 220);
             }
           }}
         >
-          <div className="grid gap-1">
-            <ToastTitle>{item.title}</ToastTitle>
-            {item.description ? <ToastDescription>{item.description}</ToastDescription> : null}
+          <div className="flex items-start gap-3">
+            <ToastIcon variant={item.variant} />
+            <div className="grid -space-y-1.5">
+              <ToastTitle>{item.title}</ToastTitle>
+              {item.description ? <ToastDescription>{item.description}</ToastDescription> : null}
+            </div>
           </div>
-          <ToastClose />
         </Toast>
       ))}
       <ToastViewport />

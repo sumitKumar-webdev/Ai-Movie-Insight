@@ -14,6 +14,7 @@ import { toast } from "@/app/Hooks/use-toast";
 import { setAuthenticatedUser } from "@/app/store/auth-store";
 import { login, resendVerificationEmail } from "@/app/services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { brand } from "@/app/config/brand";
 
 const loginSchema = z.object({
   identifier: z.string().trim().min(1, "Email or username is required."),
@@ -140,7 +141,7 @@ export default function LoginPage() {
     <AuthShell
       badge="Welcome back"
       title="Login"
-      description="Sign in to continue exploring reviews, saved picks, and AI movie insights."
+      description={`Sign in to continue exploring reviews, saved picks, and ${brand.authInsightLabel}.`}
       footer={
         <>
           Don&apos;t have an account?{" "}

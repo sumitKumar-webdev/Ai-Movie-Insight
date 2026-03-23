@@ -7,6 +7,7 @@ import {
 } from "@/app/components/ui/card";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Sentiment } from "@/app/modal/service.modal";
+import { brand } from "@/app/config/brand";
 
 type AIInsightCardProps = {
   loading: boolean;
@@ -31,7 +32,7 @@ const AIInsightCard = ({ loading, data, error }: AIInsightCardProps) => {
         {loading ? (
           <Skeleton className="h-8 w-28 bg-white/12" />
         ) : (
-          <CardTitle className="text-xl md:text-2xl">AI Insight</CardTitle>
+          <CardTitle className="text-xl md:text-2xl">{brand.insightTitle}</CardTitle>
         )}
       </CardHeader>
       <CardContent className="space-y-4">

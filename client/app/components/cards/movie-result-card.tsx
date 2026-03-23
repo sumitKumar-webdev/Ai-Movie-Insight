@@ -32,7 +32,7 @@ export default function MovieResultCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer overflow-hidden border-white/10 bg-white/4 py-0 text-white transition hover:bg-white/[0.07]",
+        "cursor-pointer overflow-hidden border-white/12 bg-[#101010] py-0 text-white transition hover:bg-[#171717]",
         className,
       )}
       onClick={onClick}
@@ -55,21 +55,20 @@ export default function MovieResultCard({
 
         <CardContent className="min-w-0 p-0">
           {imdbId ? (
-            <p className={cn("text-xs", "text-white/60")} title={imdbId}>
+            <p className="text-xs text-white/72" title={imdbId}>
               {imdbId}
             </p>
           ) : null}
           <h3
             className={cn(
-              "truncate text-sm font-semibold sm:text-[15px]",
-              "text-white",
+              "truncate text-sm font-semibold text-white sm:text-[15px]",
             )}
             title={title}
           >
             {title}
           </h3>
-          <p className={cn("mt-0.5 text-[11px] sm:text-xs", "text-white/55")}>
-            {formatLabel(titleType)} • {releaseYear}
+          <p className="mt-0.5 text-[11px] text-white/72 sm:text-xs">
+            {formatLabel(titleType)} {"\u2022"} {releaseYear}
           </p>
         </CardContent>
       </div>

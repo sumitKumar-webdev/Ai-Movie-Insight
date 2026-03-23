@@ -13,6 +13,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { buildApiUrl } from "@/app/services/api-client";
 import { AuthUser, setAuthenticatedUser } from "@/app/store/auth-store";
+import { brand } from "@/app/config/brand";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -212,7 +213,7 @@ export default function SignupPage() {
     <AuthShell
       badge="Join the club"
       title="Sign up"
-      description="Create your account to save favorites, track discoveries, and unlock AI movie insights."
+      description={`Create your account to save favorites, track discoveries, and unlock ${brand.authInsightLabel}.`}
       footer={
         <>
           Already have an account?{" "}

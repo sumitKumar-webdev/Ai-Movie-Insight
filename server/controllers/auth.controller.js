@@ -21,6 +21,7 @@ import { errorRes, successRes } from "../lib/res.js";
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
+const isDevelopment = process.env.NODE_ENV === "development";
 
 function sanitizeUser(user) {
   return {
@@ -157,7 +158,7 @@ export const register = async (req, res) => {
           verification.rawToken,
         );
 
-        if (!delivery.delivered) {
+        if (!delivery.delivered && !isDevelopment) {
           throw new Error("Verification email could not be sent. Please try again later.");
         }
       });
@@ -171,6 +172,7 @@ export const register = async (req, res) => {
       user: sanitizeUser(user),
       requiresVerification: true,
       emailSent: delivery.delivered,
+      verificationUrl: isDevelopment ? delivery.verificationUrl : undefined,
     });
   } catch (error) {
     const message =
@@ -410,7 +412,7 @@ export const resendVerificationEmail = async (req, res) => {
       verification.rawToken,
     );
 
-    if (!delivery.delivered) {
+    if (!delivery.delivered && !isDevelopment) {
       return errorRes(
         res,
         500,
@@ -424,6 +426,7 @@ export const resendVerificationEmail = async (req, res) => {
       "A new verification email has been sent.",
       {
         emailSent: true,
+        verificationUrl: isDevelopment ? delivery.verificationUrl : undefined,
       },
     );
   } catch (error) {
@@ -512,8 +515,7 @@ export const forgotPassword = async (req, res) => {
       "A reset link has been sent.",
       {
         emailSent: delivery.delivered,
-        resetUrl:
-          process.env.NODE_ENV !== "production" ? delivery.resetUrl : undefined,
+        resetUrl: isDevelopment ? delivery.resetUrl : undefined,
       },
     );
   } catch (error) {

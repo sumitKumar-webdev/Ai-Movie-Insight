@@ -200,6 +200,22 @@ export default function MovieInsightPage() {
             people={movie?.crew ?? []}
           />
 
+          <div className="xl:hidden">
+            <AIInsightCard
+              loading={insightLoading}
+              data={
+                aiInsight
+                  ? {
+                      sentiment: aiInsight.sentiment,
+                      summary: aiInsight.summary,
+                      confidence: aiInsight.confidence,
+                    }
+                  : null
+              }
+              error={insightError}
+            />
+          </div>
+
           {movie?.isReleased === true ? (
             <ReviewsSection
               imdbId={imdbId}
@@ -215,7 +231,7 @@ export default function MovieInsightPage() {
           ) : null}
         </div>
 
-        <div className="space-y-6">
+        <div className="hidden space-y-6 xl:block">
           <AIInsightCard
             loading={insightLoading}
             data={

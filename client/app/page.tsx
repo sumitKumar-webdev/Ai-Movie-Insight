@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
@@ -11,6 +12,7 @@ import MovieResultCardSkeleton from "./components/skeleton-loader/movie-result-c
 import { MovieSearchItem } from "./modal/service.modal";
 import { searchMovies } from "./services/movie.service";
 import { PosterRail } from "./components/poster rail/poster-rail";
+import { brand } from "./config/brand";
 
 const leftPosters = [
   "https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg",
@@ -73,16 +75,24 @@ export default function Home() {
           <PosterRail posters={rightPosters} reverse />
         </div>
         <div className="absolute md:relative md:mx-auto px-2 sm:px-4 md:px-6 w-full md:max-w-2xl lg:ml-auto lg:w-[58%]">
-          <div className="rounded-3xl border border-white/10 bg-white/6 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-8">
-            <p className="mb-2 text-xs font-medium tracking-[0.24em] text-white/65 uppercase">
-              AI Movie Insight Builder
-            </p>
+          <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(12,16,24,0.88),rgba(6,8,14,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-8">
+            <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/6 px-3 py-2">
+              <Image
+                src={brand.logoSrc}
+                alt={brand.logoAlt}
+                width={24}
+                height={24}
+                className="h-6 w-6 rounded-md"
+              />
+              <p className="text-xs font-medium tracking-[0.24em] text-white/70 uppercase">
+                {brand.homepageEyebrow}
+              </p>
+            </div>
             <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-              Movie Insight Finder
+              {brand.homepageTitle}
             </h1>
             <p className="mt-3 max-w-xl text-sm text-white/70 sm:text-base">
-              Search by movie name and get cast, ratings, reviews, and AI
-              sentiment in seconds.
+              {brand.homepageDescription}
             </p>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -95,10 +105,10 @@ export default function Home() {
                   }
                 }}
                 placeholder="Enter movie name (e.g. Inception)"
-                className="h-12 border-white/20 bg-black/40 text-white placeholder:text-white/45"
+                className="h-12 border-white/15 bg-black/45 text-white placeholder:text-white/45"
               />
               <Button
-                className="h-12 rounded-xl bg-white text-black hover:bg-white/90"
+                className="h-12 rounded-xl bg-[linear-gradient(135deg,#f8fafc,#dbeafe)] text-slate-950 shadow-[0_12px_30px_rgba(219,234,254,0.18)] hover:bg-white/90"
                 onClick={() => {
                   if (results[0]?.imdbId) {
                     navigateToMovie(results[0].imdbId);
@@ -125,7 +135,7 @@ export default function Home() {
                       releaseYear={movie.year}
                       posterUrl={movie.poster}
                       titleType={movie.type}
-                      className="bg-white/8 hover:bg-white/12"
+                      className="border-white/10 bg-[linear-gradient(180deg,rgba(18,24,34,0.96),rgba(11,15,22,0.98))] hover:bg-[linear-gradient(180deg,rgba(24,31,43,0.98),rgba(14,20,29,0.99))]"
                       onClick={() => navigateToMovie(movie.imdbId)}
                     />
                   ))

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Loader2, Send, Sparkles, UserCircle2, X } from "lucide-react";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
 import { Button } from "@/app/components/ui/button";
@@ -15,17 +15,26 @@ import {
 } from "@/app/components/ui/dialog";
 import { Textarea } from "@/app/components/ui/textarea";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
+import AuthRequiredModal from "@/app/modal/auth-required-modal";
 import { AssistantMessage } from "@/app/modal/service.modal";
 import { chatWithAssistant } from "@/app/services/movie.service";
-import { useAuthStore } from "@/app/store/auth-store";
+import {
+  clearAuthState,
+  fetchCurrentUser,
+  getAuthStoreState,
+  useAuthStore,
+} from "@/app/store/auth-store";
+import { brand } from "@/app/config/brand";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "movie_ai_assistant_session";
 
 export default function AiAssistantLauncher() {
   const router = useRouter();
+  const pathname = usePathname();
   const user = useAuthStore((auth) => auth.user);
   const [open, setOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -79,8 +88,36 @@ export default function AiAssistantLauncher() {
     });
   }, [messages, loading, open]);
 
+  const promptLogin = () => {
+    setOpen(false);
+    setAuthModalOpen(true);
+  };
+
+  const ensureAuthenticated = async () => {
+    if (getAuthStoreState().user?.id) {
+      return true;
+    }
+
+    const sessionUser = await fetchCurrentUser();
+    if (!sessionUser?.id) {
+      promptLogin();
+      return false;
+    }
+
+    return true;
+  };
+
+  const openAssistant = async () => {
+    if (!(await ensureAuthenticated())) {
+      return;
+    }
+
+    setOpen(true);
+  };
+
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!(await ensureAuthenticated())) return;
     const content = input.trim();
     if (!content || loading) return;
     const userMessage: AssistantMessage = {
@@ -112,6 +149,12 @@ export default function AiAssistantLauncher() {
         },
       ]);
     } catch (error) {
+      if (error instanceof Error && /unauthorized|invalid token|user not found/i.test(error.message)) {
+        clearAuthState();
+        promptLogin();
+        return;
+      }
+
       setMessages([
         ...nextMessages,
         {
@@ -225,37 +268,39 @@ export default function AiAssistantLauncher() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="fixed right-4 bottom-4 z-100 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-1 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#111722] sm:right-6 sm:bottom-6 sm:gap-3"
-        aria-label="Open AI assistant"
-      >
-        <AiAvatar />
-        <span className="hidden flex-col leading-tight min-[420px]:flex">
-          <span className="text-brand-primary-muted text-[10px] font-medium tracking-[0.24em] uppercase">
-            Cine guide
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <button
+          type="button"
+          onClick={() => {
+            void openAssistant();
+          }}
+          className="fixed right-4 bottom-4 z-100 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-1 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#111722] sm:right-6 sm:bottom-6 sm:gap-3"
+          aria-label="Open AI assistant"
+        >
+          <AiAvatar />
+          <span className="hidden flex-col leading-tight min-[420px]:flex">
+            <span className="text-brand-primary-muted text-[10px] font-medium tracking-[0.24em] uppercase">
+              {brand.assistantEyebrow}
+            </span>
+            <span className="text-sm font-semibold text-white">{brand.assistantTitle}</span>
           </span>
-          <span className="text-sm font-semibold text-white">Ask AI</span>
-        </span>
-      </button>
+        </button>
 
-      <DialogContent
-        showCloseButton={false}
-        contentWrapperClassName="items-end justify-stretch p-0 sm:items-center sm:justify-center sm:p-4"
-        className="data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/92 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10 sm:bg-black/85"
-      >
+        <DialogContent
+          showCloseButton={false}
+          contentWrapperClassName="items-end justify-stretch p-0 sm:items-center sm:justify-center sm:p-4"
+          className="data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/92 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10 sm:bg-black/85"
+        >
         <DialogHeader className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16 -space-y-2">
           <p className="text-brand-primary text-[10px] md:text-xs font-semibold tracking-[0.22em] uppercase">
-            AI Assistant
+            {brand.assistantEyebrow}
           </p>
           <DialogTitle className="mt-1 text-base md:text-xl font-semibold sm:text-2xl">
-            Movie chat assistant
+            {brand.assistantTitle}
           </DialogTitle>
           <DialogDescription className="mt-1 text-xs md:text-sm text-white/55">
-            Ask about a movie and get a description plus up to three
-            suggestions.
+            {brand.assistantDescription}
           </DialogDescription>
         </DialogHeader>
 
@@ -318,7 +363,15 @@ export default function AiAssistantLauncher() {
             Press Enter to send, Shift+Enter for a new line.
           </p>
         </form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+      <AuthRequiredModal
+        open={authModalOpen}
+        onOpenChange={setAuthModalOpen}
+        nextPath={pathname || "/"}
+        title="Login to use AI Assistant"
+        description="Sign in or create an account to chat with the movie assistant and keep your recommendations tied to your session."
+      />
+    </>
   );
 }

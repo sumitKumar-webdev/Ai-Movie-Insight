@@ -172,6 +172,7 @@ export async function chatWithAssistant(
 ): Promise<{ reply: string; suggestions: AssistantSuggestion[] }> {
   const response = await fetch(buildApiUrl("/api/movies/assistant"), {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
   });

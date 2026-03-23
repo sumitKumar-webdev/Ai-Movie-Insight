@@ -41,11 +41,13 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
   const buttonRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
+  const [buttonWidth, setButtonWidth] = useState(320);
 
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
     if (!clientId) {
+      setReady(false);
       return;
     }
 
@@ -98,7 +100,7 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
         size: "large",
         text: mode === "login" ? "signin_with" : "signup_with",
         shape: "rectangular",
-        width: 320,
+        width: buttonWidth,
       });
       setReady(true);
     };
@@ -124,11 +126,46 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
     return () => {
       script.onload = null;
     };
-  }, [mode, nextPath, onError]);
+  }, [buttonWidth, mode, nextPath, onError]);
+
+  useEffect(() => {
+    const updateWidth = () => {
+      const nextWidth = buttonRef.current?.parentElement?.clientWidth ?? 320;
+      setButtonWidth(Math.max(220, Math.min(400, Math.floor(nextWidth))));
+    };
+
+    updateWidth();
+
+    const observer = new ResizeObserver(() => {
+      updateWidth();
+    });
+
+    if (buttonRef.current?.parentElement) {
+      observer.observe(buttonRef.current.parentElement);
+    }
+
+    window.addEventListener("resize", updateWidth);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateWidth);
+    };
+  }, []);
+
+  if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
+    return (
+      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        Google sign-in is not available right now. Please use email and password to continue.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-2">
-      <div ref={buttonRef} className={loading ? "pointer-events-none opacity-70" : ""} />
+      <div
+        ref={buttonRef}
+        className={loading ? "pointer-events-none opacity-70" : ""}
+      />
       {!ready ? <p className="text-sm text-slate-500">Loading Google sign-in...</p> : null}
     </div>
   );

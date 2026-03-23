@@ -13,8 +13,6 @@ npm install
 ```env
 IMDB_API_BASE_URL=https://api.imdbapi.dev
 NEXT_PUBLIC_IMDB_API_BASE_URL=https://api.imdbapi.dev
-OPENAI_API_KEY=your_openai_api_key
-OPENAI_MODEL=gpt-4o-mini
 MONGODB_URI=mongodb://127.0.0.1:27017/ai_movie_insight
 ```
 

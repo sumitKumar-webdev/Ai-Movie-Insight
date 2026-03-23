@@ -57,7 +57,9 @@ export default function RouteProgressBar() {
     };
 
     listeners.add(listener);
-    return () => listeners.delete(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   }, []);
 
   useEffect(() => {

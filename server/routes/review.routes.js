@@ -6,6 +6,7 @@ import {
   likeReply,
   likeReview,
   listReplies,
+  saveReply,
   listReviews,
   saveReview,
 } from "../controllers/review.controller.js";
@@ -20,6 +21,7 @@ router.delete("/:reviewId", requireAuth, deleteReview);
 router.post("/:reviewId/likes", requireAuth, likeReview);
 router.get("/:reviewId/replies", listReplies);
 router.post("/:reviewId/replies", requireAuth, addReply);
+router.patch("/:reviewId/replies/:replyId", requireAuth, saveReply);
 router.post("/:reviewId/replies/:replyId/likes", requireAuth, likeReply);
 router.delete("/:reviewId/replies/:replyId", requireAuth, deleteReply);
 

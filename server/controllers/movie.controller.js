@@ -156,10 +156,10 @@ function formatMovieInsight(title, fallbackImdbId, options = {}) {
 
 function formatCommunityReview(review) {
   const author =
-    typeof review?.user?.username === "string" && review.user.username.trim()
-      ? review.user.username.trim()
-      : typeof review?.user?.name === "string" && review.user.name.trim()
+    typeof review?.user?.name === "string" && review.user.name.trim()
         ? review.user.name.trim()
+      : typeof review?.user?.username === "string" && review.user.username.trim()
+        ? review.user.username.trim()
         : "User";
   const message =
     typeof review?.message === "string" && review.message.trim() ? review.message.trim() : "";
@@ -176,10 +176,10 @@ function formatCommunityReview(review) {
       ? review.replies.map((reply) => ({
         _id: String(reply?._id ?? ""),
         author:
-          typeof reply?.user?.username === "string" && reply.user.username.trim()
-            ? reply.user.username.trim()
-            : typeof reply?.user?.name === "string" && reply.user.name.trim()
+          typeof reply?.user?.name === "string" && reply.user.name.trim()
               ? reply.user.name.trim()
+            : typeof reply?.user?.username === "string" && reply.user.username.trim()
+              ? reply.user.username.trim()
               : "User",
         text:
           typeof reply?.message === "string" && reply.message.trim()
@@ -216,13 +216,13 @@ async function buildMovieAiInsight(imdbId, title) {
   const insight = {
     imdbId,
     title: fallbackTitle,
-    summary: "No community reviews yet. Be the first to share what you thought about this movie.",
+    summary: "At least two community reviews are needed before CineAI can generate an insight.",
     sentiment: "NoReviews",
     confidence: 0,
     communityReviews: formattedReviews,
   };
 
-  if (reviewTexts.length === 0) {
+  if (reviewTexts.length < 2) {
     return insight;
   }
 

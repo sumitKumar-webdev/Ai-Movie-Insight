@@ -6,16 +6,9 @@ function escapeRegex(value) {
 }
 
 function formatReply(reply) {
-  const author =
-    typeof reply?.user?.username === "string" && reply.user.username.trim()
-      ? reply.user.username.trim()
-      : typeof reply?.user?.name === "string" && reply.user.name.trim()
-        ? reply.user.name.trim()
-        : "User";
-
   return {
     _id: String(reply?._id ?? ""),
-    author,
+    author: reply?.user.name,
     username: reply?.user.username,
     text: typeof reply?.message === "string" ? reply.message.trim() : "",
     date: reply?.createdAt ? new Date(reply.createdAt).toISOString() : "",
@@ -28,10 +21,10 @@ function formatReview(review, options = {}) {
   const text =
     typeof review?.message === "string" && review.message.trim() ? review.message.trim() : "";
   const author =
-    typeof review?.user?.username === "string" && review.user.username.trim()
-      ? review.user.username.trim()
-      : typeof review?.user?.name === "string" && review.user.name.trim()
+    typeof review?.user?.name === "string" && review.user.name.trim()
         ? review.user.name.trim()
+      : typeof review?.user?.username === "string" && review.user.username.trim()
+        ? review.user.username.trim()
         : "User";
   const includeReplies = options.includeReplies === true;
   const replies = Array.isArray(review?.replies) ? review.replies : [];
@@ -267,6 +260,54 @@ export async function addReply(req, res) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to reply to review";
+    return errorRes(res, 500, message);
+  }
+}
+
+export async function saveReply(req, res) {
+  try {
+    const reviewId = typeof req.params?.reviewId === "string" ? req.params.reviewId.trim() : "";
+    const replyId = typeof req.params?.replyId === "string" ? req.params.replyId.trim() : "";
+    const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+
+    if (!reviewId || !replyId) {
+      return errorRes(res, 400, "reviewId and replyId are required");
+    }
+
+    if (!message) {
+      return errorRes(res, 400, "message is required");
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return errorRes(res, 404, "Review not found");
+    }
+
+    const reply = review.replies.id(replyId);
+    if (!reply) {
+      return errorRes(res, 404, "Reply not found");
+    }
+
+    if (String(reply.user) !== String(req.auth.userId)) {
+      return errorRes(res, 403, "You can only edit your own reply");
+    }
+
+    reply.message = message;
+    await review.save();
+
+    const populatedReview = await Review.findById(reviewId)
+      .populate("replies.user", "name username")
+      .lean();
+    const updatedReply = populatedReview?.replies?.find(
+      (item) => String(item?._id ?? "") === replyId,
+    );
+
+    return successRes(res, 200, "Reply updated successfully", {
+      reply: updatedReply ? formatReply(updatedReply) : null,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update reply";
     return errorRes(res, 500, message);
   }
 }

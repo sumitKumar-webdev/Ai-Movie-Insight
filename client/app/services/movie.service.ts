@@ -128,6 +128,29 @@ export async function addReviewReply(
   };
 }
 
+export async function updateReviewReply(
+  reviewId: string,
+  replyId: string,
+  message: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies/${replyId}`), {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  const payload = (await response.json()) as ApiResponse;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    message: payload.message,
+  };
+}
+
 export async function likeReviewReply(
   reviewId: string,
   replyId: string,

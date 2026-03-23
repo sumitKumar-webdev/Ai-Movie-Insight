@@ -27,7 +27,7 @@ export function Toaster() {
       const nextToast: ToastItem = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         open: true,
-        duration: customEvent.detail.duration ?? 400,
+        duration: 4000,
         variant: customEvent.detail.variant ?? "default",
         title: customEvent.detail.title,
         description: customEvent.detail.description,
@@ -43,7 +43,7 @@ export function Toaster() {
   }, []);
 
   return (
-    <ToastProvider>
+    <ToastProvider duration={4500}>
       {toasts.map((item) => (
         <Toast
           key={item.id}

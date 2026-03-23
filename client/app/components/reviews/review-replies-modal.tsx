@@ -21,6 +21,7 @@ import {
 } from "@/app/services/movie.service";
 import { formatLabel, getInitials } from "@/lib/resuable-component";
 import { Input } from "../ui/input";
+import RenderAvatar from "../avatar/render-avatar";
 
 type ReviewRepliesModalProps = {
   open: boolean;
@@ -223,27 +224,26 @@ export default function ReviewRepliesModal({
                 </div>
               ) : selectedReview ? (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/8 text-sm font-semibold text-white/90">
-                      {getInitials(selectedReview.author)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-white">
-                        {formatLabel(selectedReview.author)}
-                      </p>
-                      <p className="text-xs text-white/55">
-                        {selectedReview.date
-                          ? new Date(selectedReview.date).toLocaleDateString()
-                          : ""}
+                  <div className="flex max-w-[75%] items-center gap-3">
+                    <RenderAvatar
+                      name={selectedReview.author}
+                      imageUrl={selectedReview.imageUrl}
+                    />
+                    <div className="min-w-0 -space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-white text-lg">
+                          {formatLabel(selectedReview.author)}
+                        </h4>
+                      </div>
+                      <p className="text-sm text-[#A0A0A0]">
+                        @{selectedReview.username}
                       </p>
                     </div>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-white/10 bg-[#0d121b] p-4 shadow-[0_20px_60px_rgba(0,0,0,0.32)] sm:rounded-[1.75rem] sm:p-5">
-                    <p className="text-sm leading-7 text-white/88">
-                      {selectedReview.text || "No review text provided."}
-                    </p>
-                  </div>
+                  <p className="text-sm leading-7 text-white/88">
+                    {selectedReview.text || "No review text provided."}
+                  </p>
 
                   <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
                     <Heart className="h-4 w-4" />
@@ -275,52 +275,78 @@ export default function ReviewRepliesModal({
                       const isOwnReply = Boolean(
                         currentUserId && reply.userId === currentUserId,
                       );
+                      const replyDate = reply.date
+                        ? new Date(reply.date).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                          })
+                        : "Just now";
                       return (
                         <div
                           key={reply._id ?? `${reply.author}-${reply.date}`}
-                            className="rounded-[1.2rem] border border-white/8 bg-[#10161f] p-4 shadow-[0_18px_50px_rgba(0,0,0,0.22)] sm:rounded-[1.35rem]"
+                          className="flex flex-col gap-2"
                         >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-semibold text-white">
-                                {formatLabel(reply.author)}
-                              </p>
-                              <p className="mt-1 text-[11px] text-white/50">
-                                {reply.date
-                                  ? new Date(reply.date).toLocaleDateString()
-                                  : ""}
-                              </p>
+                          <div className="flex items-start gap-3">
+                            <RenderAvatar
+                              name={reply.author}
+                              imageUrl={reply.imageUrl}
+                              className="h-5 w-5"
+                              initialsClassName="font-medium"
+                            />
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <div className="mb-1 flex items-center">
+                                    <p className="truncate text-sm font-semibold text-[#FFFFFF]">
+                                      {reply.username?.trim() ||
+                                        formatLabel(reply.author)}
+                                    </p>
+                                  </div>
+
+                                  <div className="mb-2 wrap-break-word text-sm leading-4.25 text-[#C6C6C6]">
+                                    <span>{reply.text}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-4">
+                                    <span className="text-[13px] font-normal text-[#919191]">
+                                      {replyDate}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        reply._id &&
+                                        void handleReplyLike(reply._id)
+                                      }
+                                      aria-label="Like reply"
+                                      className="relative flex items-center justify-center p-1 text-[#919191] transition-transform duration-100 hover:text-white active:scale-95 gap-1"
+                                    >
+                                      <Heart
+                                        className="h-4 w-4 fill-none stroke-current"
+                                        strokeWidth={1.5}
+                                      />
+                                      {reply.likes ?? 0}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                <div className="mt-1 flex shrink-0 flex-col items-center -ml-1">
+                                  {isOwnReply ? (
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        reply._id &&
+                                        void handleReplyDelete(reply._id)
+                                      }
+                                      aria-label="Delete reply"
+                                      className="mt-2 inline-flex items-center justify-center rounded-full p-1 text-[#919191] transition hover:bg-white/10 hover:text-white"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
                             </div>
-                            {isOwnReply ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  reply._id && void handleReplyDelete(reply._id)
-                                }
-                                className="text-white/55 hover:bg-white/8 hover:text-brand-primary"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            ) : null}
-                          </div>
-                          <p className="mt-3 text-sm leading-7 text-white/85">
-                            {reply.text}
-                          </p>
-                          <div className="mt-4 flex items-center gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                reply._id && void handleReplyLike(reply._id)
-                              }
-                              className="rounded-full border-white/15 bg-white/5 text-white hover:bg-white/10"
-                            >
-                              <Heart className="h-4 w-4" />
-                              {reply.likes ?? 0}
-                            </Button>
                           </div>
                         </div>
                       );
@@ -355,7 +381,9 @@ export default function ReviewRepliesModal({
                   </Button>
                 </div>
                 {error ? (
-                  <p className="mt-3 text-sm text-rose-300 text-center">{error}</p>
+                  <p className="mt-3 text-sm text-rose-300 text-center">
+                    {error}
+                  </p>
                 ) : (
                   <p className="mt-3 text-sm text-white/65 text-center">
                     Please Keep this conversation healthy

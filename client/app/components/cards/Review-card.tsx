@@ -81,7 +81,7 @@ export default function ReviewCard({
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-1.5 text-sm text-[#E2E2E2] md:text-base">
                 <p className="truncate font-semibold hover:text-white">
-                  {formatLabel(review.author)}
+                  {review.username}
                 </p>
               </div>
               <div className="flex items-center text-xs text-[#C6C6C6]">

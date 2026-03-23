@@ -10,13 +10,14 @@ import {
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Button } from "@/app/components/ui/button";
 import { Textarea } from "@/app/components/ui/textarea";
-import ReviewCard from "@/app/components/cards/Review-card";
 import ReviewRepliesModal from "@/app/components/reviews/review-replies-modal";
+import ReviewThreadItem from "@/app/components/reviews/review-thread-item";
 import DeleteConfirmModal from "@/app/modal/delete-confirm-modal";
 import { buildApiUrl } from "@/app/services/api-client";
 import { getMovieReviews } from "@/app/services/movie.service";
 import { toast } from "@/app/Hooks/use-toast";
 import { MovieInsight, Review } from "@/app/modal/service.modal";
+import ReviewCard from "@/app/components/cards/Review-card";
 
 type ReviewsSectionProps = {
   imdbId: string;
@@ -417,7 +418,6 @@ export default function ReviewsSection({
                     key={review._id ?? review.date}
                     review={review}
                     isOwnReview={isOwnReview}
-                    highlightAsOwner={isOwnReview}
                     onEdit={
                       isOwnReview ? () => startEditingReview(review) : undefined
                     }

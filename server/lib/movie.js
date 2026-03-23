@@ -72,26 +72,25 @@ export async function fetchImdbTitleReleaseDates(imdbId) {
     };
 }
 
-export async function searchMoviesByQuery(query, limit = 20) {
+export async function searchMoviesByQuery(query, options = {}) {
     const normalizedQuery = typeof query === "string" ? query.trim() : "";
     if (!normalizedQuery) return [];
 
+    const limit =
+        typeof options.limit === "number" && options.limit > 0 ? options.limit : 20;
     const payload = await fetchJson(
         `${IMDB_API_BASE_URL}/search/titles?query=${encodeURIComponent(normalizedQuery)}`,
-   {
+    ).catch(() => null);
 
-   } ).catch(() => null);
-
-    return payload.titles
-        .map((item) => {
-            return {
-                imdbId: item.id ?? '',
-                title: item.originalTitle || item.primaryTitle || item.id,
-                year: String(item?.startYear) ?? 'N/A',
-                poster: item?.primaryImage?.url ?? null,
-                type: item.type || "movie",
-            };
-        })
+    const titles = Array.isArray(payload?.titles) ? payload.titles : [];
+    return titles
+        .map((item) => ({
+            imdbId: item.id ?? '',
+            title: item.originalTitle || item.primaryTitle || item.id,
+            year: String(item?.startYear) ?? 'N/A',
+            poster: item?.primaryImage?.url ?? null,
+            type: item.type || "movie",
+        }))
         .filter(Boolean)
         .slice(0, limit);
 }

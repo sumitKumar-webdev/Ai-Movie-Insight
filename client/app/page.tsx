@@ -45,18 +45,28 @@ export default function Home() {
       setLoading(false);
       return;
     }
+
+    let cancelled = false;
+
     const fetchMovies = async () => {
       try {
         setLoading(true);
         const response = await searchMovies(debouncedQuery);
-        setResults(response as MovieSearchItem[]);
-      } catch (error) {
-        console.error(error);
+        if (!cancelled) {
+          setResults(response);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
-    fetchMovies();
+
+    void fetchMovies();
+
+    return () => {
+      cancelled = true;
+    };
   }, [debouncedQuery]);
 
   const navigateToMovie = (imdbId: string) => {
@@ -91,10 +101,8 @@ export default function Home() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") {
-                    if (results[0]?.imdbId) {
-                      navigateToMovie(results[0].imdbId);
-                    }
+                  if (event.key === "Enter" && results[0]?.imdbId) {
+                    navigateToMovie(results[0].imdbId);
                   }
                 }}
                 placeholder="Enter movie name (e.g. Inception)"
@@ -116,7 +124,7 @@ export default function Home() {
             {normalizedQuery && (
               <div className="home-search-scroll mt-4 max-h-72 space-y-2 overflow-y-auto pb-3 pr-1">
                 {loading || debouncedQuery !== normalizedQuery ? (
-                  [1, 2, 3].map((p) => <MovieResultCardSkeleton key={p} />)
+                  [1, 2, 3].map((item) => <MovieResultCardSkeleton key={item} />)
                 ) : results.length > 0 ? (
                   results.map((movie) => (
                     <MovieResultCard
@@ -131,9 +139,7 @@ export default function Home() {
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-white/65">
-                    No matching movie found.
-                  </p>
+                  <p className="text-sm text-white/65">No matching movie found.</p>
                 )}
               </div>
             )}

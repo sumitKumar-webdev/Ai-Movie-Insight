@@ -20,7 +20,7 @@ const sentimentTone = (sentiment: Sentiment): string => {
   if (sentiment === "Negative")
     return "bg-rose-500/15 text-rose-300 border-rose-400/30";
   if (sentiment === "NoReviews")
-    return "bg-sky-500/15 text-sky-300 border-sky-400/30";
+    return "border-brand-primary-soft bg-brand-primary-soft text-brand-primary";
   return "bg-amber-500/15 text-amber-300 border-amber-400/30";
 };
 
@@ -69,7 +69,7 @@ const AIInsightCard = ({ loading, data, error }: AIInsightCardProps) => {
               </div>
               <div className="h-2 rounded-full bg-white/10">
                 <div
-                  className="h-2 rounded-full bg-violet-400"
+                  className="bg-brand-primary h-2 rounded-full"
                   style={{
                     width: `${Math.round((data?.confidence ?? 0) * 100)}%`,
                   }}

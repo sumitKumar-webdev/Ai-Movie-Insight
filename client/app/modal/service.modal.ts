@@ -1,5 +1,11 @@
 export type Sentiment = "Positive" | "Mixed" | "Negative" | "NoReviews";
 
+export type ApiResponse<TData = undefined> = {
+  message?: string;
+  status?: boolean;
+  data?: TData;
+};
+
 export type Review = {
   _id?: string;
   author: string;
@@ -24,6 +30,11 @@ export type ReviewReply = {
   userId?: string | null;
 };
 
+export type RepliesPayload = {
+  review?: Review;
+  replies?: ReviewReply[];
+};
+
 export type PersonCredit = {
   id: string;
   name: string;
@@ -37,6 +48,7 @@ export type MovieInsight = {
   title: string;
   year: string;
   releaseDate?: string;
+  isReleased?: boolean;
   runtime: string;
   rating: string;
   language: string;
@@ -57,7 +69,12 @@ export type MovieInsight = {
 
 export type MovieAiInsight = Pick<
   MovieInsight,
-  "imdbId" | "title" | "summary" | "sentiment" | "confidence" | "communityReviews"
+  | "imdbId"
+  | "title"
+  | "summary"
+  | "sentiment"
+  | "confidence"
+  | "communityReviews"
 >;
 
 export type MovieSearchItem = {

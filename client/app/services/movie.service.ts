@@ -1,9 +1,11 @@
 import {
+  ApiResponse,
   AssistantMessage,
   AssistantSuggestion,
   MovieAiInsight,
   MovieInsight,
   MovieSearchItem,
+  RepliesPayload,
   Review,
 } from "../modal/service.modal";
 import { buildApiUrl } from "./api-client";
@@ -35,14 +37,19 @@ export async function getMovieByImdbId(imdbId: string): Promise<MovieInsight> {
     buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}`),
     { cache: "no-store" },
   );
-  const payload = (await response.json()) as { data?: MovieInsight; error?: string };
+  const payload = (await response.json()) as {
+    data?: MovieInsight;
+    error?: string;
+  };
   if (!response.ok || !payload.data) {
     throw new Error(payload.error ?? "Movie not found");
   }
   return payload.data;
 }
 
-export async function getMovieAiInsightByImdbId(imdbId: string): Promise<MovieAiInsight> {
+export async function getMovieAiInsightByImdbId(
+  imdbId: string,
+): Promise<MovieAiInsight> {
   const normalized = imdbId.trim().toLowerCase();
   if (!IMDB_ID_REGEX.test(normalized)) throw new Error("Invalid IMDb ID");
 
@@ -50,7 +57,10 @@ export async function getMovieAiInsightByImdbId(imdbId: string): Promise<MovieAi
     buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}/insight`),
     { cache: "no-store" },
   );
-  const payload = (await response.json()) as { data?: MovieAiInsight; error?: string };
+  const payload = (await response.json()) as {
+    data?: MovieAiInsight;
+    error?: string;
+  };
   if (!response.ok || !payload.data) {
     throw new Error(payload.error ?? "Movie insight not found");
   }
@@ -78,6 +88,85 @@ export async function getMovieReviews(imdbId: string): Promise<Review[]> {
   }
 }
 
+export async function getReviewReplies(
+  reviewId: string,
+): Promise<{ ok: boolean; status: number; message?: string; data?: RepliesPayload }> {
+  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies`), {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as ApiResponse<RepliesPayload>;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    message: payload.message,
+    data: payload.data,
+  };
+}
+
+export async function addReviewReply(
+  reviewId: string,
+  message: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies`), {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ message }),
+  });
+
+  const payload = (await response.json()) as ApiResponse;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    message: payload.message,
+  };
+}
+
+export async function likeReviewReply(
+  reviewId: string,
+  replyId: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const response = await fetch(
+    buildApiUrl(`/api/reviews/${reviewId}/replies/${replyId}/likes`),
+    {
+      method: "POST",
+      credentials: "include",
+    },
+  );
+
+  const payload = (await response.json()) as ApiResponse;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    message: payload.message,
+  };
+}
+
+export async function deleteReviewReply(
+  reviewId: string,
+  replyId: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies/${replyId}`), {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  const payload = (await response.json()) as ApiResponse;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    message: payload.message,
+  };
+}
+
 export async function chatWithAssistant(
   messages: Pick<AssistantMessage, "role" | "content">[],
 ): Promise<{ reply: string; suggestions: AssistantSuggestion[] }> {
@@ -101,6 +190,8 @@ export async function chatWithAssistant(
 
   return {
     reply: payload.data.reply,
-    suggestions: Array.isArray(payload.data.suggestions) ? payload.data.suggestions : [],
+    suggestions: Array.isArray(payload.data.suggestions)
+      ? payload.data.suggestions
+      : [],
   };
 }

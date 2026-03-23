@@ -87,6 +87,7 @@ function getIndiaReleaseDetails(payload) {
   if (!indiaRelease?.releaseDate?.year) {
     return {
       releaseDate: "N/A",
+      isReleased: false,
     };
   }
 
@@ -96,8 +97,19 @@ function getIndiaReleaseDetails(payload) {
     .map((value, index) => (index === 0 ? String(value) : String(value).padStart(2, "0")))
     .join("/");
 
+  let isReleased = true;
+  if (typeof year === "number") {
+    if (typeof month === "number" && typeof day === "number") {
+      const releaseUtc = Date.UTC(year, month - 1, day, 23, 59, 59, 999);
+      isReleased = releaseUtc <= Date.now();
+    } else {
+      isReleased = year <= new Date().getUTCFullYear();
+    }
+  }
+
   return {
     releaseDate,
+    isReleased,
   };
 }
 
@@ -118,7 +130,8 @@ function formatMovieInsight(title, fallbackImdbId, options = {}) {
     title: title.primaryTitle ?? `Movie ${fallbackImdbId}`,
     year: resolvedYear,
     type: title.type,
-    releaseDate:  options.releaseDate.trim() ?? "N/A",
+    releaseDate: options.releaseDate?.trim() || "N/A",
+    isReleased: options.isReleased ?? false,
     runtime: formatRuntime(title.runtimeSeconds),
     rating: title.rating?.aggregateRating?.toFixed(1) ?? "N/A",
     language: joinNames(title.spokenLanguages),
@@ -147,7 +160,7 @@ function formatCommunityReview(review) {
       ? review.user.username.trim()
       : typeof review?.user?.name === "string" && review.user.name.trim()
         ? review.user.name.trim()
-      : "User";
+        : "User";
   const message =
     typeof review?.message === "string" && review.message.trim() ? review.message.trim() : "";
 
@@ -167,7 +180,7 @@ function formatCommunityReview(review) {
             ? reply.user.username.trim()
             : typeof reply?.user?.name === "string" && reply.user.name.trim()
               ? reply.user.name.trim()
-             : "User",
+              : "User",
         text:
           typeof reply?.message === "string" && reply.message.trim()
             ? reply.message.trim()
@@ -198,7 +211,7 @@ async function buildMovieAiInsight(imdbId, title) {
     typeof title === "string" && title.trim()
       ? title.trim()
       : communityReviews.find((review) => typeof review?.movieTitle === "string" && review.movieTitle.trim())
-          ?.movieTitle?.trim() || `Movie ${imdbId}`;
+        ?.movieTitle?.trim() || `Movie ${imdbId}`;
 
   const insight = {
     imdbId,
@@ -239,7 +252,7 @@ export async function searchMovies(req, res) {
     if (!query) {
       return res.status(200).json({ data: [] });
     }
-    const data = await searchMoviesByQuery(query, 20);
+    const data = await searchMoviesByQuery(query, { limit: 25 });
 
     return res.status(200).json({ data });
   } catch (error) {
@@ -268,7 +281,16 @@ export async function chatMovieAssistant(request, response) {
       .reverse()
       .find((message) => message.role === "user");
 
-    const aiResult = await chatWithMovieAssistant(sanitizedMessages).catch(() => null);
+    let aiResult = null;
+    let aiErrorMessage = "";
+
+    try {
+      aiResult = await chatWithMovieAssistant(sanitizedMessages);
+    } catch (error) {
+      aiErrorMessage =
+        error instanceof Error ? error.message : "Failed to chat with movie assistant";
+      console.error("[movie:assistant]", aiErrorMessage);
+    }
     const suggestionQueries =
       aiResult?.suggestions?.length
         ? aiResult.suggestions
@@ -280,7 +302,7 @@ export async function chatMovieAssistant(request, response) {
     const seenIds = new Set();
 
     for (const query of suggestionQueries) {
-      const results = await searchMoviesByQuery(query, 5);
+      const results = await searchMoviesByQuery(query, { limit: 5 });
       for (const result of results) {
         if (!result?.imdbId || seenIds.has(result.imdbId)) continue;
         seenIds.add(result.imdbId);
@@ -290,13 +312,12 @@ export async function chatMovieAssistant(request, response) {
       if (suggestionResults.length >= 3) break;
     }
 
-    const reply =
-      aiResult?.reply ||
-      "I can help with movie descriptions and recommendations. Tell me a title, genre, mood, or what kind of film night you want.";
-
     return response.status(200).json({
       data: {
-        reply,
+        reply: aiResult?.reply ||
+          (suggestionResults.length > 0
+            ? "Admin ka ghee khatam h aap ye dekh lo"
+            : aiErrorMessage || "Failed, please try again."),
         suggestions: suggestionResults,
       },
     });
@@ -331,6 +352,7 @@ export async function getMovieByImdbId(request, response) {
     const insight = formatMovieInsight(title, imdbId, {
       year: String(title.startYear ?? "Unknown"),
       releaseDate: indiaRelease.releaseDate,
+      isReleased: indiaRelease.isReleased,
       backdrop: backdropFromVideos || title.primaryImage?.url || "",
     });
 

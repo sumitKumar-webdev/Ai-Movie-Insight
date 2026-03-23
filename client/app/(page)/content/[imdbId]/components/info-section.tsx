@@ -27,11 +27,11 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
             fill
             priority
             sizes="100vw"
-            className="absolute inset-0 object-cover opacity-45"
+            className="absolute inset-0 object-cover opacity-75"
           />
         )
       )}
-      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.2),rgba(0,0,0,0.92))]" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.2),rgba(0,0,0,0.72))]" />
       <div className="absolute inset-x-0 bottom-0">
         <div className="mx-auto w-full max-w-7xl px-4 pb-6 md:px-6 md:pb-10">
           <div className="grid grid-cols-[120px_1fr] items-end gap-4 sm:grid-cols-[170px_1fr] sm:gap-5 md:grid-cols-[260px_1fr] md:gap-6">

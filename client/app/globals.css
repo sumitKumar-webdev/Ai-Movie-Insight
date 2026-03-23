@@ -7,6 +7,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -49,6 +51,8 @@
 
 :root {
   --radius: 0.625rem;
+  --brand-primary: oklch(0.865 0.118 195.3);
+  --brand-secondary: oklch(0.585 0.102 205.9);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -83,6 +87,8 @@
 }
 
 .dark {
+  --brand-primary: oklch(0.865 0.118 195.3);
+  --brand-secondary: oklch(0.7 0.104 201.9);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -162,6 +168,38 @@
 
 .home-search-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.62);
+}
+
+.text-brand-primary {
+  color: var(--brand-primary);
+}
+
+.text-brand-primary-muted {
+  color: color-mix(in oklab, var(--brand-primary) 70%, transparent);
+}
+
+.bg-brand-primary {
+  background-color: var(--brand-primary);
+}
+
+.bg-brand-primary-soft {
+  background-color: color-mix(in oklab, var(--brand-primary) 15%, transparent);
+}
+
+.border-brand-primary-soft {
+  border-color: color-mix(in oklab, var(--brand-primary) 30%, transparent);
+}
+
+.hover\:text-brand-primary:hover {
+  color: var(--brand-primary);
+}
+
+.hover\:border-brand-primary-soft:hover {
+  border-color: color-mix(in oklab, var(--brand-primary) 25%, transparent);
+}
+
+.focus-visible\:ring-brand-primary-soft:focus-visible {
+  --tw-ring-color: color-mix(in oklab, var(--brand-primary) 30%, transparent);
 }
 
 @keyframes posterDown {

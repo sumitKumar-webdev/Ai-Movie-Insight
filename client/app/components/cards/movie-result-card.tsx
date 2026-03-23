@@ -15,7 +15,6 @@ type MovieResultCardProps = {
   titleType: string;
   className?: string;
   onClick?: () => void;
-  tone?: "dark" | "light";
 };
 
 export default function MovieResultCard({
@@ -26,18 +25,14 @@ export default function MovieResultCard({
   titleType,
   className,
   onClick,
-  tone = "dark",
 }: MovieResultCardProps) {
   const [posterError, setPosterError] = useState(false);
   const hasPoster = Boolean(posterUrl) && posterUrl !== "N/A" && !posterError;
-  const isLight = tone === "light";
 
   return (
     <Card
       className={cn(
-        isLight
-          ? "cursor-pointer overflow-hidden border-slate-200 bg-white py-0 text-slate-900 transition hover:bg-slate-50"
-          : "cursor-pointer overflow-hidden border-white/10 bg-white/4 py-0 text-white transition hover:bg-white/[0.07]",
+        "cursor-pointer overflow-hidden border-white/10 bg-white/4 py-0 text-white transition hover:bg-white/[0.07]",
         className,
       )}
       onClick={onClick}
@@ -60,20 +55,20 @@ export default function MovieResultCard({
 
         <CardContent className="min-w-0 p-0">
           {imdbId ? (
-            <p className={cn("text-xs", isLight ? "text-slate-500" : "text-white/60")} title={imdbId}>
+            <p className={cn("text-xs", "text-white/60")} title={imdbId}>
               {imdbId}
             </p>
           ) : null}
           <h3
             className={cn(
               "truncate text-sm font-semibold sm:text-[15px]",
-              isLight ? "text-slate-900" : "text-white",
+              "text-white",
             )}
             title={title}
           >
             {title}
           </h3>
-          <p className={cn("mt-0.5 text-[11px] sm:text-xs", isLight ? "text-slate-500" : "text-white/55")}>
+          <p className={cn("mt-0.5 text-[11px] sm:text-xs", "text-white/55")}>
             {formatLabel(titleType)} • {releaseYear}
           </p>
         </CardContent>

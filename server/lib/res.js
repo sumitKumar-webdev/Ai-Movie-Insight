@@ -10,6 +10,7 @@ export function successRes(res, statusCode, message, data = {}) {
 export function errorRes(res, statusCode, message, data = null) {
     const payload = {
         message,
+        error: message,
         data: null,
         status: false,
     };

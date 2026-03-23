@@ -21,67 +21,13 @@ import {
   getAuthStoreState,
   useAuthStore,
 } from "@/app/store/auth-store";
+import { setRouteProgressLoading } from "@/app/components/ui/route-progress";
 import InfoSection from "./components/info-section";
 import AIInsightCard from "./components/ai-insight-card";
 import CastCrewSection from "./components/cast-crew-section";
 import ExpandableText from "@/app/components/ExpandableText/ExpandableText";
 import ReviewsSection from "./components/reviews-section";
-import AuthRequiredModal from "@/app/components/auth/auth-required-modal";
-
-async function loadMovieDetails(
-  imdbId: string,
-  setDetailsLoading: (value: boolean) => void,
-  setError: (value: string | null) => void,
-  setMovie: (value: MovieInsight | null) => void,
-) {
-  if (!imdbId) {
-    setDetailsLoading(false);
-    return;
-  }
-
-  setDetailsLoading(true);
-  setError(null);
-  setMovie(null);
-
-  try {
-    const movieResponse = await getMovieByImdbId(imdbId);
-    setMovie(movieResponse);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Movie not found";
-    setError(message);
-  } finally {
-    setDetailsLoading(false);
-  }
-}
-
-async function loadMovieAiInsight(
-  imdbId: string,
-  title: string,
-  setInsightLoading: (value: boolean) => void,
-  setInsightError: (value: string | null) => void,
-  setInsight: (value: MovieAiInsight | null) => void,
-) {
-  if (!imdbId) {
-    setInsightLoading(false);
-    return;
-  }
-
-  setInsightLoading(true);
-  setInsightError(null);
-
-  try {
-    const insightResponse = await getMovieAiInsightByImdbId(imdbId);
-    setInsight({
-      ...insightResponse,
-      title: insightResponse.title || title,
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Movie insight not found";
-    setInsightError(message);
-  } finally {
-    setInsightLoading(false);
-  }
-}
+import AuthRequiredModal from "@/app/modal/auth-required-modal";
 
 export default function MovieInsightPage() {
   const params = useParams<{ imdbId: string }>();
@@ -97,58 +43,56 @@ export default function MovieInsightPage() {
   const [error, setError] = useState<string | null>(null);
   const [insightError, setInsightError] = useState<string | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [refreshAI, setRefreshAI] = useState(false);
   const currentUserId = useAuthStore((auth) => auth.user?.id ?? "");
+  const isPageLoading = detailsLoading || insightLoading;
 
   useEffect(() => {
-    let cancelled = false;
-
-    const setDetailsLoadingSafe = (value: boolean) => {
-      if (!cancelled) setDetailsLoading(value);
+    const fetchDetails = async () => {
+      setDetailsLoading(true);
+      try {
+        const movieResponse = await getMovieByImdbId(imdbId);
+        setMovie(movieResponse);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Movie not found";
+        setError(message);
+      } finally {
+        setDetailsLoading(false);
+      }
     };
-    const setErrorSafe = (value: string | null) => {
-      if (!cancelled) setError(value);
-    };
-    const setMovieSafe = (value: MovieInsight | null) => {
-      if (!cancelled) setMovie(value);
-    };
-
-    void loadMovieDetails(
-      imdbId,
-      setDetailsLoadingSafe,
-      setErrorSafe,
-      setMovieSafe,
-    );
-
-    return () => {
-      cancelled = true;
-    };
+    fetchDetails();
   }, [imdbId]);
 
   useEffect(() => {
-    let cancelled = false;
+    const fetchAiInsight = async () => {
+      if (!imdbId) {
+        setInsightLoading(false);
+        return;
+      }
 
-    const setInsightLoadingSafe = (value: boolean) => {
-      if (!cancelled) setInsightLoading(value);
-    };
-    const setInsightErrorSafe = (value: string | null) => {
-      if (!cancelled) setInsightError(value);
-    };
-    const setAiInsightSafe = (value: MovieAiInsight | null) => {
-      if (!cancelled) setAiInsight(value);
-    };
+      setInsightLoading(true);
+      setInsightError(null);
 
-    void loadMovieAiInsight(
-      imdbId,
-      movie?.title ?? "",
-      setInsightLoadingSafe,
-      setInsightErrorSafe,
-      setAiInsightSafe,
-    );
-
-    return () => {
-      cancelled = true;
+      try {
+        const insightResponse = await getMovieAiInsightByImdbId(imdbId);
+        setAiInsight({
+          ...insightResponse,
+          title: insightResponse.title || movie?.title || "",
+        });
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Movie insight not found";
+        setInsightError(message);
+      } finally {
+        setInsightLoading(false);
+      }
     };
+    fetchAiInsight();
   }, [imdbId, movie?.title]);
+
+  useEffect(() => {
+    setRouteProgressLoading(isPageLoading);
+  }, [isPageLoading]);
 
   const ensureAuthenticated = async () => {
     if (getAuthStoreState().user?.id) {
@@ -256,25 +200,19 @@ export default function MovieInsightPage() {
             people={movie?.crew ?? []}
           />
 
-          <ReviewsSection
-            imdbId={imdbId}
-            movieTitle={movie?.title ?? ""}
-            currentUserId={currentUserId}
-            ensureAuthenticated={ensureAuthenticated}
-            onUnauthorized={() => {
-              clearAuthState();
-              setAuthModalOpen(true);
-            }}
-            onRefreshInsight={async () => {
-              await loadMovieAiInsight(
-                imdbId,
-                movie?.title ?? "",
-                setInsightLoading,
-                setInsightError,
-                setAiInsight,
-              );
-            }}
-          />
+          {movie?.isReleased === true ? (
+            <ReviewsSection
+              imdbId={imdbId}
+              movieTitle={movie?.title ?? ""}
+              currentUserId={currentUserId}
+              ensureAuthenticated={ensureAuthenticated}
+              onUnauthorized={() => {
+                clearAuthState();
+                setAuthModalOpen(true);
+              }}
+              onRefreshInsight={() => setRefreshAI(!refreshAI)}
+            />
+          ) : null}
         </div>
 
         <div className="space-y-6">

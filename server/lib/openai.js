@@ -1,57 +1,88 @@
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
-export async function summarizeWithOpenAI(movieTitle, input, mode) {
-  if (!OPENAI_API_KEY || !input.trim()) {
+function getGeminiEndpoint() {
+  if (!GEMINI_API_KEY) {
     return null;
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    GEMINI_MODEL,
+  )}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+}
+
+async function generateGeminiJson({ systemInstruction, conversation, temperature }) {
+  const endpoint = getGeminiEndpoint();
+  if (!endpoint) {
+    return null;
+  }
+
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
-      temperature: 0.2,
-      messages: [
-        {
-          role: "system",
-          content:
-            mode === "reviews"
-              ? 'You analyze movie audience reviews. Return strict JSON with keys: summary, sentiment, confidence. sentiment must be "Positive", "Mixed", or "Negative".'
-              : "You summarize a movie's available metadata into a concise audience-facing insight. Return strict JSON with keys: summary, confidence.",
-        },
-        {
-          role: "user",
-          content:
-            mode === "reviews"
-              ? `Movie: ${movieTitle}\n\nReviews:\n${input}\n\nRules: summary max 45 words. confidence must be 0..1.`
-              : `Movie: ${movieTitle}\n\nMetadata:\n${input}\n\nRules: summary max 45 words. confidence must be 0..1.`,
-        },
-      ],
-      response_format: { type: "json_object" },
+      system_instruction: {
+        parts: [{ text: systemInstruction }],
+      },
+      contents: conversation.map((message) => ({
+        role: message.role === "assistant" ? "model" : "user",
+        parts: [{ text: String(message.content ?? "").trim() }],
+      })),
+      generationConfig: {
+        temperature,
+        responseMimeType: "application/json",
+      },
     }),
   });
 
   if (!response.ok) {
-    return null;
+    const payload = await response.json().catch(() => null);
+    const message =
+      payload?.error?.message ||
+      `Gemini request failed with status ${response.status}`;
+    throw new Error(message);
   }
 
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
+  const payload = await response.json();
+  const outputText = payload?.candidates?.[0]?.content?.parts
+    ?.map((part) => String(part?.text ?? ""))
+    .join("")
+    .trim();
+
+  if (!outputText) {
     return null;
   }
-
-  let parsed;
 
   try {
-    parsed = JSON.parse(content);
+    return JSON.parse(outputText);
   } catch {
     return null;
   }
+}
+
+export async function summarizeWithOpenAI(movieTitle, input, mode) {
+  if (!input.trim()) {
+    return null;
+  }
+
+  const parsed = await generateGeminiJson({
+    temperature: 0.2,
+    systemInstruction:
+      mode === "reviews"
+        ? 'You analyze movie audience reviews. Respond with JSON only using exactly these keys: summary, sentiment, confidence. sentiment must be one of "Positive", "Mixed", or "Negative". Keep summary under 45 words. confidence must be a number between 0 and 1.'
+        : "You summarize movie metadata into a concise audience-facing insight. Respond with JSON only using exactly these keys: summary, confidence. Keep summary under 45 words. confidence must be a number between 0 and 1.",
+    conversation: [
+      {
+        role: "user",
+        content:
+          mode === "reviews"
+            ? `Movie: ${movieTitle}\n\nReviews:\n${input}`
+            : `Movie: ${movieTitle}\n\nMetadata:\n${input}`,
+      },
+    ],
+  });
 
   const summary = String(parsed?.summary ?? "").trim();
   if (!summary) {
@@ -62,8 +93,8 @@ export async function summarizeWithOpenAI(movieTitle, input, mode) {
   const rawSentiment = String(parsed?.sentiment ?? "");
   const sentiment =
     rawSentiment === "Positive" ||
-    rawSentiment === "Mixed" ||
-    rawSentiment === "Negative"
+      rawSentiment === "Mixed" ||
+      rawSentiment === "Negative"
       ? rawSentiment
       : undefined;
 
@@ -75,60 +106,28 @@ export async function summarizeWithOpenAI(movieTitle, input, mode) {
 }
 
 export async function chatWithMovieAssistant(history) {
-  if (!OPENAI_API_KEY || !Array.isArray(history) || history.length === 0) {
+  if (!Array.isArray(history) || history.length === 0) {
     return null;
   }
 
-  const messages = [
-    {
-      role: "system",
-      content:
-        "You are a friendly movie assistant. Return strict JSON with keys: reply, suggestions. reply should directly answer the user about movies in under 120 words. suggestions must be an array with up to 3 movie title strings only.",
-    },
-    ...history.map((message) => ({
-      role: message.role === "assistant" ? "assistant" : "user",
-      content: String(message.content ?? "").trim(),
-    })),
-  ];
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: OPENAI_MODEL,
-      temperature: 0.7,
-      messages,
-      response_format: { type: "json_object" },
-    }),
+  const parsed = await generateGeminiJson({
+    temperature: 0.7,
+    systemInstruction:
+      "You are a warm, natural movie assistant. Respond with JSON only using exactly these keys: reply and suggestions. reply should feel human, conversational, and helpful while directly answering the user about movies in under 100 words. suggestions must be an array of movie title strings with at most 3 items. Return 1 or 2 suggestions when that is enough, and only return 3 when it genuinely helps.",
+    conversation: history
+      .map((message) => ({
+        role: message.role === "assistant" ? "assistant" : "user",
+        content: String(message.content ?? "").trim(),
+      }))
+      .filter((message) => message.content),
   });
-
-  if (!response.ok) {
-    return null;
-  }
-
-  const data = await response.json();
-  const content = data?.choices?.[0]?.message?.content;
-  if (!content) {
-    return null;
-  }
-
-  let parsed;
-
-  try {
-    parsed = JSON.parse(content);
-  } catch {
-    return null;
-  }
 
   const reply = String(parsed?.reply ?? "").trim();
   const suggestions = Array.isArray(parsed?.suggestions)
     ? parsed.suggestions
-        .map((item) => String(item ?? "").trim())
-        .filter(Boolean)
-        .slice(0, 3)
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 3)
     : [];
 
   if (!reply) {

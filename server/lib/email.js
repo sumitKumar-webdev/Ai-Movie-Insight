@@ -1,30 +1,31 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
-const smtpHost = process.env.SMTP_HOST;
-const smtpPort = Number(process.env.SMTP_PORT || "587");
-const smtpUser = process.env.SMTP_USER;
-const smtpPass = process.env.SMTP_PASS;
-const mailFrom = process.env.MAIL_FROM || smtpUser || "no-reply@example.com";
+function normalizeEnv(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmed = value.trim();
+  return trimmed.replace(/^['"]|['"]$/g, "");
+}
+
+const resendApiKey =
+  normalizeEnv(process.env.EMAIL_API_KEY) ||
+  normalizeEnv(process.env.emailAPIkey) ||
+  normalizeEnv(process.env.RESEND_API_KEY);
+const mailFrom = normalizeEnv(process.env.MAIL_FROM) || "onboarding@resend.dev";
 const serverPublicUrl = process.env.SERVER_PUBLIC_URL || "http://localhost:5000";
 const clientPublicUrl =
   process.env.CLIENT_PUBLIC_URL ||
   process.env.CLIENT_ORIGIN ||
   "http://localhost:3000";
 
-function getTransporter() {
-  if (!smtpHost || !smtpUser || !smtpPass) {
+function getResendClient() {
+  if (!resendApiKey) {
     return null;
   }
 
-  return nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  });
+  return new Resend(resendApiKey);
 }
 
 function buildEmailLayout({ eyebrow, title, greeting, message, ctaLabel, ctaUrl }) {
@@ -125,15 +126,15 @@ function getTemplatePayload(template, { name, message, token } = {}) {
 }
 
 export async function sendTemplateEmail(email, name, message, template, options = {}) {
-  const transporter = getTransporter();
+  const resend = getResendClient();
   const payload = getTemplatePayload(template, {
     name,
     message,
     token: options.token,
   });
 
-  if (!transporter) {
-    console.log(`[email:${template}] SMTP not configured for ${email}`);
+  if (!resend) {
+    console.log(`[email:${template}] Resend not configured for ${email}`);
     if (payload.verificationUrl) {
       console.log(`Verification link for ${email}: ${payload.verificationUrl}`);
     }
@@ -148,13 +149,29 @@ export async function sendTemplateEmail(email, name, message, template, options 
     };
   }
 
-  await transporter.sendMail({
-    from: mailFrom,
-    to: email,
-    subject: payload.subject,
-    text: payload.text,
-    html: payload.html,
-  });
+  try {
+    const response = await resend.emails.send({
+      from: mailFrom,
+      to: email,
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    });
+
+    if (response?.error) {
+      throw new Error(response.error.message || "Resend email delivery failed");
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown email delivery error";
+    console.error(`[email:${template}] Failed to send email to ${email}: ${reason}`);
+
+    return {
+      delivered: false,
+      verificationUrl: payload.verificationUrl,
+      resetUrl: payload.resetUrl,
+      error: reason,
+    };
+  }
 
   return {
     delivered: true,

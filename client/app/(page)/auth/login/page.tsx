@@ -12,7 +12,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/Hooks/use-toast";
 import { setAuthenticatedUser } from "@/app/store/auth-store";
-import { login } from "@/app/services/auth.service";
+import { login, resendVerificationEmail } from "@/app/services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
@@ -26,7 +26,10 @@ export default function LoginPage() {
   const router = useRouter();
   const [safeNext, setSafeNext] = useState("/");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendEmail, setResendEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -48,11 +51,17 @@ export default function LoginPage() {
 
   const onSubmit = async ({ identifier, password }: LoginFormValues) => {
     setError("");
+    setNotice("");
     try {
       setLoading(true);
       const response = await login({ identifier, password });
-      console.log(response);
       if (!response.status || !response?.data?.user) {
+        if (response.message === "Please verify your email before logging in") {
+          const normalizedIdentifier = identifier.trim();
+          if (normalizedIdentifier.includes("@")) {
+            setResendEmail(normalizedIdentifier.toLowerCase());
+          }
+        }
         setError(response.message ?? "Login failed");
         return;
       }
@@ -69,6 +78,33 @@ export default function LoginPage() {
       setError("Login failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onResendVerification = async () => {
+    setError("");
+    setNotice("");
+
+    const email = resendEmail.trim().toLowerCase();
+    if (!email) {
+      setError("Enter your email to resend the verification link.");
+      return;
+    }
+
+    try {
+      setResendLoading(true);
+      const response = await resendVerificationEmail(email);
+
+      if (!response.status) {
+        setError(response.message ?? "Unable to resend verification email.");
+        return;
+      }
+
+      setNotice(response.message ?? "A new verification email has been sent.");
+    } catch {
+      setError("Unable to resend verification email.");
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -120,6 +156,12 @@ export default function LoginPage() {
       {error ? (
         <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {error}
+        </p>
+      ) : null}
+
+      {notice ? (
+        <p className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {notice}
         </p>
       ) : null}
 
@@ -197,6 +239,41 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
+
+      {error === "Please verify your email before logging in" ? (
+        <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-sm font-medium text-slate-800">Need a new verification email?</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Enter the email for your account and we&apos;ll send a fresh verification link.
+          </p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <Input
+              type="email"
+              value={resendEmail}
+              onChange={(event) => setResendEmail(event.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              className="h-11"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onResendVerification}
+              disabled={resendLoading}
+              className="h-11 sm:min-w-44"
+            >
+              {resendLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Sending...
+                </span>
+              ) : (
+                "Resend email"
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <div className="flex items-center justify-center gap-3 text-center text-xs uppercase tracking-[0.24em] text-slate-400">
         or

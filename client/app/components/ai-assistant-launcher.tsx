@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Send, Sparkles, X } from "lucide-react";
+import { Loader2, Send, Sparkles, UserCircle2, X } from "lucide-react";
+import RenderAvatar from "@/app/components/avatar/render-avatar";
 import { Button } from "@/app/components/ui/button";
 import {
   DialogClose,
@@ -16,11 +17,14 @@ import { Textarea } from "@/app/components/ui/textarea";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
 import { AssistantMessage } from "@/app/modal/service.modal";
 import { chatWithAssistant } from "@/app/services/movie.service";
+import { useAuthStore } from "@/app/store/auth-store";
+import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "movie_ai_assistant_session";
 
 export default function AiAssistantLauncher() {
   const router = useRouter();
+  const user = useAuthStore((auth) => auth.user);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,9 +40,7 @@ export default function AiAssistantLauncher() {
 
   useEffect(() => {
     const stored = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!stored) {
-      return;
-    }
+    if (!stored) return;
 
     try {
       const parsed = JSON.parse(stored) as AssistantMessage[];
@@ -71,16 +73,16 @@ export default function AiAssistantLauncher() {
       return;
     }
 
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [messages, loading, open]);
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const content = input.trim();
-    if (!content || loading) {
-      return;
-    }
-
+    if (!content || loading) return;
     const userMessage: AssistantMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -94,7 +96,10 @@ export default function AiAssistantLauncher() {
     try {
       setLoading(true);
       const result = await chatWithAssistant(
-        nextMessages.map(({ role, content: text }) => ({ role, content: text })),
+        nextMessages.map(({ role, content: text }) => ({
+          role,
+          content: text,
+        })),
       );
 
       setMessages([
@@ -113,9 +118,7 @@ export default function AiAssistantLauncher() {
           id: `assistant-error-${Date.now()}`,
           role: "assistant",
           content:
-            error instanceof Error
-              ? error.message
-              : "I could not answer right now. Please try again.",
+            error instanceof Error ? error.message : "Assistant request failed",
         },
       ]);
     } finally {
@@ -129,19 +132,104 @@ export default function AiAssistantLauncher() {
     router.push(`/content/${imdbId}`);
   };
 
+  const currentUserName = user?.name?.trim() || user?.username?.trim() || "You";
+
+  const AiAvatar = ({ className }: { className?: string }) => (
+    <span className="text-brand-primary inline-flex items-center justify-center rounded-full border border-[color-mix(in_oklab,var(--brand-primary)_20%,transparent)] bg-[linear-gradient(145deg,color-mix(in_oklab,var(--brand-primary)_14%,transparent),rgba(11,16,24,0.98))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_24px_rgba(15,23,42,0.28)]">
+      <Sparkles className={cn("h-5 w-5", className)} />
+    </span>
+  );
+
+  const renderUserAvatar = () => {
+    if (!user) {
+      return (
+        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/8 text-white/80 shadow-[0_10px_24px_rgba(15,23,42,0.2)]">
+          <UserCircle2 className="h-5 w-5" />
+        </span>
+      );
+    }
+
+    return (
+      <RenderAvatar
+        name={currentUserName}
+        className="h-10 w-10 border border-white/10 bg-white/8 shadow-[0_10px_24px_rgba(15,23,42,0.2)] md:h-10 md:w-10"
+        initialsClassName="text-xs font-semibold text-white"
+      />
+    );
+  };
+
+  const renderMessage = (message: AssistantMessage) => {
+    const isUser = message.role === "user";
+    return (
+      <div
+        key={message.id}
+        className={cn(
+          "space-y-3",
+          isUser ? "ml-auto max-w-[96%] sm:max-w-[90%]" : "max-w-[96%]",
+        )}
+      >
+        <div
+          className={cn(
+            "flex items-start gap-3",
+            isUser ? "justify-end" : "justify-start",
+          )}
+        >
+          {!isUser ? <AiAvatar className="h-4 w-4" /> : null}
+
+          <div
+            className={cn(
+              "min-w-0",
+              isUser
+                ? "max-w-[92%] sm:max-w-[85%]"
+                : "max-w-[92%] sm:max-w-[88%]",
+            )}
+          >
+            <div
+              className={cn(
+                "rounded-2xl px-4 py-3 text-sm leading-6 shadow-[0_18px_45px_rgba(0,0,0,0.18)]",
+                isUser
+                  ? "bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))] text-slate-900"
+                  : "border border-white/10 bg-[linear-gradient(180deg,rgba(15,22,34,0.96),rgba(9,14,24,0.98))] text-white/88",
+              )}
+            >
+              {message.content}
+            </div>
+          </div>
+
+          {isUser ? renderUserAvatar() : null}
+        </div>
+
+        {message.suggestions?.length ? (
+          <div className="grid gap-3 pl-13 sm:grid-cols-2 lg:grid-cols-3">
+            {message.suggestions.map((movie) => (
+              <MovieResultCard
+                key={`${message.id}-${movie.imdbId}`}
+                imdbId={movie.imdbId}
+                title={movie.title}
+                releaseYear={movie.year}
+                posterUrl={movie.poster}
+                titleType={movie.type}
+                className="border-white/8 bg-[#10161f] text-white hover:bg-[#17202c]"
+                onClick={() => openMovie(movie.imdbId)}
+              />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed right-4 bottom-4 z-[100] inline-flex items-center gap-2 rounded-full border border-white/12 bg-black/55 px-3 py-3 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-cyan-300/35 hover:bg-black/70 hover:shadow-[0_24px_60px_rgba(8,145,178,0.2)] sm:right-6 sm:bottom-6 sm:gap-3"
+        className="fixed right-4 bottom-4 z-100 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-1 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#111722] sm:right-6 sm:bottom-6 sm:gap-3"
         aria-label="Open AI assistant"
       >
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-cyan-300/25 bg-[linear-gradient(145deg,rgba(34,211,238,0.22),rgba(15,23,42,0.96))] text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_10px_24px_rgba(6,182,212,0.18)] sm:h-11 sm:w-11">
-          <Sparkles className="h-5 w-5" />
-        </span>
+        <AiAvatar />
         <span className="hidden flex-col leading-tight min-[420px]:flex">
-          <span className="text-[10px] font-medium tracking-[0.24em] text-cyan-200/70 uppercase">
+          <span className="text-brand-primary-muted text-[10px] font-medium tracking-[0.24em] uppercase">
             Cine guide
           </span>
           <span className="text-sm font-semibold text-white">Ask AI</span>
@@ -150,93 +238,79 @@ export default function AiAssistantLauncher() {
 
       <DialogContent
         showCloseButton={false}
-        className="flex h-[100dvh] w-[100vw] max-w-none flex-col overflow-hidden rounded-none border-0 bg-white p-0 text-slate-900 shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-slate-200"
+        className="flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/85 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10"
       >
-        <DialogHeader className="shrink-0 border-b border-slate-200 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16">
-          <p className="text-xs font-semibold tracking-[0.22em] text-cyan-700 uppercase">AI Assistant</p>
-          <DialogTitle className="mt-1 text-xl font-semibold sm:text-2xl">Movie chat assistant</DialogTitle>
-          <DialogDescription className="mt-1 text-sm text-slate-600">
-            Ask about a movie and get a description plus up to three suggestions.
+        <DialogHeader className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16">
+          <p className="text-brand-primary text-xs font-semibold tracking-[0.22em] uppercase">
+            AI Assistant
+          </p>
+          <DialogTitle className="mt-1 text-xl font-semibold sm:text-2xl">
+            Movie chat assistant
+          </DialogTitle>
+          <DialogDescription className="mt-1 text-sm text-white/55">
+            Ask about a movie and get a description plus up to three
+            suggestions.
           </DialogDescription>
         </DialogHeader>
 
-        <DialogClose className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/40 sm:top-4 sm:right-4">
+        <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
           <X className="h-4 w-4" />
           <span className="sr-only">Close assistant</span>
         </DialogClose>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50 px-3 py-3 sm:px-6 sm:py-5">
+        <div className="flex-1 overflow-y-auto home-search-scroll bg-white/3 px-3 py-3 sm:px-6 sm:py-5">
           <div className="space-y-4">
-            {messages.map((message) => (
-              <div key={message.id} className="space-y-3">
-                <div
-                  className={
-                    message.role === "user"
-                      ? "ml-auto max-w-[92%] rounded-2xl bg-slate-950 px-4 py-3 text-sm leading-6 text-white sm:max-w-[85%]"
-                      : "max-w-[96%] rounded-2xl bg-white px-4 py-3 text-sm leading-6 text-slate-800 shadow-sm sm:max-w-[90%]"
-                  }
-                >
-                  {message.content}
-                </div>
+            {messages.map(renderMessage)}
 
-                {message.suggestions?.length ? (
-                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {message.suggestions.map((movie) => (
-                      <MovieResultCard
-                        key={`${message.id}-${movie.imdbId}`}
-                        imdbId={movie.imdbId}
-                        title={movie.title}
-                        releaseYear={movie.year}
-                        posterUrl={movie.poster}
-                        titleType={movie.type}
-                        tone="light"
-                        className="hover:bg-slate-100"
-                        onClick={() => openMovie(movie.imdbId)}
-                      />
-                    ))}
+            {loading && (
+              <div className="flex items-start gap-3">
+                <AiAvatar className="h-4 w-4" />
+                <div className="max-w-[92%] sm:max-w-[88%]">
+                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,22,34,0.96),rgba(9,14,24,0.98))] px-4 py-3 text-sm text-white/70 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Thinking about movies...
                   </div>
-                ) : null}
+                </div>
               </div>
-            ))}
-
-            {loading ? (
-              <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Thinking about movies...
-              </div>
-            ) : null}
+            )}
             <div ref={messagesEndRef} />
           </div>
         </div>
 
         <form
-          className="shrink-0 border-t border-slate-200 bg-white px-3 py-3 sm:px-6 sm:py-5"
+          className="shrink-0 border-t border-white/10 bg-[#0b1018]/85 px-3 py-3 sm:px-6 sm:py-5"
           onSubmit={onSubmit}
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end">
             <Textarea
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                event.currentTarget.form?.requestSubmit();
-              }
-            }}
-            placeholder="Ask about a movie, genre, actor, or mood..."
-            rows={2}
-            className="min-h-[52px] resize-none border-slate-300 bg-white text-sm leading-6 sm:min-h-[56px]"
-          />
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
+              placeholder="Ask about a movie, genre, actor, or mood..."
+              rows={2}
+              className="min-h-11 resize-none border-white/12 bg-[#10161f] text-sm leading-6 text-white placeholder:text-white/35"
+            />
             <Button
               type="submit"
               disabled={loading || !input.trim()}
-              className="h-11 w-full bg-slate-950 text-white hover:bg-slate-800 sm:h-12 sm:w-auto sm:min-w-28"
+              className="h-11 w-full bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))] text-slate-950 hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))]/60 cursor-pointer sm:w-auto sm:min-w-28"
             >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
               Send
             </Button>
           </div>
-          <p className="mt-2 text-xs text-slate-500">Press Enter to send, Shift+Enter for a new line.</p>
+          <p className="mt-2 text-xs text-white/45">
+            Press Enter to send, Shift+Enter for a new line.
+          </p>
         </form>
       </DialogContent>
     </Dialog>

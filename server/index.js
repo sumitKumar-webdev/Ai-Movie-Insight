@@ -34,7 +34,10 @@ app.use((error, _req, res, _next) => {
 });
 
 connectToDatabase()
-  .then(() => {
+  .then((connection) => {
+    console.log(
+      `MongoDB connected: ${connection.name || "unknown"} (${connection.host || "unknown-host"})`,
+    );
     app.listen(port, () => {
       console.log(`Server listening on http://localhost:${port}`);
     });

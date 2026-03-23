@@ -7,6 +7,7 @@ import {
   login,
   logout,
   register,
+  resendVerificationEmail,
   resetPassword,
   verifyEmail,
 } from "../controllers/auth.controller.js";
@@ -16,6 +17,7 @@ const router = Router();
 router.post("/login", login);
 router.post("/logout", logout);
 router.post("/register", register);
+router.post("/resend-verification", resendVerificationEmail);
 router.post("/google", googleAuth);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);

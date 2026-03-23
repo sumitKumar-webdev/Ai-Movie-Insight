@@ -24,7 +24,7 @@ type ReviewsSectionProps = {
   currentUserId: string;
   ensureAuthenticated: () => Promise<boolean>;
   onUnauthorized: () => void;
-  onRefreshInsight: () => Promise<void>;
+  onRefreshInsight: () => void;
 };
 
 type ReviewMutationResponse = {
@@ -335,9 +335,8 @@ export default function ReviewsSection({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {!reviewsLoading && shouldShowComposer ? (
+          {!reviewsLoading && shouldShowComposer && (
             <form
-              className="rounded-[1.8rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.03))] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-5"
               onSubmit={(event) => {
                 event.preventDefault();
                 void submitReview();
@@ -360,17 +359,17 @@ export default function ReviewsSection({
                   }
                 }}
                 placeholder="Write your review about this movie..."
-                className="min-h-32 resize-y rounded-[1.4rem] border-white/12 bg-black/25 px-4 py-3 text-white placeholder:text-white/35 focus-visible:border-cyan-300/30 focus-visible:ring-cyan-300/10"
+                className="min-h-32 resize-y border-white/12 bg-black/25 px-4 py-3 text-white placeholder:text-white/35 focus-visible:border-cyan-300/30 focus-visible:ring-cyan-300/10"
                 readOnly={!currentUserId}
               />
 
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs text-white/45">
                   Tip: specific scenes, performances, and pacing notes make
                   reviews more useful.
                 </p>
                 <div className="flex justify-end gap-2">
-                  {isEditingOwnReview ? (
+                  {isEditingOwnReview && (
                     <Button
                       type="button"
                       variant="outline"
@@ -383,7 +382,7 @@ export default function ReviewsSection({
                     >
                       Cancel
                     </Button>
-                  ) : null}
+                  )}
 
                   <Button
                     type="submit"
@@ -404,7 +403,7 @@ export default function ReviewsSection({
                 </div>
               </div>
             </form>
-          ) : null}
+          )}
 
           {!reviewsLoading && orderedReviews.length > 0 ? (
             <div className="space-y-3">
@@ -444,10 +443,12 @@ export default function ReviewsSection({
                 );
               })}
             </div>
-          ) : <p className="text-sm text-white/65">
+          ) : (
+            <p className="text-sm text-white/65">
               No community reviews yet. Share yours to help power the AI
               insight.
-            </p>}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -466,7 +467,6 @@ export default function ReviewsSection({
         reviewId={activeReplyReview?._id}
         review={activeReplyReview}
         currentUserId={currentUserId}
-        ensureAuthenticated={ensureAuthenticated}
         onUnauthorized={onUnauthorized}
         onReviewMutated={onRefreshInsight}
       />

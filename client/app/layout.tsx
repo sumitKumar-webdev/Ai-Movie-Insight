@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AppHeader from "@/app/components/Header/app-header";
-import AiAssistantLauncher from "@/app/components/ai-assistant-launcher";
 import AuthBootstrap from "@/app/components/auth/auth-bootstrap";
+import ClientLayout from "@/app/components/client-layout";
+import RouteProgressBar from "@/app/components/ui/route-progress";
 import { Toaster } from "@/app/components/ui/toaster";
 
 const geistSans = Geist({
@@ -32,10 +32,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthBootstrap />
-        <AppHeader />
-        {children}
+        <RouteProgressBar />
+        <ClientLayout>{children}</ClientLayout>
         <Toaster />
-        <AiAssistantLauncher />
       </body>
     </html>
   );

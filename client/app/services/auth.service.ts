@@ -42,6 +42,19 @@ export const signUp = async ({
   return await res.json();
 };
 
+export const resendVerificationEmail = async (email: string) => {
+  const res = await fetch(buildApiUrl("/api/auth/resend-verification"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      email: email.trim().toLowerCase(),
+    }),
+  });
+
+  return await res.json();
+};
+
 export const checkUserName = async (username: string) => {
   const res = await fetch(
     buildApiUrl(

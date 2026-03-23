@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
+import mongoose from "mongoose";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import {
@@ -130,26 +131,40 @@ export const register = async (req, res) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const verification = buildTokenWithExpiry(24);
+    const session = await mongoose.startSession();
+    let user;
+    let delivery;
 
-    const user = new User({
-      name,
-      email,
-      username,
-      passwordHash,
-      authProvider: ["local"],
-      isactive: false,
-      emailVerified: false,
-      emailVerificationTokenHash: verification.tokenHash,
-      emailVerificationExpiresAt: verification.expiresAt,
-    });
+    try {
+      await session.withTransaction(async () => {
+        user = new User({
+          name,
+          email,
+          username,
+          passwordHash,
+          authProvider: ["local"],
+          isactive: false,
+          emailVerified: false,
+          emailVerificationTokenHash: verification.tokenHash,
+          emailVerificationExpiresAt: verification.expiresAt,
+        });
 
-    await user.save();
+        await user.save({ session });
 
-    const delivery = await sendVerificationEmail(
-      user.email,
-      user.name,
-      verification.rawToken,
-    );
+        delivery = await sendVerificationEmail(
+          user.email,
+          user.name,
+          verification.rawToken,
+        );
+
+        if (!delivery.delivered) {
+          throw new Error("Verification email could not be sent. Please try again later.");
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
+
     await sendWelcomeEmail(user.email, user.name);
 
     return successRes(res, 201, "Verification email sent", {
@@ -347,6 +362,73 @@ export const verifyEmail = async (req, res) => {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to verify email";
+    return errorRes(res, 500, message);
+  }
+};
+
+export const resendVerificationEmail = async (req, res) => {
+  try {
+    const email = String(req.body?.email ?? "").trim().toLowerCase();
+
+    if (!email) {
+      return errorRes(res, 400, "email is required");
+    }
+
+    const user = await User.findOne({ email });
+    const providers = Array.isArray(user?.authProvider)
+      ? user.authProvider
+      : user?.authProvider
+        ? [user.authProvider]
+        : [];
+
+    if (!user || !providers.includes("local")) {
+      return successRes(
+        res,
+        200,
+        "If that email is registered, a verification link has been sent.",
+        {
+          emailSent: true,
+        },
+      );
+    }
+
+    if (user.emailVerified) {
+      return successRes(res, 200, "This email is already verified.", {
+        alreadyVerified: true,
+        emailSent: false,
+      });
+    }
+
+    const verification = buildTokenWithExpiry(24);
+    user.emailVerificationTokenHash = verification.tokenHash;
+    user.emailVerificationExpiresAt = verification.expiresAt;
+    await user.save();
+
+    const delivery = await sendVerificationEmail(
+      user.email,
+      user.name,
+      verification.rawToken,
+    );
+
+    if (!delivery.delivered) {
+      return errorRes(
+        res,
+        500,
+        "We couldn't send the verification email right now. Please try again in a moment.",
+      );
+    }
+
+    return successRes(
+      res,
+      200,
+      "A new verification email has been sent.",
+      {
+        emailSent: true,
+      },
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to resend verification email";
     return errorRes(res, 500, message);
   }
 };

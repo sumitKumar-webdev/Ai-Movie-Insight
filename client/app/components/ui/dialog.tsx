@@ -51,19 +51,26 @@ function DialogContent({
   children,
   showCloseButton = true,
   overlayClassName,
+  contentWrapperClassName,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
   overlayClassName?: string
+  contentWrapperClassName?: string
 }) {
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay className={overlayClassName} />
-      <div className="fixed inset-0 z-[130] flex items-center justify-center p-4">
+      <div
+        className={cn(
+          "fixed inset-0 z-[130] flex items-center justify-center p-4",
+          contentWrapperClassName,
+        )}
+      >
         <DialogPrimitive.Content
           data-slot="dialog-content"
           className={cn(
-            "data-[state=open]:animate-in data-[state=closed]:animate-out relative grid w-full max-w-lg gap-4 rounded-xl border bg-background p-6 shadow-2xl duration-200 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 focus:outline-none",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out relative grid w-full max-w-lg gap-4 rounded-xl border bg-background p-6 shadow-2xl duration-200 data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 focus:outline-none",
             className
           )}
           {...props}

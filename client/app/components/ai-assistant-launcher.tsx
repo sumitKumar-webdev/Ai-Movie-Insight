@@ -136,7 +136,7 @@ export default function AiAssistantLauncher() {
 
   const AiAvatar = ({ className }: { className?: string }) => (
     <span className="text-brand-primary inline-flex items-center justify-center rounded-full border border-[color-mix(in_oklab,var(--brand-primary)_20%,transparent)] bg-[linear-gradient(145deg,color-mix(in_oklab,var(--brand-primary)_14%,transparent),rgba(11,16,24,0.98))] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_24px_rgba(15,23,42,0.28)]">
-      <Sparkles className={cn("h-5 w-5", className)} />
+      <Sparkles className={cn("md:h-5 h-4 w-4 md:w-5", className)} />
     </span>
   );
 
@@ -164,7 +164,7 @@ export default function AiAssistantLauncher() {
       <div
         key={message.id}
         className={cn(
-          "space-y-3",
+          "min-w-0 space-y-3",
           isUser ? "ml-auto max-w-[96%] sm:max-w-[90%]" : "max-w-[96%]",
         )}
       >
@@ -174,7 +174,7 @@ export default function AiAssistantLauncher() {
             isUser ? "justify-end" : "justify-start",
           )}
         >
-          {!isUser ? <AiAvatar className="h-4 w-4" /> : null}
+          {!isUser ? <AiAvatar className="md:h-4 h-3 w-3 md:w-4" /> : null}
 
           <div
             className={cn(
@@ -192,7 +192,7 @@ export default function AiAssistantLauncher() {
                   : "border border-white/10 bg-[linear-gradient(180deg,rgba(15,22,34,0.96),rgba(9,14,24,0.98))] text-white/88",
               )}
             >
-              {message.content}
+              <p className="text-xs sm:text-sm md:text-base">{message.content}</p>
             </div>
           </div>
 
@@ -200,7 +200,12 @@ export default function AiAssistantLauncher() {
         </div>
 
         {message.suggestions?.length ? (
-          <div className="grid gap-3 pl-13 sm:grid-cols-2 lg:grid-cols-3">
+          <div
+            className={cn(
+              "min-w-0 grid gap-3 sm:grid-cols-2 lg:grid-cols-3",
+              !isUser ? "sm:pl-13" : "",
+            )}
+          >
             {message.suggestions.map((movie) => (
               <MovieResultCard
                 key={`${message.id}-${movie.imdbId}`}
@@ -238,28 +243,29 @@ export default function AiAssistantLauncher() {
 
       <DialogContent
         showCloseButton={false}
-        className="flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/85 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10"
+        contentWrapperClassName="items-end justify-stretch p-0 sm:items-center sm:justify-center sm:p-4"
+        className="data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/92 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10 sm:bg-black/85"
       >
-        <DialogHeader className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16">
-          <p className="text-brand-primary text-xs font-semibold tracking-[0.22em] uppercase">
+        <DialogHeader className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16 -space-y-2">
+          <p className="text-brand-primary text-[10px] md:text-xs font-semibold tracking-[0.22em] uppercase">
             AI Assistant
           </p>
-          <DialogTitle className="mt-1 text-xl font-semibold sm:text-2xl">
+          <DialogTitle className="mt-1 text-base md:text-xl font-semibold sm:text-2xl">
             Movie chat assistant
           </DialogTitle>
-          <DialogDescription className="mt-1 text-sm text-white/55">
+          <DialogDescription className="mt-1 text-xs md:text-sm text-white/55">
             Ask about a movie and get a description plus up to three
             suggestions.
           </DialogDescription>
         </DialogHeader>
 
-        <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
-          <X className="h-4 w-4" />
+        <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex  p-2 md:p-4 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
+          <X className="h-3 w-3 md:h-4 md:w-4" />
           <span className="sr-only">Close assistant</span>
         </DialogClose>
 
-        <div className="flex-1 overflow-y-auto home-search-scroll bg-white/3 px-3 py-3 sm:px-6 sm:py-5">
-          <div className="space-y-4">
+        <div className="home-search-scroll flex-1 overflow-x-hidden overflow-y-auto bg-white/3 px-3 py-3 sm:px-6 sm:py-5">
+          <div className="min-w-0 space-y-4">
             {messages.map(renderMessage)}
 
             {loading && (
@@ -281,7 +287,7 @@ export default function AiAssistantLauncher() {
           className="shrink-0 border-t border-white/10 bg-[#0b1018]/85 px-3 py-3 sm:px-6 sm:py-5"
           onSubmit={onSubmit}
         >
-          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-end">
+          <div className="flex items-end gap-2 sm:gap-3">
             <Textarea
               value={input}
               onChange={(event) => setInput(event.target.value)}
@@ -293,19 +299,19 @@ export default function AiAssistantLauncher() {
               }}
               placeholder="Ask about a movie, genre, actor, or mood..."
               rows={2}
-              className="min-h-11 resize-none border-white/12 bg-[#10161f] text-sm leading-6 text-white placeholder:text-white/35"
+              className="min-h-11 flex-1 resize-none border-white/12 bg-[#10161f] text-sm leading-6 text-white placeholder:text-white/35"
             />
             <Button
               type="submit"
               disabled={loading || !input.trim()}
-              className="h-11 w-full bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))] text-slate-950 hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))]/60 cursor-pointer sm:w-auto sm:min-w-28"
+              className="h-11 w-11 shrink-0 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))] px-0 text-slate-950 hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))]/60 cursor-pointer sm:w-auto sm:min-w-28 sm:px-4"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              Send
+              <span className="hidden sm:inline">Send</span>
             </Button>
           </div>
           <p className="mt-2 text-xs text-white/45">

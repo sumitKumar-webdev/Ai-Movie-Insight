@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import AuthBootstrap from "@/app/components/auth/auth-bootstrap";
-import ClientLayout from "@/app/components/client-layout";
+import ClientLayout from "@/app/client-layout";
 import RouteProgressBar from "@/app/components/ui/route-progress";
 import { Toaster } from "@/app/components/ui/toaster";
 

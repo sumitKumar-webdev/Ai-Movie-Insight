@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Film, LogOut, Search, UserCircle2 } from "lucide-react";
 import { logoutUser, useAuthStore } from "@/app/store/auth-store";
@@ -23,6 +23,7 @@ import { startRouteProgress } from "@/app/components/ui/route-progress";
 
 export default function AppHeader() {
   const router = useRouter();
+  const pathname = usePathname();
   const [loggingOut, setLoggingOut] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -30,6 +31,7 @@ export default function AppHeader() {
   const [results, setResults] = useState<MovieSearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const authStatus = useAuthStore((auth) => auth.status);
   const user = useAuthStore((auth) => auth.user);
 
@@ -37,6 +39,7 @@ export default function AppHeader() {
   const normalizedQuery = useMemo(() => query.trim(), [query]);
   const debouncedQuery = useDebounce(normalizedQuery, 250);
   const shouldShowSuggestions = isFocused && normalizedQuery.length >= 2;
+  const isDetailPage = pathname?.startsWith("/content/");
 
   useEffect(() => {
     if (!debouncedQuery && debouncedQuery.length >= 2) {
@@ -56,6 +59,12 @@ export default function AppHeader() {
     fetchResults();
   }, [debouncedQuery]);
 
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [mobileSearchOpen]);
+
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
@@ -74,6 +83,7 @@ export default function AppHeader() {
   const navigateToMovie = (imdbId: string) => {
     if (!imdbId) return;
     setIsFocused(false);
+    setMobileSearchOpen(false);
     setQuery("");
     setResults([]);
     startRouteProgress();
@@ -82,11 +92,19 @@ export default function AppHeader() {
 
   return (
     <>
-      <header className="relative z-100 bg-black backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+      <header className="top-0 z-[220] bg-black backdrop-blur-xl">
+        <div
+          className={`mx-auto flex max-w-7xl gap-3 px-4 py-3 sm:px-6 ${
+            isDetailPage
+              ? "items-center justify-end"
+              : "flex-col lg:flex-row lg:items-center lg:justify-between"
+          }`}
+        >
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-md px-2 py-1 text-white/90 transition hover:text-white"
+            className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-white/90 transition hover:text-white ${
+              isDetailPage ? "hidden sm:inline-flex" : ""
+            }`}
           >
             <Film className="h-5 w-5" />
             <span className="text-sm font-semibold tracking-wide sm:text-base">
@@ -94,10 +112,12 @@ export default function AppHeader() {
             </span>
           </Link>
 
-          <div className="flex items-start gap-3 lg:items-center">
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-3 lg:flex-none">
             <div
               ref={containerRef}
-              className="relative min-w-0 flex-1 lg:w-104 lg:flex-none"
+              className={`relative min-w-0 flex-1 ${
+                isDetailPage ? "max-w-none" : "lg:w-104 lg:flex-none"
+              } hidden sm:block`}
             >
               <div
                 className="flex h-11 cursor-text items-center rounded-full border border-white/12 bg-white/6 pl-3 pr-2"
@@ -132,7 +152,7 @@ export default function AppHeader() {
 
               {shouldShowSuggestions ? (
                 <div
-                  className="absolute left-0 right-0 top-[calc(100%+0.55rem)] max-h-80 overflow-y-auto border border-white/10 bg-zinc-950/98 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl home-search-scroll"
+                  className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-[230] max-h-80 overflow-y-auto border border-white/10 bg-zinc-950/98 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl home-search-scroll"
                   onMouseDown={(event) => event.preventDefault()}
                 >
                   {loading || debouncedQuery !== normalizedQuery ? (
@@ -164,6 +184,18 @@ export default function AppHeader() {
                 </div>
               ) : null}
             </div>
+
+            <button
+              type="button"
+              aria-label="Open search"
+              onClick={() => {
+                setMobileSearchOpen((open) => !open);
+                setIsFocused(true);
+              }}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 sm:hidden"
+            >
+              <Search className="h-5 w-5" />
+            </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -202,6 +234,86 @@ export default function AppHeader() {
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+        </div>
+
+        <div
+          className={`overflow-hidden border-white/8 px-4 transition-all duration-300 ease-out sm:hidden ${
+            mobileSearchOpen
+              ? "max-h-[26rem] overflow-visible border-t pb-3 opacity-100"
+              : "max-h-0 border-t-0 pb-0 opacity-0"
+          }`}
+        >
+          <div
+            ref={containerRef}
+            className={`relative mx-auto max-w-7xl pt-3 transition-transform duration-300 ease-out ${
+              mobileSearchOpen ? "translate-y-0" : "-translate-y-3"
+            }`}
+          >
+              <div
+                className="flex h-11 cursor-text items-center rounded-full border border-white/12 bg-white/6 pl-3 pr-2"
+                onClick={() => inputRef.current?.focus()}
+              >
+                <Search className="h-4 w-4 shrink-0 text-white/45" />
+                <div className="relative flex-1">
+                  <Input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => {
+                      requestAnimationFrame(() => {
+                        setIsFocused(
+                          containerRef.current?.contains(
+                            document.activeElement,
+                          ) ?? false,
+                        );
+                      });
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && results[0]?.imdbId) {
+                        navigateToMovie(results[0].imdbId);
+                      }
+                    }}
+                    placeholder="Search movies..."
+                    className="h-full border-0 bg-transparent px-3 text-sm text-white shadow-none placeholder:text-white/35 focus-visible:ring-0"
+                  />
+                </div>
+              </div>
+
+              {shouldShowSuggestions ? (
+                <div
+                  className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-230 max-h-80 overflow-y-auto border border-white/10 bg-zinc-950/98 p-2 shadow-[0_24px_80px_rgba(0,0,0,0.55)] backdrop-blur-xl home-search-scroll"
+                  onMouseDown={(event) => event.preventDefault()}
+                >
+                  {loading || debouncedQuery !== normalizedQuery ? (
+                    <div className="space-y-2">
+                      {[1, 2, 3, 4, 5].map((item) => (
+                        <MovieResultCardSkeleton key={item} />
+                      ))}
+                    </div>
+                  ) : results.length > 0 ? (
+                    <div className="space-y-2">
+                      {results.map((movie) => (
+                        <MovieResultCard
+                          key={movie.imdbId}
+                          imdbId={movie.imdbId}
+                          title={movie.title}
+                          releaseYear={movie.year}
+                          posterUrl={movie.poster}
+                          titleType={movie.type}
+                          className="bg-white/5 hover:bg-white/10"
+                          onClick={() => navigateToMovie(movie.imdbId)}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-3 py-4 text-sm text-white/55">
+                      No matching movie found.
+                    </p>
+                  )}
+                </div>
+              ) : null}
           </div>
         </div>
       </header>

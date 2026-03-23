@@ -45,28 +45,17 @@ export default function Home() {
       setLoading(false);
       return;
     }
-
-    let cancelled = false;
-
     const fetchMovies = async () => {
       try {
         setLoading(true);
         const response = await searchMovies(debouncedQuery);
-        if (!cancelled) {
-          setResults(response);
-        }
+        setResults(response);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     };
 
-    void fetchMovies();
-
-    return () => {
-      cancelled = true;
-    };
+    fetchMovies();
   }, [debouncedQuery]);
 
   const navigateToMovie = (imdbId: string) => {
@@ -124,7 +113,9 @@ export default function Home() {
             {normalizedQuery && (
               <div className="home-search-scroll mt-4 max-h-72 space-y-2 overflow-y-auto pb-3 pr-1">
                 {loading || debouncedQuery !== normalizedQuery ? (
-                  [1, 2, 3].map((item) => <MovieResultCardSkeleton key={item} />)
+                  [1, 2, 3].map((item) => (
+                    <MovieResultCardSkeleton key={item} />
+                  ))
                 ) : results.length > 0 ? (
                   results.map((movie) => (
                     <MovieResultCard
@@ -139,8 +130,10 @@ export default function Home() {
                     />
                   ))
                 ) : (
-                  <p className="text-sm text-white/65">No matching movie found.</p>
-                )}
+                  <p className="text-sm text-white/65">
+                    No matching movie found.
+                    </p>
+                  )}
               </div>
             )}
           </div>

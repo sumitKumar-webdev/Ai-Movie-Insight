@@ -11,10 +11,10 @@ export const CreditCard = ({ person }: { person: PersonCredit }) => {
           alt={person.name}
           width={88}
           height={88}
-          className="mx-auto h-22 w-22 rounded-full object-cover"
+          className="mx-auto h-18 w-18 md:h-22 md:w-22 rounded-full object-cover"
         />
       ) : (
-        <div className="mx-auto flex h-22 w-22 items-center justify-center rounded-full bg-white/10 text-xl text-white/70">
+        <div className="mx-auto flex h-18 w-18 md:h-22 md:w-22 items-center justify-center rounded-full bg-white/10 text-xl text-white/70">
           {getInitials(person.name)}
         </div>
       )}

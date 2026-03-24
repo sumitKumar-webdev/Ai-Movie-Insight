@@ -29,6 +29,23 @@ import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "movie_ai_assistant_session";
 
+function renderMessageContent(content: string) {
+  const parts = content.split(/(\*[^*\n]+\*)/g);
+
+  return parts.map((part, index) => {
+    const isEmphasis = /^\*[^*\n]+\*$/.test(part);
+    if (!isEmphasis) {
+      return <span key={`${index}-${part}`}>{part}</span>;
+    }
+
+    return (
+      <strong key={`${index}-${part}`} className="font-bold text-white">
+        {part.slice(1, -1)}
+      </strong>
+    );
+  });
+}
+
 export default function AiAssistantLauncher() {
   const router = useRouter();
   const pathname = usePathname();
@@ -233,7 +250,9 @@ export default function AiAssistantLauncher() {
                   : "border border-white/10 bg-[linear-gradient(180deg,rgba(15,22,34,0.96),rgba(9,14,24,0.98))] text-white/88",
               )}
             >
-              <p className="text-xs sm:text-sm md:text-base">{message.content}</p>
+              <p className="text-xs sm:text-sm md:text-base">
+                {isUser ? message.content : renderMessageContent(message.content)}
+              </p>
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { fetchImdbTitleById, fetchImdbTitleReleaseDates, fetchImdbTitleVideos, searchMoviesByQuery } from "../lib/movie.js";
-import { chatWithMovieAssistant, generateRecommendationTitles, summarizeWithOpenAI } from "../lib/openai.js";
+import { chatWithMovieAssistant, summarizeWithOpenAI } from "../lib/openai.js";
 import Review from "../models/Review.js";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
@@ -16,6 +16,28 @@ function normalizeSuggestionQuery(value) {
     .replace(/[":]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function extractMentionedTitles(reply) {
+  const text = String(reply ?? "").trim();
+  if (!text) return [];
+
+  const matches = [];
+  const patterns = [
+    /"([^"\n]{2,80})"/g,
+    /\*([^*\n]{2,80})\*/g,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of text.matchAll(pattern)) {
+      const title = normalizeSuggestionQuery(match[1]);
+      if (title) {
+        matches.push(title);
+      }
+    }
+  }
+
+  return Array.from(new Set(matches)).slice(0, 3);
 }
 
 async function collectSuggestionResults(queries) {
@@ -35,15 +57,20 @@ async function collectSuggestionResults(queries) {
     );
 
     for (const candidate of candidates) {
-      const results = await searchMoviesByQuery(candidate, { limit: 5 });
-      for (const result of results) {
-        if (!result?.imdbId || seenIds.has(result.imdbId)) continue;
-        seenIds.add(result.imdbId);
-        suggestionResults.push(result);
-        if (suggestionResults.length >= 3) {
-          return suggestionResults;
-        }
+      const results = await searchMoviesByQuery(candidate, { limit: 1 });
+      const bestResult = results.find(
+        (result) => result?.imdbId && !seenIds.has(result.imdbId),
+      );
+
+      if (bestResult) {
+        seenIds.add(bestResult.imdbId);
+        suggestionResults.push(bestResult);
+        break;
       }
+    }
+
+    if (suggestionResults.length >= 3) {
+      return suggestionResults;
     }
   }
 
@@ -319,10 +346,6 @@ export async function chatMovieAssistant(request, response) {
       return response.status(400).json({ error: "At least one message is required" });
     }
 
-    const latestUserMessage = [...sanitizedMessages]
-      .reverse()
-      .find((message) => message.role === "user");
-
     let aiResult = null;
     let aiErrorMessage = "";
 
@@ -335,20 +358,9 @@ export async function chatMovieAssistant(request, response) {
     }
     let suggestionQueries = aiResult?.suggestions?.length
       ? aiResult.suggestions
-      : [];
+      : extractMentionedTitles(aiResult?.reply);
 
     let suggestionResults = await collectSuggestionResults(suggestionQueries);
-
-    if (!suggestionResults.length && latestUserMessage?.content) {
-      const fallbackSuggestions = await generateRecommendationTitles(latestUserMessage.content).catch(
-        () => [],
-      );
-
-      if (fallbackSuggestions.length) {
-        suggestionQueries = fallbackSuggestions;
-        suggestionResults = await collectSuggestionResults(suggestionQueries);
-      }
-    }
 
     return response.status(200).json({
       data: {

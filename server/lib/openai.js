@@ -93,8 +93,8 @@ export async function summarizeWithOpenAI(movieTitle, input, mode) {
   const rawSentiment = String(parsed?.sentiment ?? "");
   const sentiment =
     rawSentiment === "Positive" ||
-      rawSentiment === "Mixed" ||
-      rawSentiment === "Negative"
+    rawSentiment === "Mixed" ||
+    rawSentiment === "Negative"
       ? rawSentiment
       : undefined;
 
@@ -111,9 +111,38 @@ export async function chatWithMovieAssistant(history) {
   }
 
   const parsed = await generateGeminiJson({
-    temperature: 0.7,
-    systemInstruction:
-      'You are a movie expert who talks like a close friend. Respond with JSON only using exactly these keys: reply and suggestions. reply should use simple English, feel warm and natural, and sound like a friend talking, not a corporate assistant. You can lightly mix in easy Hindi in Roman script (Hinglish) when it feels natural, but keep it minimal and easy to understand. When useful, mention small movie details like vibe, genre, mood, performances, or why someone may like it. Keep reply under 70 words. suggestions must be an array of real movie or TV title strings with at most 3 items. When the user asks for recommendations by genre, mood, actor, director, story type, or asks for something similar, include 2 or 3 concrete titles in suggestions. Only return an empty suggestions array for purely factual questions where recommendations would not help. Use title names only in suggestions, without years, numbering, or extra commentary.',
+    temperature: 0.5,
+    systemInstruction: `You are a movie expert who talks like a close friend.
+
+Respond ONLY in valid JSON with exactly these keys:
+- reply (string)
+- suggestions (array of strings)
+
+STRICT RULES:
+1. suggestions must contain only titles that are explicitly recommended or mentioned in reply.
+2. If reply mentions 1 title, suggestions must contain exactly that 1 title.
+3. If reply mentions 2 or 3 titles, suggestions must contain exactly those same titles in the same order.
+4. Never include any title in suggestions that does not appear in reply.
+5. Do not replace a title with sequels, trilogy entries, franchise relatives, or similar titles.
+6. Example: if reply mentions "The Dark Knight", suggestions must not become "The Dark Knight Rises" unless reply also mentions it.
+7. suggestions can have at most 3 items.
+8. Use title names only in suggestions, with no years and no commentary.
+9. If no title is recommended in reply, return suggestions as [].
+10. Keep reply under 70 words, friendly, simple, and natural. Light Hinglish is okay.
+
+VALID EXAMPLE:
+{
+  "reply": "You should watch The Dark Knight, Sicario, and The Departed. All three have intense crime drama and strong tension.",
+  "suggestions": ["The Dark Knight", "Sicario", "The Departed"]
+}
+
+INVALID EXAMPLE:
+{
+  "reply": "You should watch The Dark Knight, Sicario, and The Departed.",
+  "suggestions": ["The Dark Knight", "The Dark Knight Rises", "Batman Begins"]
+}
+
+Return JSON only.`,
     conversation: history
       .map((message) => ({
         role: message.role === "assistant" ? "assistant" : "user",
@@ -125,43 +154,17 @@ export async function chatWithMovieAssistant(history) {
   const reply = String(parsed?.reply ?? "").trim();
   const suggestions = Array.isArray(parsed?.suggestions)
     ? parsed.suggestions
-      .map((item) => String(item ?? "").trim())
-      .filter(Boolean)
-      .slice(0, 3)
+        .map((item) => String(item ?? "").trim())
+        .filter(Boolean)
+        .slice(0, 3)
     : [];
 
   if (!reply) {
     return null;
   }
-
+  
   return {
     reply,
     suggestions,
   };
-}
-
-export async function generateRecommendationTitles(prompt) {
-  const normalizedPrompt = String(prompt ?? "").trim();
-  if (!normalizedPrompt) {
-    return [];
-  }
-
-  const parsed = await generateGeminiJson({
-    temperature: 0.6,
-    systemInstruction:
-      'Respond with JSON only using exactly this key: suggestions. suggestions must be an array of 3 real movie or TV title strings that best match the user request. Prefer well-known titles that are likely searchable. Use title names only, with no years and no commentary.',
-    conversation: [
-      {
-        role: "user",
-        content: normalizedPrompt,
-      },
-    ],
-  });
-
-  return Array.isArray(parsed?.suggestions)
-    ? parsed.suggestions
-      .map((item) => String(item ?? "").trim())
-      .filter(Boolean)
-      .slice(0, 3)
-    : [];
 }

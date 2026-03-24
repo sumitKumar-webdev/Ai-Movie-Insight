@@ -6,6 +6,7 @@ import User from "../models/User.js";
 import {
   ACCESS_COOKIE_NAME,
   REFRESH_COOKIE_NAME,
+  genJti,
   getAccessCookieOptions,
   getAccessToken,
   getRefreshCookieOptions,
@@ -92,14 +93,16 @@ async function generateUniqueUsername(seedValue) {
   }
 }
 
-function setAuthCookies(res, user) {
-  const payload = {
-    userId: String(user._id),
-    email: user.email,
+function buildAuthSession(user) {
+  const jti = genJti();
+  return {
+    user: sanitizeUser(user),
+    accessToken: signAccessToken({
+      userId: String(user._id),
+      email: user.email,
+    }),
+    refreshToken: signRefreshToken({ userId: String(user._id), jti }),
   };
-
-  res.cookie(ACCESS_COOKIE_NAME, signAccessToken(payload), getAccessCookieOptions());
-  res.cookie(REFRESH_COOKIE_NAME, signRefreshToken(payload), getRefreshCookieOptions());
 }
 
 function clearAuthCookies(res) {
@@ -126,11 +129,7 @@ function buildEmailVerificationRedirectUrl(status, message) {
 
 export const register = async (req, res) => {
   try {
-    const body = req.body ?? {};
-    const name = String(body.name ?? "").trim();
-    const email = String(body.email ?? "").trim().toLowerCase();
-    const username = String(body.username ?? "").trim();
-    const password = typeof body.password === "string" ? body.password : "";
+    const { name, email, username, password } = req.body ?? {}
 
     if (!name) return errorRes(res, 400, "name is required");
     if (!email) return errorRes(res, 400, "email is required");
@@ -145,21 +144,14 @@ export const register = async (req, res) => {
       );
     }
 
-    if (password.length < 6) {
-      return errorRes(res, 400, "Password must be at least 6 characters long");
-    }
+    if (password.length < 6) return errorRes(res, 400, "Password must be at least 6 characters long");
 
     const existingUser = await User.findOne({
       $or: [{ email }, { username }],
     }).lean();
 
-    if (existingUser?.email === email) {
-      return errorRes(res, 409, "An account with this email already exists");
-    }
-
-    if (existingUser?.username === username) {
-      return errorRes(res, 409, "This username is already taken");
-    }
+    if (existingUser?.email === email) return errorRes(res, 409, "An account with this email already exists");
+    if (existingUser?.username === username) return errorRes(res, 409, "This username is already taken");
 
     const passwordHash = await bcrypt.hash(password, 10);
     const verification = buildTokenWithExpiry(24);
@@ -196,9 +188,7 @@ export const register = async (req, res) => {
     } finally {
       await session.endSession();
     }
-
     await sendWelcomeEmail(user.email, user.name);
-
     return successRes(res, 201, "Verification email sent", {
       user: sanitizeUser(user),
       requiresVerification: true,
@@ -250,10 +240,12 @@ export const login = async (req, res) => {
       return errorRes(res, 401, "Invalid username/email or password");
     }
 
-    setAuthCookies(res, user);
+    const session = buildAuthSession(user);
+    res.cookie(ACCESS_COOKIE_NAME, session.accessToken, getAccessCookieOptions());
+    res.cookie(REFRESH_COOKIE_NAME, session.refreshToken, getRefreshCookieOptions());
 
     return successRes(res, 200, "Login successful", {
-      user: sanitizeUser(user),
+      ...session,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to login";
@@ -342,10 +334,12 @@ export const googleAuth = async (req, res) => {
       await user.save();
     }
 
-    setAuthCookies(res, user);
+    const session = buildAuthSession(user);
+    res.cookie(ACCESS_COOKIE_NAME, session.accessToken, getAccessCookieOptions());
+    res.cookie(REFRESH_COOKIE_NAME, session.refreshToken, getRefreshCookieOptions());
 
     return successRes(res, 200, "Google authentication successful", {
-      user: sanitizeUser(user),
+      ...session,
     });
   } catch (error) {
     const message =
@@ -601,7 +595,9 @@ export const resetPassword = async (req, res) => {
 
 export const refreshSession = async (req, res) => {
   try {
-    const token = getRefreshToken(req);
+    const token =
+      getRefreshToken(req) ||
+      (typeof req.body?.refreshToken === "string" ? req.body.refreshToken.trim() : "");
     if (!token) {
       return errorRes(res, 401, "Unauthorized");
     }
@@ -618,10 +614,12 @@ export const refreshSession = async (req, res) => {
       return errorRes(res, 401, "User not found");
     }
 
-    setAuthCookies(res, user);
+    const session = buildAuthSession(user);
+    res.cookie(ACCESS_COOKIE_NAME, session.accessToken, getAccessCookieOptions());
+    res.cookie(REFRESH_COOKIE_NAME, session.refreshToken, getRefreshCookieOptions());
 
     return successRes(res, 200, "Session refreshed", {
-      user: sanitizeUser(user),
+      ...session,
     });
   } catch (error) {
     const message =

@@ -11,7 +11,7 @@ import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/Hooks/use-toast";
-import { fetchCurrentUser } from "@/app/store/auth-store";
+import { fetchCurrentUser } from "@/app/store/store";
 import { login, resendVerificationEmail } from "@/app/services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { brand } from "@/app/config/brand";

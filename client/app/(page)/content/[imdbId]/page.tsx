@@ -20,7 +20,7 @@ import {
   fetchCurrentUser,
   getAuthStoreState,
   useAuthStore,
-} from "@/app/store/auth-store";
+} from "@/app/store/store";
 import { setRouteProgressLoading } from "@/app/components/ui/route-progress";
 import InfoSection from "./components/info-section";
 import AIInsightCard from "./components/ai-insight-card";

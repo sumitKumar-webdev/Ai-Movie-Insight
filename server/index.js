@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes.js";
 import movieRoutes from "./routes/movie.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import { connectToDatabase } from "./lib/db.js";
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const port = Number(process.env.PORT || 5000);
@@ -16,13 +17,9 @@ app.use(
     credentials: true,
   }),
 );
+app.use(cookieParser());
 app.use(express.json());
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));
-
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
-});
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/movies", movieRoutes);

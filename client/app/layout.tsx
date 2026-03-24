@@ -7,6 +7,7 @@ import ClientLayout from "@/app/client-layout";
 import RouteProgressBar from "@/app/components/ui/route-progress";
 import { Toaster } from "@/app/components/ui/toaster";
 import { brand } from "@/app/config/brand";
+import StoreProvider from "@/app/store/store-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -74,12 +75,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AuthBootstrap />
-        <Suspense fallback={null}>
-          <RouteProgressBar />
-        </Suspense>
-        <ClientLayout>{children}</ClientLayout>
-        <Toaster />
+        <StoreProvider>
+          <AuthBootstrap />
+          <Suspense fallback={null}>
+            <RouteProgressBar />
+          </Suspense>
+          <ClientLayout>{children}</ClientLayout>
+          <Toaster />
+        </StoreProvider>
       </body>
     </html>
   );

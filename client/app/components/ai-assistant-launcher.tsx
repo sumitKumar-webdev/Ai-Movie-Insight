@@ -23,7 +23,7 @@ import {
   fetchCurrentUser,
   getAuthStoreState,
   useAuthStore,
-} from "@/app/store/auth-store";
+} from "@/app/store/store";
 import { brand } from "@/app/config/brand";
 import { cn } from "@/lib/utils";
 
@@ -111,13 +111,11 @@ export default function AiAssistantLauncher() {
     if (!(await ensureAuthenticated())) {
       return;
     }
-
     setOpen(true);
   };
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!(await ensureAuthenticated())) return;
     const content = input.trim();
     if (!content || loading) return;
     const userMessage: AssistantMessage = {
@@ -273,17 +271,17 @@ export default function AiAssistantLauncher() {
         <button
           type="button"
           onClick={() => {
-            void openAssistant();
+             openAssistant();
           }}
-          className="fixed right-4 bottom-4 z-100 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-1 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#111722] sm:right-6 sm:bottom-6 sm:gap-3"
+          className="fixed overflow-hidden right-4 bottom-4 z-100 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-2 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#0c1017] sm:right-6 sm:bottom-6 sm:gap-1"
           aria-label="Open AI assistant"
         >
           <AiAvatar />
           <span className="hidden flex-col leading-tight min-[420px]:flex">
-            <span className="text-brand-primary-muted text-[10px] font-medium tracking-[0.24em] uppercase">
+            <span className="text-brand-primary-muted text-[9px] font-medium tracking-[0.24em] uppercase">
               {brand.assistantEyebrow}
             </span>
-            <span className="text-sm font-semibold text-white">{brand.assistantTitle}</span>
+            <span className="text-[13px] font-semibold text-white">{brand.assistantTitle}</span>
           </span>
         </button>
 

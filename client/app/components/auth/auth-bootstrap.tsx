@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { fetchCurrentUser } from "@/app/store/auth-store";
+import { fetchCurrentUser } from "@/app/store/store";
 
 export default function AuthBootstrap() {
   useEffect(() => {
-    void fetchCurrentUser();
+    fetchCurrentUser();
   }, []);
 
   return null;

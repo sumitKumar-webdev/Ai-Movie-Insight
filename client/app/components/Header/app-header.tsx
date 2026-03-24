@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LogOut, Search, UserCircle2, X } from "lucide-react";
 import BrandWordmark from "@/app/components/brand/wordmark";
-import { logoutUser, useAuthStore } from "@/app/store/auth-store";
+import { logoutUser, useAuthStore } from "@/app/store/store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +21,6 @@ import useDebounce from "@/app/Hooks/use-debounce";
 import { searchMovies } from "@/app/services/movie.service";
 import { MovieSearchItem } from "@/app/modal/service.modal";
 import { startRouteProgress } from "@/app/components/ui/route-progress";
-import { brand } from "@/app/config/brand";
 
 type SearchSuggestionsProps = {
   loading: boolean;

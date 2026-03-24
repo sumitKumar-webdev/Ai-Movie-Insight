@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
 
 export const ACCESS_COOKIE_NAME = "movie_insight_access";
 export const REFRESH_COOKIE_NAME = "movie_insight_refresh";
@@ -21,6 +22,10 @@ export function signRefreshToken(payload) {
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
     expiresIn: "30d",
   });
+}
+
+export function genJti() {
+  return crypto.randomUUID();
 }
 
 export function getAccessCookieOptions() {

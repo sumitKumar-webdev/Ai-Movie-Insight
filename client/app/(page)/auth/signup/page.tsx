@@ -12,7 +12,7 @@ import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { buildApiUrl } from "@/app/services/api-client";
-import { fetchCurrentUser } from "@/app/store/auth-store";
+import { fetchCurrentUser } from "@/app/store/store";
 import { brand } from "@/app/config/brand";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;

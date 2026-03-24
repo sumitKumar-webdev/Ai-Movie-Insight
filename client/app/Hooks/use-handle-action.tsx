@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { logoutUser } from "@/app/store/auth-store";
+import { logoutUser } from "@/app/store/store";
 
 export type ActionUse =
   | "edit"

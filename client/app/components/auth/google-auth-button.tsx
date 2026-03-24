@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/app/services/api-client";
-import { fetchCurrentUser } from "@/app/store/auth-store";
+import { fetchCurrentUser } from "@/app/store/store";
 
 declare global {
   interface Window {

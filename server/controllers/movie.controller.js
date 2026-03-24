@@ -1,11 +1,53 @@
 import { fetchImdbTitleById, fetchImdbTitleReleaseDates, fetchImdbTitleVideos, searchMoviesByQuery } from "../lib/movie.js";
-import { chatWithMovieAssistant, summarizeWithOpenAI } from "../lib/openai.js";
+import { chatWithMovieAssistant, generateRecommendationTitles, summarizeWithOpenAI } from "../lib/openai.js";
 import Review from "../models/Review.js";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function normalizeSuggestionQuery(value) {
+  return String(value ?? "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/\b\d{4}\b/g, " ")
+    .replace(/[":]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function collectSuggestionResults(queries) {
+  const suggestionResults = [];
+  const seenIds = new Set();
+
+  for (const rawQuery of queries) {
+    const query = normalizeSuggestionQuery(rawQuery);
+    if (!query) continue;
+
+    const candidates = Array.from(
+      new Set([
+        query,
+        query.split("-")[0]?.trim() || "",
+        query.split(",")[0]?.trim() || "",
+      ].filter(Boolean)),
+    );
+
+    for (const candidate of candidates) {
+      const results = await searchMoviesByQuery(candidate, { limit: 5 });
+      for (const result of results) {
+        if (!result?.imdbId || seenIds.has(result.imdbId)) continue;
+        seenIds.add(result.imdbId);
+        suggestionResults.push(result);
+        if (suggestionResults.length >= 3) {
+          return suggestionResults;
+        }
+      }
+    }
+  }
+
+  return suggestionResults;
 }
 
 function formatRuntime(runtimeSeconds) {
@@ -291,32 +333,28 @@ export async function chatMovieAssistant(request, response) {
         error instanceof Error ? error.message : "Failed to chat with movie assistant";
       console.error("[movie:assistant]", aiErrorMessage);
     }
-    const suggestionQueries =
-      aiResult?.suggestions?.length
-        ? aiResult.suggestions
-        : latestUserMessage?.content
-          ? [latestUserMessage.content]
-          : [];
+    let suggestionQueries = aiResult?.suggestions?.length
+      ? aiResult.suggestions
+      : [];
 
-    const suggestionResults = [];
-    const seenIds = new Set();
+    let suggestionResults = await collectSuggestionResults(suggestionQueries);
 
-    for (const query of suggestionQueries) {
-      const results = await searchMoviesByQuery(query, { limit: 5 });
-      for (const result of results) {
-        if (!result?.imdbId || seenIds.has(result.imdbId)) continue;
-        seenIds.add(result.imdbId);
-        suggestionResults.push(result);
-        if (suggestionResults.length >= 3) break;
+    if (!suggestionResults.length && latestUserMessage?.content) {
+      const fallbackSuggestions = await generateRecommendationTitles(latestUserMessage.content).catch(
+        () => [],
+      );
+
+      if (fallbackSuggestions.length) {
+        suggestionQueries = fallbackSuggestions;
+        suggestionResults = await collectSuggestionResults(suggestionQueries);
       }
-      if (suggestionResults.length >= 3) break;
     }
 
     return response.status(200).json({
       data: {
         reply: aiResult?.reply ||
           (suggestionResults.length > 0
-            ? "Admin ka ghee khatam h aap ye dekh lo"
+            ? "Here are a few picks you might enjoy."
             : aiErrorMessage || "Failed, please try again."),
         suggestions: suggestionResults,
       },

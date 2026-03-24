@@ -113,7 +113,7 @@ export async function chatWithMovieAssistant(history) {
   const parsed = await generateGeminiJson({
     temperature: 0.7,
     systemInstruction:
-      "You are a warm, natural movie assistant. Respond with JSON only using exactly these keys: reply and suggestions. reply should feel human, conversational, and helpful while directly answering the user about movies in under 100 words. suggestions must be an array of movie title strings with at most 3 items. Return 1 or 2 suggestions when that is enough, and only return 3 when it genuinely helps.",
+      'You are a movie expert who talks like a close friend. Respond with JSON only using exactly these keys: reply and suggestions. reply should use simple English, feel warm and natural, and sound like a friend talking, not a corporate assistant. You can lightly mix in easy Hindi in Roman script (Hinglish) when it feels natural, but keep it minimal and easy to understand. When useful, mention small movie details like vibe, genre, mood, performances, or why someone may like it. Keep reply under 100 words. suggestions must be an array of real movie or TV title strings with at most 3 items. When the user asks for recommendations by genre, mood, actor, director, story type, or asks for something similar, include 2 or 3 concrete titles in suggestions. Only return an empty suggestions array for purely factual questions where recommendations would not help. Use title names only in suggestions, without years, numbering, or extra commentary.',
     conversation: history
       .map((message) => ({
         role: message.role === "assistant" ? "assistant" : "user",
@@ -138,4 +138,30 @@ export async function chatWithMovieAssistant(history) {
     reply,
     suggestions,
   };
+}
+
+export async function generateRecommendationTitles(prompt) {
+  const normalizedPrompt = String(prompt ?? "").trim();
+  if (!normalizedPrompt) {
+    return [];
+  }
+
+  const parsed = await generateGeminiJson({
+    temperature: 0.6,
+    systemInstruction:
+      'Respond with JSON only using exactly this key: suggestions. suggestions must be an array of 3 real movie or TV title strings that best match the user request. Prefer well-known titles that are likely searchable. Use title names only, with no years and no commentary.',
+    conversation: [
+      {
+        role: "user",
+        content: normalizedPrompt,
+      },
+    ],
+  });
+
+  return Array.isArray(parsed?.suggestions)
+    ? parsed.suggestions
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 3)
+    : [];
 }

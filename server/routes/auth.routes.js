@@ -6,6 +6,7 @@ import {
   googleAuth,
   login,
   logout,
+  refreshSession,
   register,
   resendVerificationEmail,
   resetPassword,
@@ -16,6 +17,7 @@ const router = Router();
 
 router.post("/login", login);
 router.post("/logout", logout);
+router.post("/refresh", refreshSession);
 router.post("/register", register);
 router.post("/resend-verification", resendVerificationEmail);
 router.post("/google", googleAuth);

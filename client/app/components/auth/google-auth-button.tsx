@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { buildApiUrl } from "@/app/services/api-client";
+import { apiFetch } from "@/app/services/api-client";
 import { AuthUser, setAuthenticatedUser } from "@/app/store/auth-store";
 
 declare global {
@@ -68,10 +68,9 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
             setLoading(true);
             onError("");
 
-            const response = await fetch(buildApiUrl("/api/auth/google"), {
+            const response = await apiFetch("/api/auth/google", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              credentials: "include",
               body: JSON.stringify({ idToken: credential }),
             });
             const payload = (await response.json()) as {

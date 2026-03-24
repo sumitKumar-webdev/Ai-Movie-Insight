@@ -8,7 +8,7 @@ import {
   RepliesPayload,
   Review,
 } from "../modal/service.modal";
-import { buildApiUrl } from "./api-client";
+import { authenticatedFetch, buildApiUrl } from "./api-client";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
 
@@ -91,8 +91,7 @@ export async function getMovieReviews(imdbId: string): Promise<Review[]> {
 export async function getReviewReplies(
   reviewId: string,
 ): Promise<{ ok: boolean; status: number; message?: string; data?: RepliesPayload }> {
-  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies`), {
-    credentials: "include",
+  const response = await authenticatedFetch(`/api/reviews/${reviewId}/replies`, {
     cache: "no-store",
   });
 
@@ -110,9 +109,8 @@ export async function addReviewReply(
   reviewId: string,
   message: string,
 ): Promise<{ ok: boolean; status: number; message?: string }> {
-  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies`), {
+  const response = await authenticatedFetch(`/api/reviews/${reviewId}/replies`, {
     method: "POST",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -133,9 +131,8 @@ export async function updateReviewReply(
   replyId: string,
   message: string,
 ): Promise<{ ok: boolean; status: number; message?: string }> {
-  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies/${replyId}`), {
+  const response = await authenticatedFetch(`/api/reviews/${reviewId}/replies/${replyId}`, {
     method: "PATCH",
-    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -155,11 +152,10 @@ export async function likeReviewReply(
   reviewId: string,
   replyId: string,
 ): Promise<{ ok: boolean; status: number; message?: string }> {
-  const response = await fetch(
-    buildApiUrl(`/api/reviews/${reviewId}/replies/${replyId}/likes`),
+  const response = await authenticatedFetch(
+    `/api/reviews/${reviewId}/replies/${replyId}/likes`,
     {
       method: "POST",
-      credentials: "include",
     },
   );
 
@@ -176,9 +172,8 @@ export async function deleteReviewReply(
   reviewId: string,
   replyId: string,
 ): Promise<{ ok: boolean; status: number; message?: string }> {
-  const response = await fetch(buildApiUrl(`/api/reviews/${reviewId}/replies/${replyId}`), {
+  const response = await authenticatedFetch(`/api/reviews/${reviewId}/replies/${replyId}`, {
     method: "DELETE",
-    credentials: "include",
   });
 
   const payload = (await response.json()) as ApiResponse;
@@ -193,9 +188,8 @@ export async function deleteReviewReply(
 export async function chatWithAssistant(
   messages: Pick<AssistantMessage, "role" | "content">[],
 ): Promise<{ reply: string; suggestions: AssistantSuggestion[] }> {
-  const response = await fetch(buildApiUrl("/api/movies/assistant"), {
+  const response = await authenticatedFetch("/api/movies/assistant", {
     method: "POST",
-    credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ messages }),
   });

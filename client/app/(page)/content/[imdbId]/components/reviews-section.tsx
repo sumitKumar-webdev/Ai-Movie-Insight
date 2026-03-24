@@ -11,9 +11,8 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { Button } from "@/app/components/ui/button";
 import { Textarea } from "@/app/components/ui/textarea";
 import ReviewRepliesModal from "@/app/components/reviews/review-replies-modal";
-import ReviewThreadItem from "@/app/components/reviews/review-thread-item";
 import DeleteConfirmModal from "@/app/modal/delete-confirm-modal";
-import { buildApiUrl } from "@/app/services/api-client";
+import { authenticatedFetch } from "@/app/services/api-client";
 import { getMovieReviews } from "@/app/services/movie.service";
 import { toast } from "@/app/Hooks/use-toast";
 import { MovieInsight, Review } from "@/app/modal/service.modal";
@@ -162,15 +161,12 @@ export default function ReviewsSection({
 
     try {
       setSubmittingReview(true);
-      const response = await fetch(
-        buildApiUrl(
-          isEditingOwnReview && userReview?._id
-            ? `/api/reviews/${userReview._id}`
-            : "/api/reviews",
-        ),
+      const response = await authenticatedFetch(
+        isEditingOwnReview && userReview?._id
+          ? `/api/reviews/${userReview._id}`
+          : "/api/reviews",
         {
           method: isEditingOwnReview ? "PATCH" : "POST",
-          credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
@@ -225,13 +221,9 @@ export default function ReviewsSection({
 
     try {
       setSubmittingReview(true);
-      const response = await fetch(
-        buildApiUrl(`/api/reviews/${userReview._id}`),
-        {
-          method: "DELETE",
-          credentials: "include",
-        },
-      );
+      const response = await authenticatedFetch(`/api/reviews/${userReview._id}`, {
+        method: "DELETE",
+      });
 
       if (response.status === 401) {
         onUnauthorized();
@@ -268,13 +260,9 @@ export default function ReviewsSection({
       return;
     }
 
-    const response = await fetch(
-      buildApiUrl(`/api/reviews/${reviewId}/likes`),
-      {
-        method: "POST",
-        credentials: "include",
-      },
-    );
+    const response = await authenticatedFetch(`/api/reviews/${reviewId}/likes`, {
+      method: "POST",
+    });
 
     if (response.status === 401) {
       onUnauthorized();

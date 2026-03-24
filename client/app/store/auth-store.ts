@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { buildApiUrl } from "@/app/services/api-client";
+import { apiFetch, authenticatedFetch } from "@/app/services/api-client";
 
 export type AuthUser = {
   id: string;
@@ -83,9 +83,8 @@ export async function fetchCurrentUser(force = false): Promise<AuthUser | null> 
 
   inFlightSessionRequest = (async () => {
     try {
-      const response = await fetch(buildApiUrl("/api/auth/me"), {
+      const response = await authenticatedFetch("/api/auth/me", {
         method: "GET",
-        credentials: "include",
         cache: "no-store",
       });
 
@@ -119,9 +118,8 @@ export async function fetchCurrentUser(force = false): Promise<AuthUser | null> 
 
 export async function logoutUser() {
   try {
-    await fetch(buildApiUrl("/api/auth/logout"), {
+    await apiFetch("/api/auth/logout", {
       method: "POST",
-      credentials: "include",
     });
   } finally {
     clearAuthState();

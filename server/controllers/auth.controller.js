@@ -4,11 +4,16 @@ import mongoose from "mongoose";
 import { OAuth2Client } from "google-auth-library";
 import User from "../models/User.js";
 import {
-  AUTH_COOKIE_NAME,
-  getAuthCookieOptions,
-  getAuthToken,
-  signAuthToken,
-  verifyAuthToken,
+  ACCESS_COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+  getAccessCookieOptions,
+  getAccessToken,
+  getRefreshCookieOptions,
+  getRefreshToken,
+  signAccessToken,
+  signRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
 } from "../lib/auth.js";
 import {
   sendPasswordResetEmail,
@@ -87,13 +92,23 @@ async function generateUniqueUsername(seedValue) {
   }
 }
 
-function setAuthCookie(res, token) {
-  res.cookie(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
+function setAuthCookies(res, user) {
+  const payload = {
+    userId: String(user._id),
+    email: user.email,
+  };
+
+  res.cookie(ACCESS_COOKIE_NAME, signAccessToken(payload), getAccessCookieOptions());
+  res.cookie(REFRESH_COOKIE_NAME, signRefreshToken(payload), getRefreshCookieOptions());
 }
 
-function clearAuthCookie(res) {
-  res.clearCookie(AUTH_COOKIE_NAME, {
-    ...getAuthCookieOptions(),
+function clearAuthCookies(res) {
+  res.clearCookie(ACCESS_COOKIE_NAME, {
+    ...getAccessCookieOptions(),
+    maxAge: undefined,
+  });
+  res.clearCookie(REFRESH_COOKIE_NAME, {
+    ...getRefreshCookieOptions(),
     maxAge: undefined,
   });
 }
@@ -235,11 +250,7 @@ export const login = async (req, res) => {
       return errorRes(res, 401, "Invalid username/email or password");
     }
 
-    const token = signAuthToken({
-      userId: String(user._id),
-      email: user.email,
-    });
-    setAuthCookie(res, token);
+    setAuthCookies(res, user);
 
     return successRes(res, 200, "Login successful", {
       user: sanitizeUser(user),
@@ -331,11 +342,7 @@ export const googleAuth = async (req, res) => {
       await user.save();
     }
 
-    const token = signAuthToken({
-      userId: String(user._id),
-      email: user.email,
-    });
-    setAuthCookie(res, token);
+    setAuthCookies(res, user);
 
     return successRes(res, 200, "Google authentication successful", {
       user: sanitizeUser(user),
@@ -592,28 +599,58 @@ export const resetPassword = async (req, res) => {
   }
 };
 
+export const refreshSession = async (req, res) => {
+  try {
+    const token = getRefreshToken(req);
+    if (!token) {
+      return errorRes(res, 401, "Unauthorized");
+    }
+
+    const payload = verifyRefreshToken(token);
+    if (!payload?.userId) {
+      clearAuthCookies(res);
+      return errorRes(res, 401, "Invalid refresh token");
+    }
+
+    const user = await User.findById(payload.userId);
+    if (!user) {
+      clearAuthCookies(res);
+      return errorRes(res, 401, "User not found");
+    }
+
+    setAuthCookies(res, user);
+
+    return successRes(res, 200, "Session refreshed", {
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to refresh session";
+    return errorRes(res, 500, message);
+  }
+};
+
 export const logout = async (_req, res) => {
-  clearAuthCookie(res);
+  clearAuthCookies(res);
 
   return successRes(res, 200, "Logged out successfully");
 };
 
 export const getCurrentUser = async (req, res) => {
   try {
-    const token = getAuthToken(req);
+    const token = getAccessToken(req);
     if (!token) {
       return errorRes(res, 401, "Unauthorized");
     }
 
-    const payload = verifyAuthToken(token);
+    const payload = verifyAccessToken(token);
     if (!payload?.userId) {
-      clearAuthCookie(res);
       return errorRes(res, 401, "Invalid token");
     }
 
     const user = await User.findById(payload.userId);
     if (!user) {
-      clearAuthCookie(res);
+      clearAuthCookies(res);
       return errorRes(res, 401, "User not found");
     }
 

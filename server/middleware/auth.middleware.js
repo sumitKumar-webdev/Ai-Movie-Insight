@@ -1,13 +1,13 @@
 import User from "../models/User.js";
-import { getAuthToken, verifyAuthToken } from "../lib/auth.js";
+import { getAccessToken, verifyAccessToken } from "../lib/auth.js";
 
 export async function requireAuth(req, res, next) {
-  const token = getAuthToken(req);
+  const token = getAccessToken(req);
   if (!token) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const payload = verifyAuthToken(token);
+  const payload = verifyAccessToken(token);
   if (!payload?.userId) {
     return res.status(401).json({ error: "Invalid token" });
   }

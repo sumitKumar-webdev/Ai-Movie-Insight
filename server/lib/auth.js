@@ -1,33 +1,59 @@
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET;
-export const AUTH_COOKIE_NAME = "movie_insight_auth";
+export const ACCESS_COOKIE_NAME = "movie_insight_access";
+export const REFRESH_COOKIE_NAME = "movie_insight_refresh";
 
-if (!JWT_SECRET) {
-  throw new Error("Missing JWT_SECRET in environment variables");
+if (!process.env.JWT_ACCESS_SECRET) {
+  throw new Error("Missing JWT_ACCESS_SECRET in environment variables");
 }
 
-export function signAuthToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
+if (!process.env.JWT_REFRESH_SECRET) {
+  throw new Error("Missing JWT_REFRESH_SECRET in environment variables");
 }
 
-export function getAuthCookieOptions() {
-  const isProduction = process.env.NODE_ENV === "production";
+export function signAccessToken(payload) {
+  return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
+    expiresIn: "10m",
+  });
+}
 
+export function signRefreshToken(payload) {
+  return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
+    expiresIn: "30d",
+  });
+}
+
+export function getAccessCookieOptions() {
   return {
     httpOnly: true,
-    // Production uses separate frontend/backend origins, so the auth cookie
-    // must be cross-site to survive authenticated API calls from the client app.
-    sameSite: isProduction ? "none" : "lax",
-    secure: isProduction,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 10 * 60 * 1000,
     path: "/",
   };
 }
 
-export function verifyAuthToken(token) {
+export function getRefreshCookieOptions() {
+  return {
+    httpOnly: true,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    path: "/",
+  };
+}
+
+export function verifyAccessToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    return jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+export function verifyRefreshToken(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_REFRESH_SECRET);
   } catch {
     return null;
   }
@@ -43,14 +69,13 @@ export function getBearerToken(request) {
   return token;
 }
 
-export function getCookieToken(request) {
+export function getCookieToken(request, cookieName) {
   const cookieHeader = request.headers.cookie;
   if (!cookieHeader) return null;
 
-  const cookies = cookieHeader.split(";");
-  for (const entry of cookies) {
+  for (const entry of cookieHeader.split(";")) {
     const [rawName, ...rawValueParts] = entry.trim().split("=");
-    if (rawName !== AUTH_COOKIE_NAME) continue;
+    if (rawName !== cookieName) continue;
 
     const rawValue = rawValueParts.join("=");
     if (!rawValue) return null;
@@ -65,6 +90,10 @@ export function getCookieToken(request) {
   return null;
 }
 
-export function getAuthToken(request) {
-  return getCookieToken(request) || getBearerToken(request);
+export function getAccessToken(request) {
+  return getCookieToken(request, ACCESS_COOKIE_NAME) || getBearerToken(request);
+}
+
+export function getRefreshToken(request) {
+  return getCookieToken(request, REFRESH_COOKIE_NAME);
 }

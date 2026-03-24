@@ -1,4 +1,4 @@
-import { buildApiUrl } from "./api-client";
+import { apiFetch } from "./api-client";
 
 type loginProps = {
   identifier: string;
@@ -13,10 +13,9 @@ type signUpProps = {
 };
 
 export const login = async ({ identifier, password }: loginProps) => {
-  const res = await fetch(buildApiUrl("/api/auth/login"), {
+  const res = await apiFetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ identifier: identifier.trim(), password }),
   });
   return await res.json();
@@ -28,10 +27,9 @@ export const signUp = async ({
   email,
   password,
 }: signUpProps) => {
-  const res = await fetch(buildApiUrl("/api/auth/register"), {
+  const res = await apiFetch("/api/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({
       name: name.trim(),
       username: username.trim(),
@@ -43,10 +41,9 @@ export const signUp = async ({
 };
 
 export const resendVerificationEmail = async (email: string) => {
-  const res = await fetch(buildApiUrl("/api/auth/resend-verification"), {
+  const res = await apiFetch("/api/auth/resend-verification", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({
       email: email.trim().toLowerCase(),
     }),
@@ -56,13 +53,10 @@ export const resendVerificationEmail = async (email: string) => {
 };
 
 export const checkUserName = async (username: string) => {
-  const res = await fetch(
-    buildApiUrl(
-      `/api/auth/check-username?username=${encodeURIComponent(username.trim())}`,
-    ),
+  const res = await apiFetch(
+    `/api/auth/check-username?username=${encodeURIComponent(username.trim())}`,
     {
       method: "GET",
-      credentials: "include",
     },
   );
   return await res.json();

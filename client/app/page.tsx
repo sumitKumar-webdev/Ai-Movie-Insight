@@ -1,12 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
+import BrandWordmark from "@/app/components/brand/wordmark";
 import useDebounce from "@/app/Hooks/use-debounce";
 import MovieResultCardSkeleton from "./components/skeleton-loader/movie-result-card-skeleton";
 import { MovieSearchItem } from "./modal/service.modal";
@@ -76,19 +76,16 @@ export default function Home() {
         </div>
         <div className="absolute md:relative md:mx-auto px-2 sm:px-4 md:px-6 w-full md:max-w-2xl lg:ml-auto lg:w-[58%]">
           <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(12,16,24,0.88),rgba(6,8,14,0.96))] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-8">
-            <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/6 px-3 py-2">
-              <Image
-                src={brand.logoSrc}
-                alt={brand.logoAlt}
-                width={24}
-                height={24}
-                className="h-6 w-6 rounded-md"
+            <div className="mb-5">
+              <BrandWordmark
+                titleClassName="text-2xl md:text-4xl leading-none"
+                subtitleClassName="text-[8px] md:text-xs"
               />
-              <p className="text-xs font-medium tracking-[0.24em] text-white/70 uppercase">
-                {brand.homepageEyebrow}
-              </p>
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+            <p className="mb-3 text-xs font-medium tracking-[0.24em] text-white/55 uppercase">
+              {brand.homepageEyebrow}
+            </p>
+            <h1 className="text-xl font-semibold tracking-tight text-white sm:text-3xl">
               {brand.homepageTitle}
             </h1>
             <p className="mt-3 max-w-xl text-sm text-white/70 sm:text-base">
@@ -108,7 +105,7 @@ export default function Home() {
                 className="h-12 border-white/15 bg-black/45 text-white placeholder:text-white/45"
               />
               <Button
-                className="h-12 rounded-xl bg-[linear-gradient(135deg,#f8fafc,#dbeafe)] text-slate-950 shadow-[0_12px_30px_rgba(219,234,254,0.18)] hover:bg-white/90"
+                className="h-12 rounded-xl bg-[linear-gradient(135deg,#f8fafc,#e8eef7)] text-slate-950 shadow-none hover:bg-[#f4f7fb]"
                 onClick={() => {
                   if (results[0]?.imdbId) {
                     navigateToMovie(results[0].imdbId);
@@ -135,7 +132,7 @@ export default function Home() {
                       releaseYear={movie.year}
                       posterUrl={movie.poster}
                       titleType={movie.type}
-                      className="border-white/10 bg-[linear-gradient(180deg,rgba(18,24,34,0.96),rgba(11,15,22,0.98))] hover:bg-[linear-gradient(180deg,rgba(24,31,43,0.98),rgba(14,20,29,0.99))]"
+                      className="border-white/10 bg-[linear-gradient(180deg,rgba(18,24,34,0.96),rgba(11,15,22,0.98))] shadow-none hover:bg-[linear-gradient(180deg,rgba(24,31,43,0.98),rgba(14,20,29,0.99))]"
                       onClick={() => navigateToMovie(movie.imdbId)}
                     />
                   ))

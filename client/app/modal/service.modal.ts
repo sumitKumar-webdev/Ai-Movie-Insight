@@ -26,6 +26,7 @@ export type ReviewReply = {
   username?: string;
   text: string;
   date: string;
+  imageUrl?: string | null;
   likes?: number;
   userId?: string | null;
 };

@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { LogOut, Search, UserCircle2, X } from "lucide-react";
+import BrandWordmark from "@/app/components/brand/wordmark";
 import { logoutUser, useAuthStore } from "@/app/store/auth-store";
 import {
   DropdownMenu,
@@ -239,20 +239,11 @@ export default function AppHeader() {
         >
           <Link
             href="/"
-            className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-white/90 transition hover:text-white ${
+            className={`inline-flex items-center rounded-md px-2 py-1 text-white/90 transition hover:text-white ${
               isDetailPage ? "hidden sm:inline-flex" : ""
             }`}
           >
-            <Image
-              src={brand.logoSrc}
-              alt={brand.logoAlt}
-              width={22}
-              height={22}
-              className="h-7 w-7 rounded-md sm:h-8 sm:w-8 md:h-10 md:w-10"
-            />
-            <span className="text-sm font-semibold tracking-wide sm:text-base">
-              {brand.name}
-            </span>
+            <BrandWordmark compact />
           </Link>
 
           <div className="flex min-w-0 items-center justify-end gap-2 sm:flex-1 sm:gap-3 md:flex-none">

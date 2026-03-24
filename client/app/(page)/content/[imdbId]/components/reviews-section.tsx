@@ -323,7 +323,7 @@ export default function ReviewsSection({
   };
 
   return (
-    <>
+    <section className="-px-4">
       <Card className="border-none bg-white/3 text-white">
         <CardHeader>
           {reviewsLoading ? (
@@ -470,6 +470,6 @@ export default function ReviewsSection({
         onUnauthorized={onUnauthorized}
         onReviewMutated={onRefreshInsight}
       />
-    </>
+    </section>
   );
 }

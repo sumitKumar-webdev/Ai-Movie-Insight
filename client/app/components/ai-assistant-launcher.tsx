@@ -304,8 +304,8 @@ export default function AiAssistantLauncher() {
           </DialogDescription>
         </DialogHeader>
 
-        <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex  p-2 md:p-4 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
-          <X className="h-3 w-3 md:h-4 md:w-4" />
+        <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex  p-1 md:p-2 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
+          <X className="h-4 w-4 md:h-5 md:w-5" />
           <span className="sr-only">Close assistant</span>
         </DialogClose>
 

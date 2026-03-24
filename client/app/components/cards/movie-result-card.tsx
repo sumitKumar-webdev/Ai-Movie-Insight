@@ -32,7 +32,7 @@ export default function MovieResultCard({
   return (
     <Card
       className={cn(
-        "cursor-pointer overflow-hidden border-white/12 bg-[#101010] py-0 text-white transition hover:bg-[#171717]",
+        "cursor-pointer overflow-hidden border-white/12 bg-[#101010] py-0 text-white shadow-none transition hover:bg-[#171717]",
         className,
       )}
       onClick={onClick}

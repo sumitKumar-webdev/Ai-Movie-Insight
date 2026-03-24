@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/app/services/api-client";
-import { AuthUser, setAuthenticatedUser } from "@/app/store/auth-store";
+import { fetchCurrentUser } from "@/app/store/auth-store";
 
 declare global {
   interface Window {
@@ -75,15 +75,20 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
             });
             const payload = (await response.json()) as {
               error?: string;
-              data?: { user?: AuthUser };
+              data?: { user?: unknown };
             };
 
-            if (!response.ok || !payload.data?.user) {
+            if (!response.ok) {
               onError(payload.error ?? "Google sign-in failed");
               return;
             }
 
-            setAuthenticatedUser(payload.data.user);
+            const user = await fetchCurrentUser(true);
+            if (!user) {
+              onError("Google sign-in succeeded, but your browser did not keep the session.");
+              return;
+            }
+
             window.location.assign(nextPath);
           } catch {
             onError("Google sign-in failed");

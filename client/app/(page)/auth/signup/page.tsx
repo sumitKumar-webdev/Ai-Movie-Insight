@@ -12,7 +12,6 @@ import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { buildApiUrl } from "@/app/services/api-client";
-import { fetchCurrentUser } from "@/app/store/store";
 import { brand } from "@/app/config/brand";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
@@ -189,12 +188,6 @@ export default function SignupPage() {
       }
 
       if (payload.data?.user && !payload.data?.requiresVerification) {
-        const user = await fetchCurrentUser(true);
-        if (!user) {
-          setError("Signup succeeded, but your browser did not keep the session. Please log in.");
-          return;
-        }
-
         router.replace(safeNext);
         router.refresh();
         return;

@@ -11,7 +11,6 @@ import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/Hooks/use-toast";
-import { fetchCurrentUser } from "@/app/store/store";
 import { login, resendVerificationEmail } from "@/app/services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { brand } from "@/app/config/brand";
@@ -79,16 +78,9 @@ export default function LoginPage() {
         setError(response.message ?? "Login failed");
         return;
       }
-
-      const user = await fetchCurrentUser(true);
-      if (!user) {
-        setError("Login succeeded, but your browser did not keep the session. Please try again.");
-        return;
-      }
-
       toast({
         title: "Logged in successfully",
-        description: `Welcome back, ${user.name}.`,
+        description: `Welcome back, ${response.data.user.name}.`,
         variant: "success",
       });
       router.replace(safeNext);

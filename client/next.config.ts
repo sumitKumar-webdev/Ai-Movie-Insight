@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const apiProxyTarget = (
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
+).replace(/\/+$/, "");
+
 const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
@@ -21,6 +25,14 @@ const nextConfig: NextConfig = {
         hostname: "ia.media-imdb.com",
       },
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiProxyTarget}/api/:path*`,
+      },
+    ];
   },
 };
 

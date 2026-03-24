@@ -1,0 +1,16 @@
+{
+  "name": "CineAI",
+  "short_name": "CineAI",
+  "description": "Discover movies, reviews, and AI-powered insights with CineAI.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}

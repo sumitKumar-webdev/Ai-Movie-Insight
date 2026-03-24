@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   },
   description: brand.metaDescription,
   applicationName: brand.name,
+  manifest: "/site.webmanifest",
   keywords: [
     "CineAI",
     "movie search",
@@ -35,9 +36,10 @@ export const metadata: Metadata = {
     "IMDb search",
   ],
   icons: {
-    icon: brand.logoSrc,
-    shortcut: brand.logoSrc,
-    apple: brand.logoSrc,
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/favicon.svg",
   },
   openGraph: {
     title: brand.metaTitle,

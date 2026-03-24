@@ -47,7 +47,20 @@ export default function LoginPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
+    const emailVerification = params.get("emailVerification");
+    const message = params.get("message");
+
     setSafeNext(next?.startsWith("/") ? next : "/");
+
+    if (emailVerification === "success") {
+      setError("");
+      setNotice(message || "Email verified successfully. You can log in now.");
+    }
+
+    if (emailVerification === "error") {
+      setNotice("");
+      setError(message || "This verification link is invalid or has expired.");
+    }
   }, []);
 
   const onSubmit = async ({ identifier, password }: LoginFormValues) => {

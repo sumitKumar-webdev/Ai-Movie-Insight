@@ -22,6 +22,11 @@ const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
 const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 const isDevelopment = process.env.NODE_ENV === "development";
+const clientPublicUrl = (
+  process.env.CLIENT_PUBLIC_URL ||
+  process.env.CLIENT_ORIGIN ||
+  "http://localhost:3000"
+).replace(/\/+$/, "");
 
 function sanitizeUser(user) {
   return {
@@ -91,6 +96,17 @@ function clearAuthCookie(res) {
     ...getAuthCookieOptions(),
     maxAge: undefined,
   });
+}
+
+function buildEmailVerificationRedirectUrl(status, message) {
+  const redirectUrl = new URL("/auth/login", clientPublicUrl);
+  redirectUrl.searchParams.set("emailVerification", status);
+
+  if (message) {
+    redirectUrl.searchParams.set("message", message);
+  }
+
+  return redirectUrl.toString();
 }
 
 export const register = async (req, res) => {
@@ -339,7 +355,10 @@ export const verifyEmail = async (req, res) => {
       typeof req.query.token === "string" ? req.query.token.trim() : "";
 
     if (!token) {
-      return errorRes(res, 400, "Verification token is required");
+      return res.redirect(
+        302,
+        buildEmailVerificationRedirectUrl("error", "Verification token is required"),
+      );
     }
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
@@ -350,21 +369,26 @@ export const verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-      return errorRes(res, 400, "Invalid or expired verification link");
+      return res.redirect(
+        302,
+        buildEmailVerificationRedirectUrl("error", "Invalid or expired verification link"),
+      );
     }
 
     user.emailVerified = true;
+    user.isactive = true;
     user.emailVerificationTokenHash = null;
     user.emailVerificationExpiresAt = null;
     await user.save();
 
-    return successRes(res, 200, "Email verified successfully", {
-      user: sanitizeUser(user),
-    });
+    return res.redirect(
+      302,
+      buildEmailVerificationRedirectUrl("success", "Email verified successfully. You can log in now."),
+    );
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to verify email";
-    return errorRes(res, 500, message);
+    return res.redirect(302, buildEmailVerificationRedirectUrl("error", message));
   }
 };
 

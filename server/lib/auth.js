@@ -11,11 +11,28 @@ export function signAuthToken(payload) {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: "7d" });
 }
 
+function normalizeOrigin(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return "";
+  }
+
+  try {
+    return new URL(value.trim()).origin;
+  } catch {
+    return "";
+  }
+}
+
 export function getAuthCookieOptions() {
   const isProduction = process.env.NODE_ENV === "production";
+  const clientOrigin = normalizeOrigin(process.env.CLIENT_ORIGIN);
+  const serverOrigin = normalizeOrigin(process.env.SERVER_PUBLIC_URL);
+  const isCrossOriginDeployment =
+    Boolean(clientOrigin) && Boolean(serverOrigin) && clientOrigin !== serverOrigin;
+
   return {
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: isCrossOriginDeployment ? "none" : "lax",
     secure: isProduction,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",

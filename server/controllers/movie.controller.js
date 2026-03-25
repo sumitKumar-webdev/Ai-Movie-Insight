@@ -40,6 +40,46 @@ function extractMentionedTitles(reply) {
   return Array.from(new Set(matches)).slice(0, 3);
 }
 
+function buildSearchFallbackQueries(query) {
+  const normalizedQuery = normalizeSuggestionQuery(query);
+  if (!normalizedQuery) {
+    return [];
+  }
+
+  const compactQuery = normalizedQuery
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 5)
+    .join(" ");
+
+  return Array.from(
+    new Set([
+      normalizedQuery,
+      normalizedQuery.split("-")[0]?.trim() || "",
+      normalizedQuery.split(":")[0]?.trim() || "",
+      normalizedQuery.split(",")[0]?.trim() || "",
+      compactQuery,
+    ].filter(Boolean)),
+  );
+}
+
+function isGeminiQuotaError(message) {
+  const normalized = String(message ?? "").toLowerCase();
+  return (
+    normalized.includes("quota exceeded") ||
+    normalized.includes("rate-limit") ||
+    normalized.includes("rate limits") ||
+    normalized.includes("generate_content_free_tier_requests")
+  );
+}
+
+function buildQuotaFallbackReply(userMessage) {
+  const normalizedMessage = String(userMessage ?? "").replace(/\s+/g, " ").trim();
+  return normalizedMessage
+    ? `admin ka ghee khatam h 30s baad try karna jab tak ye try kar lo: "${normalizedMessage}" based kuch picks dekh lo.`
+    : "admin ka ghee khatam h 30s baad try karna jab tak ye try kar lo.";
+}
+
 async function collectSuggestionResults(queries) {
   const suggestionResults = [];
   const seenIds = new Set();
@@ -321,12 +361,22 @@ export async function searchMovies(req, res) {
     if (!query) {
       return res.status(200).json({ data: [] });
     }
-    const data = await searchMoviesByQuery(query, { limit: 25 });
+
+    let data = [];
+    const fallbackQueries = buildSearchFallbackQueries(query);
+
+    for (const candidate of fallbackQueries) {
+      data = await searchMoviesByQuery(candidate, { limit: 25 });
+      if (Array.isArray(data) && data.length > 0) {
+        break;
+      }
+    }
 
     return res.status(200).json({ data });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to search movies";
+    console.error("[movie:search]", message);
     return res.status(500).json({ error: message });
   }
 }
@@ -348,24 +398,41 @@ export async function chatMovieAssistant(request, response) {
 
     let aiResult = null;
     let aiErrorMessage = "";
+    let isQuotaLimited = false;
+    const latestUserMessage =
+      [...sanitizedMessages].reverse().find((message) => message.role === "user")?.content || "";
 
     try {
       aiResult = await chatWithMovieAssistant(sanitizedMessages);
     } catch (error) {
       aiErrorMessage =
         error instanceof Error ? error.message : "Failed to chat with movie assistant";
+      isQuotaLimited =
+        (error instanceof Error && error.code === "GEMINI_QUOTA_EXCEEDED") ||
+        isGeminiQuotaError(aiErrorMessage);
+
+      if (isQuotaLimited) {
+        aiErrorMessage = buildQuotaFallbackReply(latestUserMessage);
+      }
+
       console.error("[movie:assistant]", aiErrorMessage);
     }
     let suggestionQueries = aiResult?.suggestions?.length
       ? aiResult.suggestions
       : extractMentionedTitles(aiResult?.reply);
 
+    if (!suggestionQueries.length && isQuotaLimited && latestUserMessage) {
+      suggestionQueries = buildSearchFallbackQueries(latestUserMessage);
+    }
+
     let suggestionResults = await collectSuggestionResults(suggestionQueries);
 
     return response.status(200).json({
       data: {
         reply: aiResult?.reply ||
-          (suggestionResults.length > 0
+          (isQuotaLimited
+            ? aiErrorMessage
+            : suggestionResults.length > 0
             ? "Here are a few picks you might enjoy."
             : aiErrorMessage || "Failed, please try again."),
         suggestions: suggestionResults,

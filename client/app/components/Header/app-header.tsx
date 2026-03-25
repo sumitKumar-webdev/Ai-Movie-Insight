@@ -148,7 +148,7 @@ export default function AppHeader() {
   const isDetailPage = pathname?.startsWith("/content/");
 
   useEffect(() => {
-    if (!debouncedQuery && debouncedQuery.length >= 2) {
+    if (debouncedQuery.length < 2) {
       setResults([]);
       setLoading(false);
       return;

@@ -1,6 +1,16 @@
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-2.5-flash";
 
+function isGeminiQuotaError(message) {
+  const normalized = String(message ?? "").toLowerCase();
+  return (
+    normalized.includes("quota exceeded") ||
+    normalized.includes("rate-limit") ||
+    normalized.includes("rate limits") ||
+    normalized.includes("generate_content_free_tier_requests")
+  );
+}
+
 function getGeminiEndpoint() {
   if (!GEMINI_API_KEY) {
     return null;
@@ -42,7 +52,11 @@ async function generateGeminiJson({ systemInstruction, conversation, temperature
     const message =
       payload?.error?.message ||
       `Gemini request failed with status ${response.status}`;
-    throw new Error(message);
+    const error = new Error(message);
+    if (isGeminiQuotaError(message)) {
+      error.code = "GEMINI_QUOTA_EXCEEDED";
+    }
+    throw error;
   }
 
   const payload = await response.json();
@@ -93,8 +107,8 @@ export async function summarizeWithOpenAI(movieTitle, input, mode) {
   const rawSentiment = String(parsed?.sentiment ?? "");
   const sentiment =
     rawSentiment === "Positive" ||
-    rawSentiment === "Mixed" ||
-    rawSentiment === "Negative"
+      rawSentiment === "Mixed" ||
+      rawSentiment === "Negative"
       ? rawSentiment
       : undefined;
 
@@ -154,15 +168,14 @@ Return JSON only.`,
   const reply = String(parsed?.reply ?? "").trim();
   const suggestions = Array.isArray(parsed?.suggestions)
     ? parsed.suggestions
-        .map((item) => String(item ?? "").trim())
-        .filter(Boolean)
-        .slice(0, 3)
+      .map((item) => String(item ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 3)
     : [];
 
   if (!reply) {
     return null;
   }
-  
   return {
     reply,
     suggestions,

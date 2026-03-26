@@ -39,25 +39,35 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   const normalizedQuery = useMemo(() => query.trim(), [query]);
-  const debouncedQuery = useDebounce(normalizedQuery, 250);
+  const debouncedQuery = useDebounce(normalizedQuery, 400);
 
   useEffect(() => {
-    if (!debouncedQuery) {
+    if (debouncedQuery.length < 4) {
       setResults([]);
       setLoading(false);
       return;
     }
+    const controller = new AbortController();
     const fetchMovies = async () => {
       try {
         setLoading(true);
-        const response = await searchMovies(debouncedQuery);
-        setResults(response);
+        const response = await searchMovies(debouncedQuery, {
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setResults(response);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchMovies();
+    return () => {
+      controller.abort();
+    };
   }, [debouncedQuery]);
 
   const navigateToMovie = (imdbId: string) => {
@@ -117,7 +127,7 @@ export default function Home() {
               </Button>
             </div>
 
-            {normalizedQuery && (
+            {normalizedQuery.length >= 4 && (
               <div className="home-search-scroll mt-4 max-h-72 space-y-2 overflow-y-auto pb-3 pr-1">
                 {loading || debouncedQuery !== normalizedQuery ? (
                   [1, 2, 3].map((item) => (
@@ -138,9 +148,9 @@ export default function Home() {
                   ))
                 ) : (
                   <p className="text-sm text-white/65">
-                    No matching movie found.
-                    </p>
-                  )}
+                     No matching movie found.
+                  </p>
+                )}
               </div>
             )}
           </div>

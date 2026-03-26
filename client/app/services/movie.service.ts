@@ -11,20 +11,34 @@ import {
 import { authenticatedFetch, buildApiUrl } from "./api-client";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
+const movieSearchCache = new Map<string, MovieSearchItem[]>(); //TODO: replace with redis in future
 
-export async function searchMovies(query: string): Promise<MovieSearchItem[]> {
+export async function searchMovies(
+  query: string,
+  options: { signal?: AbortSignal } = {},
+): Promise<MovieSearchItem[]> {
   const normalized = query.trim();
-  if (!normalized) return [];
+  if (normalized.length < 4) return [];
+
+  const cachedResults = movieSearchCache.get(normalized);
+  if (cachedResults) {
+    return cachedResults;
+  }
 
   try {
     const response = await fetch(
       buildApiUrl(`/api/movies/search?q=${encodeURIComponent(normalized)}`),
-      { cache: "no-store" },
+      { cache: "no-store", signal: options.signal },
     );
     if (!response.ok) return [];
     const payload = (await response.json()) as { data?: MovieSearchItem[] };
-    return Array.isArray(payload.data) ? payload.data : [];
-  } catch {
+    const results = Array.isArray(payload.data) ? payload.data : [];
+    movieSearchCache.set(normalized, results);
+    return results;
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      return [];
+    }
     return [];
   }
 }

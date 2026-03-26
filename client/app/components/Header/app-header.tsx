@@ -140,30 +140,42 @@ export default function AppHeader() {
 
 
   const normalizedQuery = useMemo(() => query.trim(), [query]);
-  const debouncedQuery = useDebounce(normalizedQuery, 250);
+  const debouncedQuery = useDebounce(normalizedQuery, 400);
   const shouldShowDesktopSuggestions =
-    desktopSearchOpen && desktopSearchFocused && normalizedQuery.length >= 2;
+    desktopSearchOpen && desktopSearchFocused && normalizedQuery.length >= 4;
   const shouldShowMobileSuggestions =
-    mobileSearchOpen && mobileSearchFocused && normalizedQuery.length >= 2;
+    mobileSearchOpen && mobileSearchFocused && normalizedQuery.length >= 4;
   const isDetailPage = pathname?.startsWith("/content/");
+  const shouldSearch = normalizedQuery.length >= 4
+    && (desktopSearchOpen || mobileSearchOpen);
 
   useEffect(() => {
-    if (debouncedQuery.length < 2) {
+    if (!shouldSearch || debouncedQuery.length < 4) {
       setResults([]);
       setLoading(false);
       return;
     }
+    const controller = new AbortController();
     const fetchResults = async () => {
       try {
         setLoading(true);
-        const response = await searchMovies(debouncedQuery);
-        setResults(response);
+        const response = await searchMovies(debouncedQuery, {
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setResults(response);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
     fetchResults();
-  }, [debouncedQuery]);
+    return () => {
+      controller.abort();
+    };
+  }, [debouncedQuery, shouldSearch]);
 
   useEffect(() => {
     if (!mobileSearchOpen) return;

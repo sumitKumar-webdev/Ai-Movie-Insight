@@ -164,17 +164,17 @@ export default function LoginPage() {
         </>
       }
     >
-      {error ? (
+      {Boolean(error) && (
         <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
           {error}
         </p>
-      ) : null}
+      )}
 
-      {notice ? (
+      {Boolean(notice) && (
         <p className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           {notice}
         </p>
-      ) : null}
+      )}
 
       <form
         className="mt-5 space-y-2"
@@ -211,7 +211,9 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword((value) => !value)}
                     className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-500 transition hover:text-slate-800"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                     aria-pressed={showPassword}
                   >
                     {showPassword ? (
@@ -251,11 +253,14 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      {error === "Please verify your email before logging in" ? (
+      {error === "Please verify your email before logging in" && (
         <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-medium text-slate-800">Need a new verification email?</p>
+          <p className="text-sm font-medium text-slate-800">
+            Need a new verification email?
+          </p>
           <p className="mt-1 text-sm text-slate-600">
-            Enter the email for your account and we&apos;ll send a fresh verification link.
+            Enter the email for your account and we&apos;ll send a fresh
+            verification link.
           </p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row">
             <Input
@@ -284,10 +289,14 @@ export default function LoginPage() {
             </Button>
           </div>
         </div>
-      ) : null}
+      )}
 
-      <div className="flex items-center justify-center gap-3 text-center text-xs uppercase tracking-[0.24em] text-slate-400">
-        or
+      <div className="my-2 -mt-1 flex items-center gap-3">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs uppercase tracking-wide text-slate-500">
+          or
+        </span>
+        <div className="h-px flex-1 bg-slate-200" />
       </div>
 
       <GoogleAuthButton mode="login" nextPath={safeNext} onError={setError} />

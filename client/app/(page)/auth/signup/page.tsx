@@ -377,7 +377,7 @@ export default function SignupPage() {
           </Button>
       </form>
 
-      <div className="my-5 flex items-center gap-3">
+      <div className="my-3 flex items-center gap-3">
         <div className="h-px flex-1 bg-slate-200" />
         <span className="text-xs uppercase tracking-wide text-slate-500">or</span>
         <div className="h-px flex-1 bg-slate-200" />

@@ -38,7 +38,7 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out fixed inset-0 z-[120] bg-black/40 backdrop-blur-sm data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out fixed inset-0 z-[500] bg-black/40 backdrop-blur-sm data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className
       )}
       {...props}
@@ -63,7 +63,7 @@ function DialogContent({
       <DialogOverlay className={overlayClassName} />
       <div
         className={cn(
-          "fixed inset-0 z-[130] flex items-center justify-center p-4",
+          "fixed inset-0 z-[510] flex items-center justify-center p-4",
           contentWrapperClassName,
         )}
       >

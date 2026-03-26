@@ -201,8 +201,8 @@ export default function ReviewRepliesModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="h-dvh w-screen max-w-none rounded-none border-0 bg-black/70 p-0 text-white sm:h-[min(90vh,860px)] sm:w-[min(96vw,76rem)] sm:rounded-3xl sm:border sm:border-white/10">
-        <div className="flex h-full flex-col">
+      <DialogContent className="h-dvh max-h-dvh w-screen max-w-none overflow-hidden rounded-none border-0 bg-black/70 p-0 text-white sm:h-[min(90vh,860px)] sm:max-h-[90vh] sm:w-[min(96vw,76rem)] sm:rounded-3xl sm:border sm:border-white/10">
+        <div className="flex h-full min-h-0 flex-col">
           <DialogHeader className="border-b border-white/10 px-4 py-4 text-left sm:px-6">
             <p className="text-brand-primary-muted text-xs font-semibold tracking-[0.22em] uppercase">
               Discussion
@@ -215,15 +215,15 @@ export default function ReviewRepliesModal({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.15fr)]">
-            <section className="border-b border-white/10 bg-white/0.3 px-4 py-4 lg:min-h-0 lg:border-r lg:border-b-0 lg:px-6 lg:py-6">
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden lg:grid lg:overflow-hidden lg:grid-cols-[minmax(18rem,0.85fr)_minmax(0,1.15fr)]">
+            <section className="home-search-scroll border-b border-white/10 bg-white/0.3 px-4 py-4 lg:min-h-0 lg:overflow-y-auto lg:border-r lg:border-b-0 lg:px-6 lg:py-6">
               {loading && !selectedReview ? (
                 <div className="space-y-4">
                   <Skeleton className="h-24 rounded-3xl bg-white/10" />
                   <Skeleton className="h-40 rounded-3xl bg-white/10" />
                 </div>
               ) : selectedReview ? (
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-4">
                   <div className="flex max-w-[75%] items-center gap-3">
                     <RenderAvatar
                       name={selectedReview.author}
@@ -258,8 +258,8 @@ export default function ReviewRepliesModal({
               ) : null}
             </section>
 
-            <section className="flex min-h-0 flex-col px-4 py-4 sm:px-6 sm:py-6">
-              <div className="min-h-0 flex-1 overflow-y-auto pr-0 sm:pr-1">
+            <section className="flex min-h-0 flex-col px-4 py-4 lg:overflow-hidden sm:px-2 sm:py-3">
+              <div className="min-h-0 flex-1 home-search-scroll pr-0 lg:overflow-y-auto lg:overscroll-contain sm:pr-1">
                 {loading ? (
                   <div className="space-y-3">
                     {[1, 2, 3].map((item) => (
@@ -291,7 +291,7 @@ export default function ReviewRepliesModal({
                               name={reply.author}
                               imageUrl={reply.imageUrl}
                               className="h-5 w-5"
-                              initialsClassName="font-medium"
+                              initialsClassName="font-medium text-xs md:text-sm"
                             />
 
                             <div className="min-w-0 flex-1">
@@ -358,19 +358,19 @@ export default function ReviewRepliesModal({
                   </p>
                 )}
               </div>
-              <div className="border-t border-white/55 pt-2 shadow-[0_18px_50px_rgba(0,0,0,0.24)]">
-                <div className="mb-2 flex flex-col gap-2 pt-1 sm:flex-row sm:items-center">
+              <div className="hidden border-t border-white/15 pt-2 shadow-[0_18px_50px_rgba(0,0,0,0.24)] lg:block">
+                <div className="mb-2 flex items-center gap-2 pt-1">
                   <Input
                     value={replyDraft}
                     onChange={(event) => setReplyDraft(event.target.value)}
                     placeholder="Share your take on this review..."
-                    className="min-h-11 border-white/12 bg-[#10161f] text-white placeholder:text-white/35"
+                    className="min-h-11 flex-1 border-white/12 bg-[#10161f] text-white placeholder:text-white/35"
                   />
                   <Button
                     type="button"
                     disabled={submitting || !replyDraft.trim()}
                     onClick={() => void submitReply()}
-                    className="w-full h-11 bg-[#d7e8f7] text-slate-950 hover:bg-[#c6ddf2] sm:w-auto"
+                    className="h-11 shrink-0 bg-[#d7e8f7] px-4 text-slate-950 hover:bg-[#c6ddf2]"
                   >
                     {submitting ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -381,16 +381,51 @@ export default function ReviewRepliesModal({
                   </Button>
                 </div>
                 {error ? (
-                  <p className="mt-3 text-sm text-rose-300 text-center">
+                  <p className="mt-3 text-center text-sm text-rose-300">
                     {error}
                   </p>
                 ) : (
-                  <p className="mt-3 text-sm text-white/65 text-center">
+                  <p className="mt-3 text-center text-sm text-white/65">
                     Please Keep this conversation healthy
                   </p>
                 )}
               </div>
             </section>
+          </div>
+
+          <div className="sticky bottom-0 z-10 border-t border-white/15 bg-black/85 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.24)] lg:hidden">
+            <div className="px-4 pt-2 sm:px-6">
+              <div className="mb-2 flex items-center gap-2 pt-1">
+                <Input
+                  value={replyDraft}
+                  onChange={(event) => setReplyDraft(event.target.value)}
+                  placeholder="Share your take on this review..."
+                  className="min-h-11 flex-1 border-white/12 bg-[#10161f] text-white placeholder:text-white/35"
+                />
+                <Button
+                  type="button"
+                  disabled={submitting || !replyDraft.trim()}
+                  onClick={() => void submitReply()}
+                  className="h-11 shrink-0 bg-[#d7e8f7] px-4 text-slate-950 hover:bg-[#c6ddf2]"
+                >
+                  {submitting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                  Reply
+                </Button>
+              </div>
+              {error ? (
+                <p className="mt-3 pb-3 text-center text-sm text-rose-300">
+                  {error}
+                </p>
+              ) : (
+                <p className="mt-3 hidden pb-3 text-center text-sm text-white/65 sm:block">
+                  Please Keep this conversation healthy
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

@@ -188,7 +188,6 @@ export const register = async (req, res) => {
     } finally {
       await session.endSession();
     }
-    await sendWelcomeEmail(user.email, user.name);
     return successRes(res, 201, "Verification email sent", {
       user: sanitizeUser(user),
       requiresVerification: true,
@@ -381,6 +380,7 @@ export const verifyEmail = async (req, res) => {
     user.emailVerificationTokenHash = null;
     user.emailVerificationExpiresAt = null;
     await user.save();
+    await sendWelcomeEmail(user.email, user.name);
 
     return res.redirect(
       302,

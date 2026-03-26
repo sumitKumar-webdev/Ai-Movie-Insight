@@ -37,7 +37,11 @@ type GoogleAuthButtonProps = {
 
 const GOOGLE_SCRIPT_ID = "google-identity-services";
 
-export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonProps) {
+export function GoogleAuthButton({
+  mode,
+  nextPath,
+  onError,
+}: GoogleAuthButtonProps) {
   const buttonRef = useRef<HTMLDivElement | null>(null);
   const [loading, setLoading] = useState(false);
   const [ready, setReady] = useState(false);
@@ -52,9 +56,7 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
     }
 
     const initializeGoogle = () => {
-      if (!window.google?.accounts?.id || !buttonRef.current) {
-        return;
-      }
+      if (!window.google?.accounts?.id || !buttonRef.current) return;
 
       window.google.accounts.id.initialize({
         client_id: clientId,
@@ -85,7 +87,9 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
 
             const user = await fetchCurrentUser(true);
             if (!user) {
-              onError("Google sign-in succeeded, but your browser did not keep the session.");
+              onError(
+                "Google sign-in succeeded, but your browser did not keep the session.",
+              );
               return;
             }
 
@@ -109,12 +113,16 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
       setReady(true);
     };
 
-    const existingScript = document.getElementById(GOOGLE_SCRIPT_ID) as HTMLScriptElement | null;
+    const existingScript = document.getElementById(
+      GOOGLE_SCRIPT_ID,
+    ) as HTMLScriptElement | null;
     if (existingScript) {
       if (window.google?.accounts?.id) {
         initializeGoogle();
       } else {
-        existingScript.addEventListener("load", initializeGoogle, { once: true });
+        existingScript.addEventListener("load", initializeGoogle, {
+          once: true,
+        });
       }
       return;
     }
@@ -156,21 +164,19 @@ export function GoogleAuthButton({ mode, nextPath, onError }: GoogleAuthButtonPr
     };
   }, []);
 
-  if (!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) {
-    return (
-      <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-        Google sign-in is not available right now. Please use email and password to continue.
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-2">
       <div
         ref={buttonRef}
         className={loading ? "pointer-events-none opacity-70" : ""}
       />
-      {!ready ? <p className="text-sm text-slate-500">Loading Google sign-in...</p> : null}
+      {!Boolean(ready) && (
+        <p className="text-sm text-slate-500">
+          {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
+            ? "Loading Google sign-in..."
+            : "Google client ID is missing."}
+        </p>
+      )}
     </div>
   );
 }

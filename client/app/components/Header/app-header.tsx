@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LogOut, Search, UserCircle2, X } from "lucide-react";
+import { CircleHelp, LogOut, Search, User, UserCircle2, X } from "lucide-react";
 import BrandWordmark from "@/app/components/brand/wordmark";
 import { logoutUser, useAuthStore } from "@/app/store/store";
 import {
@@ -177,19 +177,19 @@ export default function AppHeader() {
     return () => cancelAnimationFrame(frame);
   }, [desktopSearchOpen]);
 
+  const navigateTo = (href: string) => {
+    router.push(href);
+  };
+
   const handleLogout = async () => {
     try {
       setLoggingOut(true);
       await logoutUser();
-      router.push("/");
+      navigateTo("/");
       router.refresh();
     } finally {
       setLoggingOut(false);
     }
-  };
-
-  const handleLoginNavigation = () => {
-    router.push("/auth/login");
   };
 
   const navigateToMovie = (imdbId: string) => {
@@ -201,7 +201,7 @@ export default function AppHeader() {
     setQuery("");
     setResults([]);
     startRouteProgress();
-    router.push(`/content/${imdbId}`);
+    navigateTo(`/content/${imdbId}`);
   };
 
   const navigateToFirstResult = () => {
@@ -349,6 +349,20 @@ export default function AppHeader() {
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
+                      onSelect={() => navigateTo("/profile")}
+                      className="gap-2"
+                    >
+                      <User className="h-4 w-4" />
+                      Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => navigateTo("/support")}
+                      className="gap-2"
+                    >
+                      <CircleHelp className="h-4 w-4" />
+                      Support
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
                       onSelect={() => void handleLogout()}
                       disabled={loggingOut}
                       className="gap-2"
@@ -359,7 +373,7 @@ export default function AppHeader() {
                   </>
                 ) : (
                   <DropdownMenuItem
-                    onSelect={handleLoginNavigation}
+                    onSelect={() => navigateTo("/auth/login")}
                     className="cursor-pointer rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700"
                   >
                     Login

@@ -55,6 +55,8 @@ export default function AiAssistantLauncher() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const mobileDragStartYRef = useRef<number | null>(null);
+  const mobileDragDeltaYRef = useRef(0);
   const [messages, setMessages] = useState<AssistantMessage[]>([
     {
       id: "assistant-welcome",
@@ -190,6 +192,37 @@ export default function AiAssistantLauncher() {
     router.push(`/content/${imdbId}`);
   };
 
+  const isMobileViewport = () =>
+    typeof window !== "undefined" &&
+    window.matchMedia("(max-width: 639px)").matches;
+
+  const handleHeaderTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!isMobileViewport()) return;
+    mobileDragStartYRef.current = event.touches[0]?.clientY ?? null;
+    mobileDragDeltaYRef.current = 0;
+  };
+
+  const handleHeaderTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!isMobileViewport() || mobileDragStartYRef.current === null) return;
+
+    const currentY = event.touches[0]?.clientY;
+    if (typeof currentY !== "number") return;
+
+    mobileDragDeltaYRef.current = currentY - mobileDragStartYRef.current;
+  };
+
+  const handleHeaderTouchEnd = () => {
+    if (!isMobileViewport()) return;
+
+    const draggedFarEnough = mobileDragDeltaYRef.current > 64;
+    mobileDragStartYRef.current = null;
+    mobileDragDeltaYRef.current = 0;
+
+    if (draggedFarEnough) {
+      setOpen(false);
+    }
+  };
+
   const currentUserName = user?.name?.trim() || user?.username?.trim() || "You";
 
   const AiAvatar = ({ className }: { className?: string }) => (
@@ -292,7 +325,7 @@ export default function AiAssistantLauncher() {
           onClick={() => {
              openAssistant();
           }}
-          className="fixed overflow-hidden right-4 bottom-4 z-100 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-2 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#0c1017] sm:right-6 sm:bottom-6 sm:gap-1"
+          className="fixed overflow-hidden right-4 bottom-4 z-[330] inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-2 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#0c1017] sm:right-6 sm:bottom-6 sm:gap-1 sm:z-100"
           aria-label="Open AI assistant"
         >
           <AiAvatar />
@@ -306,10 +339,21 @@ export default function AiAssistantLauncher() {
 
         <DialogContent
           showCloseButton={false}
-          contentWrapperClassName="items-end justify-stretch p-0 sm:items-center sm:justify-center sm:p-4"
-          className="data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/92 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10 sm:bg-black/85"
+          overlayClassName="z-[340]"
+          contentWrapperClassName="z-[350] items-end justify-stretch p-0 sm:items-center sm:justify-center sm:p-4"
+          onPointerDownOutside={(event) => event.preventDefault()}
+          className="data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/92 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10 sm:bg-black/85 z-300"
         >
-        <DialogHeader className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16 -space-y-2">
+        <DialogHeader
+          className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16 -space-y-2"
+          onTouchStart={handleHeaderTouchStart}
+          onTouchMove={handleHeaderTouchMove}
+          onTouchEnd={handleHeaderTouchEnd}
+          onTouchCancel={handleHeaderTouchEnd}
+        >
+          <div className="mb-2 flex justify-center sm:hidden">
+            <span className="h-1.5 w-12 rounded-full bg-white/18" />
+          </div>
           <p className="text-brand-primary text-[10px] md:text-xs font-semibold tracking-[0.22em] uppercase">
             {brand.assistantEyebrow}
           </p>

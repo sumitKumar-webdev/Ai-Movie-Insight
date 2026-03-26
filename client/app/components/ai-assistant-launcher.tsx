@@ -85,16 +85,9 @@ export default function AiAssistantLauncher() {
   }, [messages]);
 
   useEffect(() => {
-    if (!open) {
-      document.body.style.overflow = "";
-      return;
-    }
-
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+    setOpen(false);
+    setAuthModalOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) {

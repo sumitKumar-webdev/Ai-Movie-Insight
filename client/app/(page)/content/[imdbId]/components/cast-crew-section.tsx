@@ -56,7 +56,7 @@ const CastCrewSection = ({ title, loading, people }: CastCrewSectionProps) => {
 
           <div
             ref={scrollerRef}
-            className="flex max-w-full gap-3 overflow-x-auto px-1 pb-2 snap-x snap-mandatory touch-pan-x [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="flex max-w-full gap-3 overflow-x-auto overscroll-x-contain px-1 pb-2 snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             {people.map((person) => (
               <div key={person.id} className="snap-start">

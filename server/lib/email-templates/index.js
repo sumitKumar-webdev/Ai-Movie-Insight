@@ -15,14 +15,10 @@ function buildEmailLayout({
   message,
   ctaLabel,
   ctaUrl,
-  linkLabel,
-  linkValue,
   note,
   secondaryBlock,
 }) {
   const safeGreeting = escapeHtml(greeting);
-  const safeLinkValue = escapeHtml(linkValue);
-  const safeLinkLabel = escapeHtml(linkLabel);
   const safeNote = note ? escapeHtml(note) : "";
   const normalizedMessage = Array.isArray(message) ? message : [message];
   const messageHtml = normalizedMessage
@@ -72,18 +68,6 @@ function buildEmailLayout({
               : ""
           }
           ${
-            linkValue
-              ? `
-                <p style="margin:0 0 8px;font-size:11px;line-height:1.6;color:#64748b;text-align:center;">
-                  ${safeLinkLabel}
-                </p>
-                <div style="margin:0 0 22px;padding:12px 14px;border:1px solid #1f2937;border-radius:8px;background:#111111;color:#94a3b8;font-size:11px;line-height:1.6;font-family:'Courier New',monospace;word-break:break-all;">
-                  ${safeLinkValue}
-                </div>
-              `
-              : ""
-          }
-          ${
             secondaryBlock
               ? `<div style="margin:0 0 22px;padding:18px;border:1px solid #1f2937;border-top:2px solid #06b6d4;border-radius:10px;background:#111111;">${secondaryBlock}</div>`
               : ""
@@ -110,7 +94,6 @@ function buildEmailLayout({
     greeting,
     ...normalizedMessage.map((item) => String(item).replace(/<[^>]+>/g, " ")),
     ctaLabel && ctaUrl ? `${ctaLabel}: ${ctaUrl}` : "",
-    linkValue ? `${linkLabel || "Open this link"}: ${linkValue}` : "",
     note || "",
   ].filter(Boolean)
     .join("\n\n");
@@ -137,8 +120,6 @@ export function getTemplatePayload(template, { name, message, token, serverPubli
             ],
           ctaLabel: "Verify Email",
           ctaUrl: verificationUrl,
-          linkLabel: "Or paste this link into your browser:",
-          linkValue: verificationUrl,
           note: "If you did not create a CineAI account, you can safely ignore this email.",
         }),
       };
@@ -183,8 +164,6 @@ export function getTemplatePayload(template, { name, message, token, serverPubli
             ],
           ctaLabel: "Reset Password",
           ctaUrl: resetUrl,
-          linkLabel: "Or copy this link into your browser:",
-          linkValue: resetUrl,
           note: "If you did not request a password reset, you can ignore this email and your password will remain unchanged.",
         }),
       };

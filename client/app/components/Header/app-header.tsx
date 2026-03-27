@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleHelp, LogOut, Search, User, UserCircle2, X } from "lucide-react";
+import { CircleHelp, LogOut, Search, User, X } from "lucide-react";
 import BrandWordmark from "@/app/components/brand/wordmark";
+import RenderAvatar from "@/app/components/avatar/render-avatar";
+import VerifiedBadge from "@/app/components/verified-badge";
 import { logoutUser, useAuthStore } from "@/app/store/store";
 import {
   DropdownMenu,
@@ -349,15 +351,29 @@ export default function AppHeader() {
                   aria-label="Open profile menu"
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
                 >
-                  <UserCircle2 className="h-5 w-5" />
+                  {authStatus === "authenticated" && user ? (
+                    <RenderAvatar
+                      name={user.name || user.username || "User"}
+                      imageUrl={user.avatar}
+                      className="h-8 w-8 md:h-9 md:w-9"
+                      initialsClassName="text-xs"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
                 </button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-44 z-230">
                 {authStatus === "authenticated" && user ? (
                   <>
-                    <DropdownMenuLabel className="truncate text-xs text-white/65">
-                      {user.name}
+                    <DropdownMenuLabel className="min-w-0 text-xs text-white/65">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate">{user.name}</span>
+                        {user.isVerified ? (
+                          <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
+                        ) : null}
+                      </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

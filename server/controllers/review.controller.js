@@ -1,4 +1,6 @@
 import { errorRes, successRes } from "../lib/res.js";
+import { getAccessToken, verifyAccessToken } from "../lib/auth.js";
+import { fetchImdbTitleById } from "../lib/movie.js";
 import { getStoredMovieAiInsight } from "./movie-insight.controller.js";
 import Review from "../models/Review.js";
 
@@ -10,23 +12,45 @@ function resolveUserId(user) {
   return user?._id ? String(user._id) : user ? String(user) : null;
 }
 
+function resolveCurrentUserId(req) {
+  if (req?.auth?.userId) return String(req.auth.userId);
+
+  const token = getAccessToken(req);
+  const payload = token ? verifyAccessToken(token) : null;
+  return payload?.userId ? String(payload.userId) : null;
+}
+
+
 function formatReply(reply, options = {}) {
   const reviewId = String(options.reviewId ?? "");
   const reviewUsername = options.reviewUsername?.trim() || "";
+  const currentUserId = options.currentUserId ? String(options.currentUserId) : null;
   const replyToType = reply?.replyToType === "reply" ? "reply" : "review";
   const replyToId =
     replyToType === "reply" && reply?.replyToReplyId
       ? String(reply.replyToReplyId)
       : reviewId;
+  const userId = resolveUserId(reply?.user);
+  const userName = reply?.user?.name?.trim() || reply?.user?.username?.trim() || "User";
+  const username = reply?.user?.username?.trim() || "";
+  const likeCount = Number(reply?.likes ?? 0);
+  const likedByUser = Array.isArray(reply?.likedBy)
+    && currentUserId
+    && reply.likedBy.some((likedUserId) => String(likedUserId) === currentUserId);
 
   return {
     _id: String(reply?._id ?? ""),
-    author: reply?.user.name,
-    username: reply?.user.username,
+    user: {
+      id: userId,
+      name: userName,
+      username,
+      imageUrl: reply?.user?.avatar?.trim() || null,
+      isVerified: Boolean(reply?.user?.is_verified),
+    },
     text: typeof reply?.message === "string" ? reply.message.trim() : "",
     date: reply?.createdAt ? new Date(reply.createdAt).toISOString() : "",
-    likes: Number(reply?.likes ?? 0),
-    userId: resolveUserId(reply?.user),
+    likeCount,
+    likedByUser: Boolean(likedByUser),
     replyToType,
     replyToId,
     replyToUsername: reply?.replyToUsername?.trim() || reviewUsername,
@@ -35,41 +59,89 @@ function formatReply(reply, options = {}) {
 
 function formatReview(review, options = {}) {
   const includeReplies = options.includeReplies === true;
+  const currentUserId = options.currentUserId ? String(options.currentUserId) : null;
   const replies = Array.isArray(review?.replies) ? review.replies : [];
+  const userId = resolveUserId(review?.user);
+  const userName = review.user?.name?.trim() || review.user?.username?.trim() || "User";
+  const username = review?.user?.username?.trim() || "";
+  const likeCount = Number(review?.likes ?? 0);
+  const commentCount = replies.length;
+  const likedByUser = Array.isArray(review?.likedBy)
+    && currentUserId
+    && review.likedBy.some((likedUserId) => String(likedUserId) === currentUserId);
 
   return {
     _id: String(review?._id ?? ""),
-    author: review.user?.name?.trim() || review.user?.username?.trim() || "User",
-    username: review?.user.username,
+    user: {
+      id: userId,
+      name: userName,
+      username,
+      imageUrl: review?.user?.avatar?.trim() || null,
+      isVerified: Boolean(review?.user?.is_verified),
+    },
     text: typeof review?.message === "string" ? review.message.trim() : "",
     date: review?.createdAt ? new Date(review.createdAt).toISOString() : "",
-    imageUrl: null,
-    likes: Number(review?.likes ?? 0),
-    userId: resolveUserId(review?.user),
-    movieImdbId: review?.movieImdbId ?? "",
-    movieTitle: review?.movieTitle ?? "",
-    replyCount: replies.length,
+    likeCount,
+    likedByUser: Boolean(likedByUser),
+    commentCount,
+    movie: {
+      imdbId: review?.movieImdbId ?? "",
+      title: review?.movieTitle ?? "",
+    },
     replies: includeReplies
       ? replies.map((reply) =>
         formatReply(reply, {
           reviewId: review?._id,
           reviewUsername: review?.user?.username,
+          currentUserId,
         }))
       : [],
   };
 }
 
-async function findFormattedReviewById(reviewId) {
+async function findFormattedReviewById(reviewId, currentUserId = null) {
   const review = await Review.findById(reviewId)
-    .populate("user", "name username email")
-    .populate("replies.user", "name username email")
+    .populate("user", "name username email avatar is_verified")
+    .populate("replies.user", "name username email avatar is_verified")
     .lean();
 
-  return review ? formatReview(review) : null;
+  return review ? formatReview(review, { currentUserId }) : null;
+}
+
+function formatReviewShareCard(review, movie, options = {}) {
+  const currentUserId = options.currentUserId ? String(options.currentUserId) : null;
+  const likedByUser = Array.isArray(review?.likedBy)
+    && currentUserId
+    && review.likedBy.some((likedUserId) => String(likedUserId) === currentUserId);
+
+  return {
+    id: String(review?._id ?? ""),
+    user: {
+      id: resolveUserId(review?.user),
+      username: review?.user?.username?.trim() || "",
+      name: review?.user?.name?.trim() || "User",
+      imageUrl: review?.user?.avatar?.trim() || null,
+      isVerified: Boolean(review?.user?.is_verified),
+    },
+    content: {
+      imdbId: review?.movieImdbId ?? "",
+      title: movie?.primaryTitle?.trim() || review?.movieTitle?.trim() || "Untitled",
+      posterUrl: movie?.primaryImage?.url?.trim() || "",
+      year: movie?.startYear ? String(movie.startYear) : "",
+      type: movie?.type?.trim() || "movie",
+      backdropUrl: "",
+    },
+    text: typeof review?.message === "string" ? review.message.trim() : "",
+    likeCount: Number(review?.likes ?? 0),
+    commentCount: Array.isArray(review?.replies) ? review.replies.length : 0,
+    likedByUser: Boolean(likedByUser),
+    createdAt: review?.createdAt ? new Date(review.createdAt).toISOString() : "",
+  };
 }
 
 export const listReviews = async (req, res) => {
   try {
+    const currentUserId = resolveCurrentUserId(req);
     const imdbId = typeof req.query.imdbId === "string" ? req.query.imdbId.trim() : "";
 
     const filter = imdbId
@@ -77,16 +149,49 @@ export const listReviews = async (req, res) => {
       : {};
 
     const reviews = await Review.find(filter)
-      .populate("user", "name username")
+      .populate("user", "name username avatar is_verified")
       .sort({ createdAt: -1 })
       .lean();
 
     return successRes(res, 200, "Reviews fetched successfully", {
-      reviews: reviews.map((review) => formatReview(review)).filter((review) => review.text),
+      reviews: reviews
+        .map((review) => formatReview(review, { currentUserId }))
+        .filter((review) => review.text),
     });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch reviews";
+    return errorRes(res, 500, message);
+  }
+}
+
+export const getReviewShareCard = async (req, res) => {
+  try {
+    const currentUserId = resolveCurrentUserId(req);
+    const reviewId = typeof req.params?.reviewId === "string" ? req.params.reviewId.trim() : "";
+
+    if (!reviewId) {
+      return errorRes(res, 400, "reviewId is required");
+    }
+
+    const review = await Review.findById(reviewId)
+      .populate("user", "name username avatar is_verified")
+      .lean();
+
+    if (!review) {
+      return errorRes(res, 404, "Review not found");
+    }
+
+    const movie = review.movieImdbId
+      ? await fetchImdbTitleById(review.movieImdbId).catch(() => null)
+      : null;
+
+    return successRes(res, 200, "Review share card fetched successfully", {
+      shareCard: formatReviewShareCard(review, movie, { currentUserId }),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch review share card";
     return errorRes(res, 500, message);
   }
 }
@@ -122,7 +227,7 @@ export async function saveReview(req, res) {
         console.error("[review:sync-insight:update]", error);
       });
 
-      const formattedReview = await findFormattedReviewById(review._id);
+      const formattedReview = await findFormattedReviewById(review._id, req.auth.userId);
 
       return successRes(res, 200, "Review saved successfully", {
         review: formattedReview,
@@ -156,7 +261,7 @@ export async function saveReview(req, res) {
       console.error("[review:sync-insight:create]", error);
     });
 
-    const formattedReview = await findFormattedReviewById(review._id);
+    const formattedReview = await findFormattedReviewById(review._id, req.auth.userId);
 
     return successRes(res, 201, "Review saved successfully", {
       review: formattedReview,
@@ -247,7 +352,7 @@ export async function likeReview(req, res) {
 
     return successRes(res, 200, hasLiked ? "Review dislike successful" : "Review liked successfully", {
       totalLikes: Math.max(Number(review.likes ?? 0), 0),
-      liked: !hasLiked,
+      likedByUser: !hasLiked,
     });
   } catch (error) {
     const message =
@@ -275,8 +380,8 @@ export async function saveReply(req, res) {
     }
 
     const review = await Review.findById(reviewId)
-      .populate("user", "name username")
-      .populate("replies.user", "name username");
+      .populate("user", "name username avatar is_verified")
+      .populate("replies.user", "name username avatar is_verified");
     if (!review) {
       return errorRes(res, 404, "Review not found");
     }
@@ -300,12 +405,14 @@ export async function saveReply(req, res) {
       await review.save();
 
       const populatedReview = await Review.findById(reviewId)
-        .populate("replies.user", "name username")
+        .populate("replies.user", "name username avatar is_verified")
         .lean();
       const latestReply = populatedReview?.replies?.[populatedReview.replies.length - 1];
 
       return successRes(res, 200, "Reply added successfully", {
-        reply: latestReply ? formatReply(latestReply) : null,
+        reply: latestReply
+          ? formatReply(latestReply, { currentUserId: req.auth.userId })
+          : null,
       });
     }
 
@@ -322,14 +429,16 @@ export async function saveReply(req, res) {
     await review.save();
 
     const populatedReview = await Review.findById(reviewId)
-      .populate("replies.user", "name username")
+      .populate("replies.user", "name username avatar is_verified")
       .lean();
     const updatedReply = populatedReview?.replies?.find(
       (item) => String(item?._id ?? "") === replyId,
     );
 
     return successRes(res, 200, "Reply updated successfully", {
-      reply: updatedReply ? formatReply(updatedReply) : null,
+      reply: updatedReply
+        ? formatReply(updatedReply, { currentUserId: req.auth.userId })
+        : null,
     });
   } catch (error) {
     const message =
@@ -340,6 +449,7 @@ export async function saveReply(req, res) {
 
 export async function listReplies(req, res) {
   try {
+    const currentUserId = resolveCurrentUserId(req);
     const reviewId = typeof req.params?.reviewId === "string" ? req.params.reviewId.trim() : "";
 
     if (!reviewId) {
@@ -347,8 +457,8 @@ export async function listReplies(req, res) {
     }
 
     const review = await Review.findById(reviewId)
-      .populate("user", "name username")
-      .populate("replies.user", "name username")
+      .populate("user", "name username avatar is_verified")
+      .populate("replies.user", "name username avatar is_verified")
       .lean();
 
     if (!review) {
@@ -356,8 +466,15 @@ export async function listReplies(req, res) {
     }
 
     return successRes(res, 200, "Replies fetched successfully", {
-      review: formatReview(review, { includeReplies: false }),
-      replies: Array.isArray(review.replies) ? review.replies.map(formatReply) : [],
+      review: formatReview(review, { includeReplies: false, currentUserId }),
+      replies: Array.isArray(review.replies)
+        ? review.replies.map((reply) =>
+          formatReply(reply, {
+            reviewId,
+            reviewUsername: review?.user?.username,
+            currentUserId,
+          }))
+        : [],
     });
   } catch (error) {
     const message =
@@ -400,7 +517,7 @@ export async function likeReply(req, res) {
 
     return successRes(res, 200, hasLiked ? "Reply dislike successful" : "Reply liked successfully", {
       totalLikes: Number(reply.likes ?? 0),
-      liked: !hasLiked,
+      likedByUser: !hasLiked,
     });
   } catch (error) {
     const message =

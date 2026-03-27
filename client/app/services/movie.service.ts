@@ -7,8 +7,9 @@ import {
   MovieSearchItem,
   RepliesPayload,
   Review,
+  ReviewShareCardPayload,
 } from "../modal/service.modal";
-import { authenticatedFetch, buildApiUrl } from "./api-client";
+import { apiFetch, authenticatedFetch, buildApiUrl } from "./api-client";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
 const movieSearchCache = new Map<string, MovieSearchItem[]>(); //TODO: replace with redis in future
@@ -86,7 +87,7 @@ export async function getMovieReviews(imdbId: string): Promise<Review[]> {
   if (!IMDB_ID_REGEX.test(normalized)) return [];
 
   try {
-    const response = await fetch(
+    const response = await apiFetch(
       buildApiUrl(`/api/reviews?imdbId=${encodeURIComponent(normalized)}`),
       { cache: "no-store" },
     );
@@ -116,6 +117,23 @@ export async function getReviewReplies(
     status: response.status,
     message: payload.message,
     data: payload.data,
+  };
+}
+
+export async function getReviewShareCard(
+  reviewId: string,
+): Promise<{ ok: boolean; status: number; message?: string; data?: ReviewShareCardPayload }> {
+  const response = await apiFetch(`/api/reviews/${reviewId}/share-card`, {
+    cache: "no-store",
+  });
+
+  const payload = (await response.json()) as ApiResponse<{ shareCard?: ReviewShareCardPayload }>;
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    message: payload.message,
+    data: payload.data?.shareCard,
   };
 }
 
@@ -157,7 +175,7 @@ export async function likeReviewReply(
   ok: boolean;
   status: number;
   message?: string;
-  data?: { totalLikes?: number; liked?: boolean };
+  data?: { totalLikes?: number; likedByUser?: boolean };
 }> {
   const response = await authenticatedFetch(
     `/api/reviews/${reviewId}/replies/${replyId}/likes`,

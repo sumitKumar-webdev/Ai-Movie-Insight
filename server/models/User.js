@@ -28,6 +28,10 @@ const UserSchema = new Schema(
       trim: true,
       default: undefined,
     },
+    is_verified: {
+      type: Boolean,
+      default: false,
+    },
     isactive: {
       type: Boolean,
       default: false,

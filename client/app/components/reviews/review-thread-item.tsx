@@ -19,6 +19,7 @@ import ExpandableText from "@/app/components/ExpandableText/ExpandableText";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
 import { formatLabel } from "@/lib/resuable-component";
 import { cn } from "@/lib/utils";
+import VerifiedBadge from "@/app/components/verified-badge";
 
 type ReviewThreadItemProps = {
   review: Review | ReviewReply;
@@ -65,12 +66,12 @@ export default function ReviewThreadItem({
   onOpenReplies,
 }: ReviewThreadItemProps) {
   const isReply = variant === "reply";
-  const imageUrl = "imageUrl" in review ? review.imageUrl ?? null : null;
-  const liked = "liked" in review ? Boolean(review.liked) : false;
+  const imageUrl = review.user?.imageUrl ?? null;
+  const liked = Boolean(review.likedByUser);
   const normalizedUsername =
-    typeof review.username === "string" ? review.username.trim() : "";
+    typeof review.user?.username === "string" ? review.user.username.trim() : "";
   const normalizedAuthor =
-    typeof review.author === "string" ? review.author.trim() : "";
+    typeof review.user?.name === "string" ? review.user.name.trim() : "";
   const formattedAuthor = normalizedAuthor ? formatLabel(normalizedAuthor) : "";
   const primaryLabel = isReply
     ? normalizedUsername || formattedAuthor
@@ -82,10 +83,10 @@ export default function ReviewThreadItem({
       : "";
   const reviewText = typeof review.text === "string" ? review.text.trim() : "";
   const reviewDate = formatReviewDate(review.date, variant === "review" ? "long" : "short");
-  const likes = review.likes ?? 0;
+  const likes = review.likeCount ?? 0;
   const totalReplies =
-    "replyCount" in review && typeof review.replyCount === "number"
-      ? review.replyCount
+    "commentCount" in review && typeof review.commentCount === "number"
+      ? review.commentCount
       : "replies" in review && Array.isArray(review.replies)
         ? review.replies.length
         : 0;
@@ -105,7 +106,7 @@ export default function ReviewThreadItem({
       {isReply ? (
         <div className="flex items-start gap-3">
           <RenderAvatar
-            name={review.author}
+            name={review.user?.name || "User"}
             imageUrl={imageUrl}
             className="h-8 w-8"
             initialsClassName="text-xs"
@@ -118,6 +119,7 @@ export default function ReviewThreadItem({
                   <p className="truncate text-sm font-semibold text-[#ffffff]">
                     {primaryLabel}
                   </p>
+                  {review.user?.isVerified ? <VerifiedBadge className="ml-1 h-3.5 w-3.5 shrink-0" /> : null}
                 </div>
 
                 <div className="mb-2 text-sm leading-[17px] break-words text-[#c6c6c6]">
@@ -200,7 +202,7 @@ export default function ReviewThreadItem({
       ) : (
         <>
           <RenderAvatar
-            name={review.author}
+            name={review.user?.name || "User"}
             imageUrl={imageUrl}
             className="h-14 w-14"
             initialsClassName="text-sm"
@@ -212,6 +214,7 @@ export default function ReviewThreadItem({
                 <p className="truncate text-lg font-semibold tracking-[-0.01em] text-white">
                   {primaryLabel}
                 </p>
+                {review.user?.isVerified ? <VerifiedBadge className="ml-1 inline-block h-4 w-4 align-[-2px]" /> : null}
 
                 {secondaryLabel ? (
                   <p className="mt-0.5 truncate text-sm text-white/60">

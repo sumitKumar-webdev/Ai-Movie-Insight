@@ -220,6 +220,9 @@ export default function MovieInsightPage() {
             <ReviewsSection
               imdbId={imdbId}
               movieTitle={movie?.title ?? ""}
+              movieYear={movie?.year ?? ""}
+              movieType={movie?.type ?? ""}
+              posterUrl={movie?.poster ?? ""}
               currentUserId={currentUserId}
               ensureAuthenticated={ensureAuthenticated}
               onUnauthorized={() => {

@@ -8,9 +8,9 @@ import {
   CircleHelp,
   Mail,
   ShieldCheck,
-  UserRound,
 } from "lucide-react";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
+import VerifiedBadge from "@/app/components/verified-badge";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 
@@ -118,13 +118,19 @@ export default function ProfilePage() {
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
                 <RenderAvatar
                   name={user.name || user.username || "User"}
+                  imageUrl={user.avatar}
                   className="h-20 w-20 rounded-[1.6rem] border border-white/12 bg-white/8 sm:h-24 sm:w-24"
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-white/55">Signed in as</p>
-                  <h2 className="mt-1 truncate text-2xl font-semibold sm:text-3xl">
-                    {user.name}
-                  </h2>
+                  <div className="mt-1 flex items-center gap-2">
+                    <h2 className="truncate text-2xl font-semibold sm:text-3xl">
+                      {user.name}
+                    </h2>
+                    {user.isVerified ? (
+                      <VerifiedBadge className="h-5 w-5 shrink-0" />
+                    ) : null}
+                  </div>
                   <p className="mt-2 truncate text-sm text-white/62 sm:text-base">
                     @{user.username}
                   </p>

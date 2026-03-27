@@ -8,6 +8,8 @@ export type AuthUser = {
   name: string;
   email: string;
   username: string;
+  avatar?: string;
+  isVerified?: boolean;
   authProvider: string[];
   emailVerified: boolean;
 };

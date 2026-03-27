@@ -123,11 +123,26 @@
 }
 
 @layer base {
+  html {
+    background: #050505;
+    scrollbar-gutter: stable both-edges;
+    overflow-y: scroll;
+  }
+
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    min-height: 100vh;
+    background: #050505;
+    overflow-x: hidden;
+  }
+
+  body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    --removed-body-scroll-bar-size: 0px !important;
   }
 }
 

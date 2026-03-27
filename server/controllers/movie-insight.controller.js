@@ -9,21 +9,38 @@ function escapeRegex(value) {
 function formatCommunityReview(review) {
   const author = review.user?.name?.trim() || review.user?.username?.trim() || "User";
   const message = typeof review?.message === "string" ? review.message.trim() : "";
+  const userId = review?.user?._id ? String(review.user._id) : null;
+  const username = review?.user?.username?.trim() || "";
+  const likeCount = Number(review.likes ?? 0);
 
   return {
     _id: String(review._id),
+    user: {
+      id: userId,
+      name: author,
+      username,
+      imageUrl: review?.user?.avatar?.trim() || null,
+      isVerified: Boolean(review?.user?.is_verified),
+    },
     author,
     text: message,
     date: review?.createdAt ? new Date(review.createdAt).toISOString() : "",
-    imageUrl: null,
-    likes: Number(review.likes ?? 0),
-    userId: review?.user?._id ? String(review.user._id) : null,
+    likeCount,
+    likedByUser: false,
+    commentCount: review.replies.length,
     replies: review.replies.map((reply) => ({
       _id: String(reply?._id ?? ""),
-      author: reply.user?.name?.trim() || reply.user?.username?.trim() || "User",
+      user: {
+        id: reply?.user?._id ? String(reply.user._id) : null,
+        name: reply.user?.name?.trim() || reply.user?.username?.trim() || "User",
+        username: reply.user?.username?.trim() || "",
+        imageUrl: reply?.user?.avatar?.trim() || null,
+        isVerified: Boolean(reply?.user?.is_verified),
+      },
       text: typeof reply?.message === "string" ? reply.message.trim() : "",
       date: reply?.createdAt ? new Date(reply.createdAt).toISOString() : "",
-      userId: reply?.user?._id ? String(reply.user._id) : null,
+      likeCount: Number(reply?.likes ?? 0),
+      likedByUser: false,
     })),
   };
 }
@@ -34,8 +51,8 @@ async function loadInsightReviewContext(imdbId) {
     movieImdbId: { $regex: `^${escapeRegex(normalizedImdbId)}$`, $options: "i" },
   })
     .sort({ createdAt: -1 })
-    .populate("user", "name username")
-    .populate("replies.user", "name username")
+    .populate("user", "name username avatar is_verified")
+    .populate("replies.user", "name username avatar is_verified")
     .select("movieImdbId movieTitle message likes createdAt user replies")
     .lean();
 

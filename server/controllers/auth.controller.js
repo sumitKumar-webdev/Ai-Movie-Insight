@@ -40,6 +40,8 @@ function sanitizeUser(user) {
     name: user.name,
     email: user.email,
     username: user.username ?? "",
+    avatar: user.avatar ?? "",
+    isVerified: Boolean(user.is_verified),
     authProvider: Array.isArray(user.authProvider)
       ? user.authProvider
       : user.authProvider

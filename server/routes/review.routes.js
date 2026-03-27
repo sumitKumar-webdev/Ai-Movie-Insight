@@ -7,6 +7,7 @@ import {
   listReplies,
   saveReply,
   listReviews,
+  getReviewShareCard,
   saveReview,
 } from "../controllers/review.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
@@ -14,6 +15,7 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 const router = Router();
 
 router.get("/", listReviews);
+router.get("/:reviewId/share-card", getReviewShareCard);
 router.post("/", requireAuth, saveReview);
 router.patch("/:reviewId", requireAuth, saveReview);
 router.delete("/:reviewId", requireAuth, deleteReview);

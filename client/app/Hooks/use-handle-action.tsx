@@ -3,22 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { logoutUser } from "@/app/store/store";
-
-export type ActionUse =
-  | "edit"
-  | "add"
-  | "delete"
-  | "import"
-  | "export"
-  | "view"
-  | "download";
-
-export type ModalProps = {
-  type: "warning" | "info";
-  actionUse: ActionUse;
-  actionValue: string;
-  data?: Record<string, unknown> | string;
-};
+import { ActionUse, ModalProps } from "@/app/models/action.model";
 
 export const useHandleAction = () => {
   const router = useRouter();
@@ -62,11 +47,12 @@ export const useHandleAction = () => {
         break;
 
       case "modal":
-        if (actionUse === "delete") {
-          setModalProps({ type: "warning", actionUse, actionValue, data });
-        } else if (actionUse === "edit") {
-          setModalProps({ type: "info", actionUse, actionValue, data });
-        }
+        setModalProps({
+          type: actionUse === "delete" ? "warning" : "info",
+          actionUse: actionUse ?? "view",
+          actionValue,
+          data,
+        });
         break;
 
       default:

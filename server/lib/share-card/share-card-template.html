@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #090c0f;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    padding: 0;
+    margin: 0;
+    width: 420px;
+  }
+
+  .card {
+    width: 420px;
+    background: #090c0f;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.07);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(92,224,255,0.5) 40%, rgba(92,224,255,0.18) 70%, transparent 100%);
+    z-index: 2;
+  }
+
+  .poster-block {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+  .poster-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: brightness(0.85) saturate(1.05);
+  }
+  .poster-fade { display: none; }
+  .poster-grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .poster-label {
+    position: absolute;
+    top: 14px; left: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(9,12,15,0.72);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 20px;
+    padding: 4px 10px 4px 7px;
+    z-index: 1;
+  }
+  .poster-label-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #5ce0ff;
+  }
+  .poster-label-text {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.45);
+  }
+
+  .poster-title-area {
+    position: absolute;
+    bottom: 0px;
+    left: 0; right: 0;
+    padding: 60px 20px 18px;
+    background: linear-gradient(to bottom, transparent 0%, rgba(9,12,15,0.65) 50%, #090c0f 100%);
+    z-index: 1;
+  }
+  .movie-meta {
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(92,224,255,0.5);
+    margin-bottom: 6px;
+  }
+  .movie-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 30px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.7);
+  }
+
+  .body { padding: 22px 22px 0; }
+
+  .user-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1a2a3a, #0d1a28);
+    border: 1px solid rgba(92,224,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(92,224,255,0.65);
+    flex-shrink: 0;
+  }
+  .user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.72);
+  }
+  .user-handle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.28);
+    margin-top: 1px;
+  }
+
+  .div {
+    height: 1px;
+    background: rgba(255,255,255,0.055);
+    margin-bottom: 18px;
+  }
+
+  .review-text {
+    font-size: 14.5px;
+    line-height: 1.82;
+    color: rgba(255,255,255,0.68);
+    font-weight: 300;
+    letter-spacing: 0.01em;
+  }
+  .review-text em {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    color: rgba(255,255,255,0.88);
+    font-size: 15.5px;
+  }
+
+  .brand-name {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: rgba(255,255,255,0.18);
+  }
+  .brand-name span { color: rgba(92,224,255,0.35); }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="poster-block">
+    <img class="poster-img" src="{{POSTER_URL}}" alt="Movie poster" />
+    <div class="poster-grain"></div>
+    <div class="poster-label">
+      <div class="poster-label-dot"></div>
+      <span class="poster-label-text">CineAI Review</span>
+    </div>
+    <div class="poster-title-area">
+      <p class="movie-meta">{{MOVIE_TYPE}} &nbsp;·&nbsp; {{MOVIE_YEAR}}</p>
+      <h1 class="movie-title">{{MOVIE_TITLE}}</h1>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="user-row">
+      <div class="user-avatar">{{AVATAR_INITIALS}}</div>
+      <div>
+        <p class="user-name">{{USER_NAME}}</p>
+        <p class="user-handle">@{{USER_HANDLE}} &nbsp;·&nbsp; {{REVIEW_DATE}}</p>
+      </div>
+    </div>
+    <div class="div"></div>
+    <p class="review-text">{{REVIEW_TEXT}}</p>
+  </div>
+</div>
+</body>
+</html>

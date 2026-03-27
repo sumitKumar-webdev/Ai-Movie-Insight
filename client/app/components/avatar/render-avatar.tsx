@@ -29,7 +29,7 @@ export default function RenderAvatar({
           src={imageUrl}
           alt={`${name}'s avatar`}
           fill
-          sizes="(max-width: 640px) 40px, 48px"
+          sizes="(max-width: 640px) 35px, 38px"
           className="object-cover"
           loading="lazy"
         />

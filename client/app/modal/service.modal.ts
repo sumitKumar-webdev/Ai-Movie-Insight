@@ -6,33 +6,66 @@ export type ApiResponse<TData = undefined> = {
   data?: TData;
 };
 
+export type ReviewUser = {
+  id?: string | null;
+  name: string;
+  username?: string;
+  imageUrl?: string | null;
+  isVerified?: boolean;
+};
+
 export type Review = {
   _id?: string;
-  author: string;
-  username?: string;
+  user: ReviewUser;
   text: string;
   date: string;
-  imageUrl?: string | null;
-  likes?: number;
-  liked?: boolean;
-  userId?: string | null;
-  replyCount?: number;
+  likeCount: number;
+  likedByUser?: boolean;
+  commentCount: number;
   replies?: ReviewReply[];
+  movie: {
+    imdbId: string;
+    title: string;
+  };
+  movieYear?: string;
+  movieType?: string;
+  posterUrl?: string;
 };
 
 export type ReviewReply = {
   _id?: string;
-  author: string;
-  username?: string;
+  user: ReviewUser;
   text: string;
   date: string;
-  imageUrl?: string | null;
-  likes?: number;
-  liked?: boolean;
-  userId?: string | null;
+  likeCount: number;
+  likedByUser?: boolean;
   replyToType?: "review" | "reply";
   replyToId?: string;
   replyToUsername?: string;
+};
+
+export type ReviewShareCardPayload = {
+  id: string;
+  user: {
+    id?: string | null;
+    username: string;
+    name: string;
+    imageUrl?: string | null;
+    isVerified?: boolean;
+  };
+  content: {
+    imdbId: string;
+    title: string;
+    posterUrl: string;
+    year: string;
+    type: string;
+    backdropUrl?: string;
+  };
+  text: string;
+  likeCount: number;
+  commentCount: number;
+  likedByUser?: boolean;
+  createdAt: string;
 };
 
 export type RepliesPayload = {

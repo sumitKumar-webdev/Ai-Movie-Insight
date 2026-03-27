@@ -22,6 +22,7 @@ import {
 import { formatLabel } from "@/lib/resuable-component";
 import { Input } from "../ui/input";
 import RenderAvatar from "../avatar/render-avatar";
+import VerifiedBadge from "../verified-badge";
 
 type ReviewRepliesModalProps = {
   open: boolean;
@@ -185,8 +186,9 @@ export default function ReviewRepliesModal({
         reply._id === replyId
           ? {
               ...reply,
-              likes: payload.data?.totalLikes ?? reply.likes ?? 0,
-              liked: payload.data?.liked ?? reply.liked ?? false,
+              likeCount: payload.data?.totalLikes ?? reply.likeCount ?? 0,
+              likedByUser:
+                payload.data?.likedByUser ?? reply.likedByUser ?? false,
             }
           : reply,
       ),
@@ -221,7 +223,7 @@ export default function ReviewRepliesModal({
 
     setReplyTarget({
       replyId: reply._id,
-      username: reply.username?.trim() || reply.author,
+      username: reply.user?.username?.trim() || reply.user?.name || "User",
     });
   };
 
@@ -263,17 +265,18 @@ export default function ReviewRepliesModal({
                 <div className="space-y-2 md:space-y-4">
                   <div className="flex max-w-[75%] items-center gap-3">
                     <RenderAvatar
-                      name={selectedReview.author}
-                      imageUrl={selectedReview.imageUrl}
+                      name={selectedReview.user?.name || "User"}
+                      imageUrl={selectedReview.user?.imageUrl}
                     />
                     <div className="min-w-0 -space-y-1">
                       <div className="flex items-center gap-2">
                         <h4 className="font-semibold text-white text-lg">
-                          {formatLabel(selectedReview.author)}
+                          {formatLabel(selectedReview.user?.name || "User")}
                         </h4>
+                        {selectedReview.user?.isVerified ? <VerifiedBadge className="h-4 w-4 shrink-0" /> : null}
                       </div>
                       <p className="text-sm text-[#A0A0A0]">
-                        @{selectedReview.username}
+                        @{selectedReview.user?.username}
                       </p>
                     </div>
                   </div>
@@ -284,11 +287,11 @@ export default function ReviewRepliesModal({
 
                   <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
                     <Heart className="h-4 w-4" />
-                    <span>{selectedReview.likes ?? 0} likes</span>
+                    <span>{selectedReview.likeCount ?? 0} likes</span>
                     <span className="text-white/25">•</span>
                     <MessageCircle className="h-4 w-4" />
                     <span>
-                      {selectedReview.replyCount ?? replies.length} replies
+                      {selectedReview.commentCount ?? replies.length} replies
                     </span>
                   </div>
                 </div>
@@ -310,7 +313,7 @@ export default function ReviewRepliesModal({
                   <div className="space-y-3">
                     {replies.map((reply) => {
                       const isOwnReply = Boolean(
-                        currentUserId && reply.userId === currentUserId,
+                        currentUserId && reply.user?.id === currentUserId,
                       );
                       const replyDate = reply.date
                         ? new Date(reply.date).toLocaleDateString("en-GB", {
@@ -320,14 +323,15 @@ export default function ReviewRepliesModal({
                         : "Just now";
                       return (
                         <div
-                          key={reply._id ?? `${reply.author}-${reply.date}`}
+                          key={reply._id ?? `${reply.user?.username || reply.user?.name}-${reply.date}`}
+                          
                           className="flex flex-col gap-2"
                         >
                           <div className="flex items-start gap-3">
                             <RenderAvatar
-                              name={reply.username ?? reply.author ?? "User"}
-                              imageUrl={reply.imageUrl}
-                              className="h-5 w-5"
+                              name={reply.user?.username ?? reply.user?.name ?? "User"}
+                              imageUrl={reply.user?.imageUrl}
+                              className="h-8 w-8 md:h-8 md:w-8"
                               initialsClassName="font-medium text-xs md:text-sm"
                             />
 
@@ -336,9 +340,10 @@ export default function ReviewRepliesModal({
                                 <div className="min-w-0 flex-1">
                                   <div className="mb-1 flex items-center">
                                     <p className="truncate text-sm font-semibold text-[#FFFFFF]">
-                                      {reply.username?.trim() ||
-                                        formatLabel(reply.author)}
+                                      {reply.user?.username?.trim() ||
+                                        formatLabel(reply.user?.name || "User")}
                                     </p>
+                                    {reply.user?.isVerified ? <VerifiedBadge className="ml-1 h-3.5 w-3.5 shrink-0" /> : null}
                                   </div>
 
                                   <div className="mb-2 wrap-break-word text-sm leading-4.25 text-[#C6C6C6]">
@@ -362,16 +367,16 @@ export default function ReviewRepliesModal({
                                       }
                                       aria-label="Like reply"
                                       className={`relative flex items-center justify-center gap-1 p-1 transition-transform duration-100 active:scale-95 ${
-                                        reply.liked
+                                        reply.likedByUser
                                           ? "text-rose-500 hover:text-rose-400"
                                           : "text-[#919191] hover:text-white"
                                       }`}
                                     >
                                       <Heart
-                                        className={`h-4 w-4 stroke-current ${reply.liked ? "fill-current" : "fill-none"}`}
+                                        className={`h-4 w-4 stroke-current ${reply.likedByUser ? "fill-current" : "fill-none"}`}
                                         strokeWidth={1.5}
                                       />
-                                      {reply.likes ?? 0}
+                                      {reply.likeCount ?? 0}
                                     </button>
                                     <button
                                       type="button"

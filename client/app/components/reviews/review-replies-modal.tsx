@@ -151,12 +151,7 @@ export default function ReviewRepliesModal({
       setReplyDraft("");
       setReplyTarget(null);
       await refreshReplies();
-      await onReviewMutated();
-      toast({
-        title: "Reply added",
-        description: "Your reply is now part of the conversation.",
-        variant: "success",
-      });
+      onReviewMutated();
     } catch (replyError) {
       setError(
         replyError instanceof Error
@@ -217,11 +212,6 @@ export default function ReviewRepliesModal({
 
     await refreshReplies();
     await onReviewMutated();
-    toast({
-      title: "Reply deleted",
-      description: "The reply was removed successfully.",
-      variant: "success",
-    });
   };
 
   const handleReplyToReply = (reply: ReviewReply) => {
@@ -233,6 +223,17 @@ export default function ReviewRepliesModal({
       replyId: reply._id,
       username: reply.username?.trim() || reply.author,
     });
+  };
+
+  const handleReplyInputKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key !== "Enter" || submitting || !replyDraft.trim()) {
+      return;
+    }
+
+    event.preventDefault();
+    submitReply();
   };
 
   return (
@@ -324,7 +325,7 @@ export default function ReviewRepliesModal({
                         >
                           <div className="flex items-start gap-3">
                             <RenderAvatar
-                              name={reply.username ?? reply.author ?? 'User'}
+                              name={reply.username ?? reply.author ?? "User"}
                               imageUrl={reply.imageUrl}
                               className="h-5 w-5"
                               initialsClassName="font-medium text-xs md:text-sm"
@@ -413,7 +414,9 @@ export default function ReviewRepliesModal({
               <div className="hidden border-t border-white/15 pt-2 shadow-[0_18px_50px_rgba(0,0,0,0.24)] lg:block">
                 {replyTarget ? (
                   <div className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
-                    <span className="truncate">Replying to @{replyTarget.username}</span>
+                    <span className="truncate">
+                      Replying to @{replyTarget.username}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setReplyTarget(null)}
@@ -427,6 +430,7 @@ export default function ReviewRepliesModal({
                   <Input
                     value={replyDraft}
                     onChange={(event) => setReplyDraft(event.target.value)}
+                    onKeyDown={handleReplyInputKeyDown}
                     placeholder={
                       replyTarget
                         ? `Reply to @${replyTarget.username}`
@@ -465,7 +469,9 @@ export default function ReviewRepliesModal({
             <div className="px-4 pt-2 sm:px-6">
               {replyTarget ? (
                 <div className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
-                  <span className="truncate">Replying to @{replyTarget.username}</span>
+                  <span className="truncate">
+                    Replying to @{replyTarget.username}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setReplyTarget(null)}
@@ -479,6 +485,7 @@ export default function ReviewRepliesModal({
                 <Input
                   value={replyDraft}
                   onChange={(event) => setReplyDraft(event.target.value)}
+                  onKeyDown={handleReplyInputKeyDown}
                   placeholder={
                     replyTarget
                       ? `Reply to @${replyTarget.username}`

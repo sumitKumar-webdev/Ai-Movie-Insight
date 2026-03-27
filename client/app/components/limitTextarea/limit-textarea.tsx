@@ -1,14 +1,14 @@
 import React from "react";
 
-type LimitTextareaProps = {
+type LimitTextareaProps = Omit<
+  React.ComponentProps<"textarea">,
+  "onChange" | "value" | "defaultValue"
+> & {
   limit?: number;
   message?: string;
   error?: string;
-  placeholder?: string;
   value?: string;
   onChange?: (value: string) => void;
-  rows?: number;
-  className?: string;
   defaultValue?: string;
 };
 
@@ -22,6 +22,7 @@ const LimitTextarea = ({
   rows = 1,
   className = "",
   defaultValue = "",
+  ...textareaProps
 }: LimitTextareaProps) => {
   const [internalValue, setInternalValue] = React.useState(defaultValue);
   const textareaRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -67,6 +68,7 @@ const LimitTextarea = ({
           value={currentValue}
           onChange={handleChange}
           maxLength={limit}
+          {...textareaProps}
           className={`min-h-15 w-full resize-none overflow-hidden border-none bg-transparent p-0 pr-16 text-xs text-white outline-none sm:text-sm md:text-base ${className}`}
         />
         <div className="absolute right-0 bottom-0 text-[10px] text-[#6B7280] sm:text-xs">

@@ -14,6 +14,20 @@ const replySchema = new Schema(
       required: true,
       trim: true,
     },
+    replyToType: {
+      type: String,
+      enum: ["review", "reply"],
+      default: "review",
+    },
+    replyToReplyId: {
+      type: Schema.Types.ObjectId,
+      default: null,
+    },
+    replyToUsername: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     likes: {
       type: Number,
       default: 0,

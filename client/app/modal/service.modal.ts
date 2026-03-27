@@ -28,7 +28,11 @@ export type ReviewReply = {
   date: string;
   imageUrl?: string | null;
   likes?: number;
+  liked?: boolean;
   userId?: string | null;
+  replyToType?: "review" | "reply";
+  replyToId?: string;
+  replyToUsername?: string;
 };
 
 export type RepliesPayload = {

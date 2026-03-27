@@ -14,12 +14,12 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import { toast } from "@/app/Hooks/use-toast";
 import { Review, ReviewReply } from "@/app/modal/service.modal";
 import {
-  addReviewReply,
   deleteReviewReply,
   getReviewReplies,
   likeReviewReply,
+  saveReviewReply,
 } from "@/app/services/movie.service";
-import { formatLabel, getInitials } from "@/lib/resuable-component";
+import { formatLabel } from "@/lib/resuable-component";
 import { Input } from "../ui/input";
 import RenderAvatar from "../avatar/render-avatar";
 
@@ -31,6 +31,11 @@ type ReviewRepliesModalProps = {
   currentUserId: string;
   onUnauthorized: () => void;
   onReviewMutated: () => void;
+};
+
+type ReplyTarget = {
+  replyId: string;
+  username: string;
 };
 
 export default function ReviewRepliesModal({
@@ -48,10 +53,17 @@ export default function ReviewRepliesModal({
   const [error, setError] = useState("");
   const [selectedReview, setSelectedReview] = useState<Review | null>(review);
   const [replies, setReplies] = useState<ReviewReply[]>([]);
+  const [replyTarget, setReplyTarget] = useState<ReplyTarget | null>(null);
 
   useEffect(() => {
     setSelectedReview(review);
   }, [review]);
+
+  useEffect(() => {
+    if (!open) {
+      setReplyTarget(null);
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open || !reviewId) {
@@ -122,7 +134,9 @@ export default function ReviewRepliesModal({
       setSubmitting(true);
       setError("");
 
-      const payload = await addReviewReply(reviewId, replyDraft.trim());
+      const payload = await saveReviewReply(reviewId, replyDraft.trim(), {
+        replyToReplyId: replyTarget?.replyId,
+      });
 
       if (payload.status === 401) {
         onUnauthorized();
@@ -135,6 +149,7 @@ export default function ReviewRepliesModal({
       }
 
       setReplyDraft("");
+      setReplyTarget(null);
       await refreshReplies();
       await onReviewMutated();
       toast({
@@ -170,7 +185,17 @@ export default function ReviewRepliesModal({
       return;
     }
 
-    await refreshReplies();
+    setReplies((currentReplies) =>
+      currentReplies.map((reply) =>
+        reply._id === replyId
+          ? {
+              ...reply,
+              likes: payload.data?.totalLikes ?? reply.likes ?? 0,
+              liked: payload.data?.liked ?? reply.liked ?? false,
+            }
+          : reply,
+      ),
+    );
   };
 
   const handleReplyDelete = async (replyId: string) => {
@@ -196,6 +221,17 @@ export default function ReviewRepliesModal({
       title: "Reply deleted",
       description: "The reply was removed successfully.",
       variant: "success",
+    });
+  };
+
+  const handleReplyToReply = (reply: ReviewReply) => {
+    if (!reply._id) {
+      return;
+    }
+
+    setReplyTarget({
+      replyId: reply._id,
+      username: reply.username?.trim() || reply.author,
     });
   };
 
@@ -262,10 +298,10 @@ export default function ReviewRepliesModal({
               <div className="min-h-0 flex-1 home-search-scroll pr-0 lg:overflow-y-auto lg:overscroll-contain sm:pr-1">
                 {loading ? (
                   <div className="space-y-3">
-                    {[1, 2, 3].map((item) => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
                       <Skeleton
                         key={item}
-                        className="h-28 rounded-3xl bg-white/10"
+                        className="h-10 rounded-xl bg-white/10"
                       />
                     ))}
                   </div>
@@ -288,7 +324,7 @@ export default function ReviewRepliesModal({
                         >
                           <div className="flex items-start gap-3">
                             <RenderAvatar
-                              name={reply.author}
+                              name={reply.username ?? reply.author ?? 'User'}
                               imageUrl={reply.imageUrl}
                               className="h-5 w-5"
                               initialsClassName="font-medium text-xs md:text-sm"
@@ -305,6 +341,11 @@ export default function ReviewRepliesModal({
                                   </div>
 
                                   <div className="mb-2 wrap-break-word text-sm leading-4.25 text-[#C6C6C6]">
+                                    {Boolean(reply.replyToUsername) && (
+                                      <span className="mr-1 font-medium text-blue-400">
+                                        @{reply.replyToUsername}
+                                      </span>
+                                    )}
                                     <span>{reply.text}</span>
                                   </div>
 
@@ -319,13 +360,24 @@ export default function ReviewRepliesModal({
                                         void handleReplyLike(reply._id)
                                       }
                                       aria-label="Like reply"
-                                      className="relative flex items-center justify-center p-1 text-[#919191] transition-transform duration-100 hover:text-white active:scale-95 gap-1"
+                                      className={`relative flex items-center justify-center gap-1 p-1 transition-transform duration-100 active:scale-95 ${
+                                        reply.liked
+                                          ? "text-rose-500 hover:text-rose-400"
+                                          : "text-[#919191] hover:text-white"
+                                      }`}
                                     >
                                       <Heart
-                                        className="h-4 w-4 fill-none stroke-current"
+                                        className={`h-4 w-4 stroke-current ${reply.liked ? "fill-current" : "fill-none"}`}
                                         strokeWidth={1.5}
                                       />
                                       {reply.likes ?? 0}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleReplyToReply(reply)}
+                                      className="p-1 text-[13px] font-medium text-[#919191] transition hover:text-white"
+                                    >
+                                      Reply
                                     </button>
                                   </div>
                                 </div>
@@ -359,11 +411,27 @@ export default function ReviewRepliesModal({
                 )}
               </div>
               <div className="hidden border-t border-white/15 pt-2 shadow-[0_18px_50px_rgba(0,0,0,0.24)] lg:block">
+                {replyTarget ? (
+                  <div className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
+                    <span className="truncate">Replying to @{replyTarget.username}</span>
+                    <button
+                      type="button"
+                      onClick={() => setReplyTarget(null)}
+                      className="shrink-0 text-xs text-white/55 transition hover:text-white"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : null}
                 <div className="mb-2 flex items-center gap-2 pt-1">
                   <Input
                     value={replyDraft}
                     onChange={(event) => setReplyDraft(event.target.value)}
-                    placeholder="Share your take on this review..."
+                    placeholder={
+                      replyTarget
+                        ? `Reply to @${replyTarget.username}`
+                        : "Share your take on this review..."
+                    }
                     className="min-h-11 flex-1 border-white/12 bg-[#10161f] text-white placeholder:text-white/35"
                   />
                   <Button
@@ -395,11 +463,27 @@ export default function ReviewRepliesModal({
 
           <div className="sticky bottom-0 z-10 border-t border-white/15 bg-black/85 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,0.24)] lg:hidden">
             <div className="px-4 pt-2 sm:px-6">
+              {replyTarget ? (
+                <div className="mb-2 flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/70">
+                  <span className="truncate">Replying to @{replyTarget.username}</span>
+                  <button
+                    type="button"
+                    onClick={() => setReplyTarget(null)}
+                    className="shrink-0 text-xs text-white/55 transition hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : null}
               <div className="mb-2 flex items-center gap-2 pt-1">
                 <Input
                   value={replyDraft}
                   onChange={(event) => setReplyDraft(event.target.value)}
-                  placeholder="Share your take on this review..."
+                  placeholder={
+                    replyTarget
+                      ? `Reply to @${replyTarget.username}`
+                      : "Share your take on this review..."
+                  }
                   className="min-h-11 flex-1 border-white/12 bg-[#10161f] text-white placeholder:text-white/35"
                 />
                 <Button

@@ -1,11 +1,24 @@
 import { errorRes, successRes } from "../lib/res.js";
+import { getStoredMovieAiInsight } from "./movie-insight.controller.js";
 import Review from "../models/Review.js";
 
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function formatReply(reply) {
+function resolveUserId(user) {
+  return user?._id ? String(user._id) : user ? String(user) : null;
+}
+
+function formatReply(reply, options = {}) {
+  const reviewId = String(options.reviewId ?? "");
+  const reviewUsername = options.reviewUsername?.trim() || "";
+  const replyToType = reply?.replyToType === "reply" ? "reply" : "review";
+  const replyToId =
+    replyToType === "reply" && reply?.replyToReplyId
+      ? String(reply.replyToReplyId)
+      : reviewId;
+
   return {
     _id: String(reply?._id ?? ""),
     author: reply?.user.name,
@@ -13,35 +26,36 @@ function formatReply(reply) {
     text: typeof reply?.message === "string" ? reply.message.trim() : "",
     date: reply?.createdAt ? new Date(reply.createdAt).toISOString() : "",
     likes: Number(reply?.likes ?? 0),
-    userId: reply?.user?._id ? String(reply.user._id) : null,
+    userId: resolveUserId(reply?.user),
+    replyToType,
+    replyToId,
+    replyToUsername: reply?.replyToUsername?.trim() || reviewUsername,
   };
 }
 
 function formatReview(review, options = {}) {
-  const text =
-    typeof review?.message === "string" && review.message.trim() ? review.message.trim() : "";
-  const author =
-    typeof review?.user?.name === "string" && review.user.name.trim()
-        ? review.user.name.trim()
-      : typeof review?.user?.username === "string" && review.user.username.trim()
-        ? review.user.username.trim()
-        : "User";
   const includeReplies = options.includeReplies === true;
   const replies = Array.isArray(review?.replies) ? review.replies : [];
 
   return {
     _id: String(review?._id ?? ""),
-    author,
+    author: review.user?.name?.trim() || review.user?.username?.trim() || "User",
     username: review?.user.username,
-    text,
+    text: typeof review?.message === "string" ? review.message.trim() : "",
     date: review?.createdAt ? new Date(review.createdAt).toISOString() : "",
     imageUrl: null,
     likes: Number(review?.likes ?? 0),
-    userId: review?.user?._id ? String(review.user._id) : null,
+    userId: resolveUserId(review?.user),
     movieImdbId: review?.movieImdbId ?? "",
     movieTitle: review?.movieTitle ?? "",
     replyCount: replies.length,
-    replies: includeReplies ? replies.map(formatReply) : [],
+    replies: includeReplies
+      ? replies.map((reply) =>
+        formatReply(reply, {
+          reviewId: review?._id,
+          reviewUsername: review?.user?.username,
+        }))
+      : [],
   };
 }
 
@@ -101,6 +115,13 @@ export async function saveReview(req, res) {
 
       if (movieTitle) review.movieTitle = movieTitle;
       await review.save();
+
+      await getStoredMovieAiInsight(review.movieImdbId, review.movieTitle, {
+        forceRefresh: true,
+      }).catch((error) => {
+        console.error("[review:sync-insight:update]", error);
+      });
+
       const formattedReview = await findFormattedReviewById(review._id);
 
       return successRes(res, 200, "Review saved successfully", {
@@ -129,6 +150,10 @@ export async function saveReview(req, res) {
       likes: 0,
       likedBy: [],
       replies: [],
+    });
+
+    await getStoredMovieAiInsight(movieImdbId, movieTitle).catch((error) => {
+      console.error("[review:sync-insight:create]", error);
     });
 
     const formattedReview = await findFormattedReviewById(review._id);
@@ -164,7 +189,15 @@ export async function deleteReview(req, res) {
       return errorRes(res, 403, "You can only delete your own review");
     }
 
+    const deletedMovieImdbId = review.movieImdbId;
+    const deletedMovieTitle = review.movieTitle;
     await review.deleteOne();
+
+    await getStoredMovieAiInsight(deletedMovieImdbId, deletedMovieTitle, {
+      forceRefresh: true,
+    }).catch((error) => {
+      console.error("[review:sync-insight:delete]", error);
+    });
 
     return successRes(res, 200, "Review deleted successfully", {
       deleted: true,
@@ -194,13 +227,13 @@ export async function likeReview(req, res) {
 
     const update = hasLiked
       ? {
-          $pull: { likedBy: req.auth.userId },
-          $inc: { likes: -1 },
-        }
+        $pull: { likedBy: req.auth.userId },
+        $inc: { likes: -1 },
+      }
       : {
-          $addToSet: { likedBy: req.auth.userId },
-          $inc: { likes: 1 },
-        };
+        $addToSet: { likedBy: req.auth.userId },
+        $inc: { likes: 1 },
+      };
 
     await Review.updateOne(
       { _id: reviewId },
@@ -223,10 +256,15 @@ export async function likeReview(req, res) {
   }
 }
 
-export async function addReply(req, res) {
+// replies
+
+export async function saveReply(req, res) {
   try {
     const reviewId = typeof req.params?.reviewId === "string" ? req.params.reviewId.trim() : "";
+    const replyId = typeof req.params?.replyId === "string" ? req.params.replyId.trim() : "";
     const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
+    const replyToReplyId =
+      typeof req.body?.replyToReplyId === "string" ? req.body.replyToReplyId.trim() : "";
 
     if (!reviewId) {
       return errorRes(res, 400, "reviewId is required");
@@ -236,51 +274,39 @@ export async function addReply(req, res) {
       return errorRes(res, 400, "message is required");
     }
 
-    const review = await Review.findById(reviewId);
+    const review = await Review.findById(reviewId)
+      .populate("user", "name username")
+      .populate("replies.user", "name username");
     if (!review) {
       return errorRes(res, 404, "Review not found");
     }
 
-    review.replies.push({
-      user: req.auth.userId,
-      message,
-      likes: 0,
-      likedBy: [],
-    });
-    await review.save();
+    if (!replyId) {
+      const replyTarget = replyToReplyId ? review.replies.id(replyToReplyId) : null;
 
-    const populatedReview = await Review.findById(reviewId)
-      .populate("replies.user", "name username")
-      .lean();
-    const latestReply = populatedReview?.replies?.[populatedReview.replies.length - 1];
+      review.replies.push({
+        user: req.auth.userId,
+        message,
+        replyToType: replyTarget ? "reply" : "review",
+        replyToReplyId: replyTarget?._id ?? null,
+        replyToUsername:
+          replyTarget?.user?.username?.trim()
+          || review.user?.username?.trim()
+          || review.user?.name?.trim()
+          || "",
+        likes: 0,
+        likedBy: [],
+      });
+      await review.save();
 
-    return successRes(res, 200, "Reply added successfully", {
-      reply: latestReply ? formatReply(latestReply) : null,
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Failed to reply to review";
-    return errorRes(res, 500, message);
-  }
-}
+      const populatedReview = await Review.findById(reviewId)
+        .populate("replies.user", "name username")
+        .lean();
+      const latestReply = populatedReview?.replies?.[populatedReview.replies.length - 1];
 
-export async function saveReply(req, res) {
-  try {
-    const reviewId = typeof req.params?.reviewId === "string" ? req.params.reviewId.trim() : "";
-    const replyId = typeof req.params?.replyId === "string" ? req.params.replyId.trim() : "";
-    const message = typeof req.body?.message === "string" ? req.body.message.trim() : "";
-
-    if (!reviewId || !replyId) {
-      return errorRes(res, 400, "reviewId and replyId are required");
-    }
-
-    if (!message) {
-      return errorRes(res, 400, "message is required");
-    }
-
-    const review = await Review.findById(reviewId);
-    if (!review) {
-      return errorRes(res, 404, "Review not found");
+      return successRes(res, 200, "Reply added successfully", {
+        reply: latestReply ? formatReply(latestReply) : null,
+      });
     }
 
     const reply = review.replies.id(replyId);
@@ -288,7 +314,7 @@ export async function saveReply(req, res) {
       return errorRes(res, 404, "Reply not found");
     }
 
-    if (String(reply.user) !== String(req.auth.userId)) {
+    if (resolveUserId(reply.user) !== String(req.auth.userId)) {
       return errorRes(res, 403, "You can only edit your own reply");
     }
 

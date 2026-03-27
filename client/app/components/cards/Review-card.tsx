@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { cn } from "@/lib/utils";
-import { formatLabel } from "@/lib/resuable-component";
 import { Review } from "@/app/modal/service.modal";
 import {
   DropdownMenu,
@@ -23,7 +22,6 @@ import RenderAvatar from "../avatar/render-avatar";
 type ReviewCardProps = {
   review: Review;
   isOwnReview?: boolean;
-  highlightAsOwner?: boolean;
   menuLabel?: string;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -36,7 +34,6 @@ type ReviewCardProps = {
 export default function ReviewCard({
   review,
   isOwnReview = false,
-  highlightAsOwner = false,
   menuLabel = "Open review actions",
   onEdit,
   onDelete,
@@ -70,14 +67,14 @@ export default function ReviewCard({
     <Card
       className={cn(
         "w-full border-0 border-b border-[#252833] bg-transparent text-white shadow-none rounded-none",
-        highlightAsOwner && "border-b-cyan-400/30",
+        isOwnReview && "border-cyan-400 border-b-2",
         className,
       )}
     >
       <CardContent className="flex flex-col gap-5 px-0 py-5">
         <div className="flex w-full items-center justify-between gap-4">
           <div className="flex max-w-[75%] items-center gap-3">
-            <RenderAvatar name={review.author} imageUrl={review.imageUrl} />
+            <RenderAvatar name={review.username ?? review.author ?? 'User'} imageUrl={review.imageUrl} />
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-1.5 text-sm text-[#E2E2E2] md:text-base">
                 <p className="truncate font-semibold hover:text-white">

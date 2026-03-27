@@ -9,7 +9,7 @@ import {
 } from "@/app/components/ui/card";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Button } from "@/app/components/ui/button";
-import { Textarea } from "@/app/components/ui/textarea";
+import LimitTextarea from "@/app/components/limitTextarea/limit-textarea";
 import ReviewRepliesModal from "@/app/components/reviews/review-replies-modal";
 import DeleteConfirmModal from "@/app/modal/delete-confirm-modal";
 import { authenticatedFetch } from "@/app/services/api-client";
@@ -339,16 +339,18 @@ export default function ReviewsSection({
                 the AI insight.
               </p>
 
-              <Textarea
+              <LimitTextarea
+                limit={500}
                 value={reviewInput}
-                onChange={(event) => setReviewInput(event.target.value)}
+                onChange={setReviewInput}
                 onFocus={() => {
                   if (!currentUserId) {
                     onUnauthorized();
                   }
                 }}
                 placeholder="Write your review about this movie..."
-                className="min-h-32 resize-y border-white/12 bg-black/25 px-4 py-3 text-white placeholder:text-white/35 focus-visible:border-cyan-300/30 focus-visible:ring-cyan-300/10"
+                rows={5}
+                className="min-h-32 rounded-md bg-black/25 px-4 py-3 text-white placeholder:text-white/35"
                 readOnly={!currentUserId}
               />
 

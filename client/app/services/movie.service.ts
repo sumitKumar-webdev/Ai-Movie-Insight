@@ -119,38 +119,26 @@ export async function getReviewReplies(
   };
 }
 
-export async function addReviewReply(
+export async function saveReviewReply(
   reviewId: string,
   message: string,
+  options: {
+    replyId?: string;
+    replyToReplyId?: string;
+  } = {},
 ): Promise<{ ok: boolean; status: number; message?: string }> {
-  const response = await authenticatedFetch(`/api/reviews/${reviewId}/replies`, {
-    method: "POST",
+  const endpoint = options.replyId
+    ? `/api/reviews/${reviewId}/replies/${options.replyId}`
+    : `/api/reviews/${reviewId}/replies`;
+  const response = await authenticatedFetch(endpoint, {
+    method: options.replyId ? "PATCH" : "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ message }),
-  });
-
-  const payload = (await response.json()) as ApiResponse;
-
-  return {
-    ok: response.ok,
-    status: response.status,
-    message: payload.message,
-  };
-}
-
-export async function updateReviewReply(
-  reviewId: string,
-  replyId: string,
-  message: string,
-): Promise<{ ok: boolean; status: number; message?: string }> {
-  const response = await authenticatedFetch(`/api/reviews/${reviewId}/replies/${replyId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({
+      message,
+      replyToReplyId: options.replyToReplyId,
+    }),
   });
 
   const payload = (await response.json()) as ApiResponse;
@@ -165,7 +153,12 @@ export async function updateReviewReply(
 export async function likeReviewReply(
   reviewId: string,
   replyId: string,
-): Promise<{ ok: boolean; status: number; message?: string }> {
+): Promise<{
+  ok: boolean;
+  status: number;
+  message?: string;
+  data?: { totalLikes?: number; liked?: boolean };
+}> {
   const response = await authenticatedFetch(
     `/api/reviews/${reviewId}/replies/${replyId}/likes`,
     {
@@ -179,6 +172,7 @@ export async function likeReviewReply(
     ok: response.ok,
     status: response.status,
     message: payload.message,
+    data: payload.data,
   };
 }
 

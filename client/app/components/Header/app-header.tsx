@@ -3,19 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleHelp, LogOut, Search, User, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import BrandWordmark from "@/app/components/brand/wordmark";
-import RenderAvatar from "@/app/components/avatar/render-avatar";
-import VerifiedBadge from "@/app/components/verified-badge";
-import { logoutUser, useAuthStore } from "@/app/store/store";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
 import { Input } from "@/app/components/ui/input";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
 import MovieResultCardSkeleton from "@/app/components/skeleton-loader/movie-result-card-skeleton";
@@ -23,6 +12,7 @@ import useDebounce from "@/app/Hooks/use-debounce";
 import { searchMovies } from "@/app/services/movie.service";
 import { MovieSearchItem } from "@/app/modal/service.modal";
 import { startRouteProgress } from "@/app/components/ui/route-progress";
+import HeaderProfileMenu from "@/app/components/Header/header-profile-menu";
 
 type SearchSuggestionsProps = {
   loading: boolean;
@@ -125,7 +115,6 @@ function SearchInputShell({
 export default function AppHeader() {
   const router = useRouter();
   const pathname = usePathname();
-  const [loggingOut, setLoggingOut] = useState(false);
   const desktopContainerRef = useRef<HTMLDivElement | null>(null);
   const mobileContainerRef = useRef<HTMLDivElement | null>(null);
   const desktopInputRef = useRef<HTMLInputElement | null>(null);
@@ -137,9 +126,6 @@ export default function AppHeader() {
   const [desktopSearchFocused, setDesktopSearchFocused] = useState(false);
   const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const authStatus = useAuthStore((auth) => auth.status);
-  const user = useAuthStore((auth) => auth.user);
-
 
   const normalizedQuery = useMemo(() => query.trim(), [query]);
   const debouncedQuery = useDebounce(normalizedQuery, 400);
@@ -193,17 +179,6 @@ export default function AppHeader() {
 
   const navigateTo = (href: string) => {
     router.push(href);
-  };
-
-  const handleLogout = async () => {
-    try {
-      setLoggingOut(true);
-      await logoutUser();
-      navigateTo("/");
-      router.refresh();
-    } finally {
-      setLoggingOut(false);
-    }
   };
 
   const navigateToMovie = (imdbId: string) => {
@@ -344,71 +319,11 @@ export default function AppHeader() {
               )}
             </button>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Open profile menu"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
-                >
-                  {authStatus === "authenticated" && user ? (
-                    <RenderAvatar
-                      name={user.name || user.username || "User"}
-                      imageUrl={user.avatar}
-                      className="h-8 w-8 md:h-9 md:w-9"
-                      initialsClassName="text-xs"
-                    />
-                  ) : (
-                    <User className="h-5 w-5" />
-                  )}
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="w-44 z-230">
-                {authStatus === "authenticated" && user ? (
-                  <>
-                    <DropdownMenuLabel className="min-w-0 text-xs text-white/65">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate">{user.name}</span>
-                        {user.isVerified ? (
-                          <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />
-                        ) : null}
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onSelect={() => navigateTo("/profile")}
-                      className="gap-2"
-                    >
-                      <User className="h-4 w-4" />
-                      Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => navigateTo("/support")}
-                      className="gap-2"
-                    >
-                      <CircleHelp className="h-4 w-4" />
-                      Support
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => void handleLogout()}
-                      disabled={loggingOut}
-                      className="gap-2"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {loggingOut ? "Logging out..." : "Logout"}
-                    </DropdownMenuItem>
-                  </>
-                ) : (
-                  <DropdownMenuItem
-                    onSelect={() => navigateTo("/auth/login")}
-                    className="cursor-pointer rounded-md px-3 py-2 text-sm text-white hover:bg-gray-700"
-                  >
-                    Login
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <HeaderProfileMenu
+              triggerClassName="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+              avatarClassName="h-8 w-8 md:h-9 md:w-9"
+              menuClassName="z-230 w-44"
+            />
           </div>
         </div>
 

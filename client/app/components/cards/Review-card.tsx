@@ -1,7 +1,7 @@
 "use client";
 import { Heart, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/app/components/ui/card";
-import CompactCount from "@/app/components/ui/compact-count";
+import CompactCount, { formatCompactCount } from "@/app/components/ui/compact-count";
 import { cn } from "@/lib/utils";
 import { Review } from "@/app/modal/service.modal";
 import ExpandableText from "../ExpandableText/ExpandableText";
@@ -49,6 +49,7 @@ export default function ReviewCard({
         : 0;
   const reviewText = typeof review.text === "string" ? review.text.trim() : "";
   const resolvedMenuActions = menuActions ?? [];
+  const replyCountLabel = formatCompactCount(totalReplies);
 
   const triggerAction = (item?: ActionItem | null) => {
     if (!item) return;
@@ -154,9 +155,8 @@ export default function ReviewCard({
               onClick={() => triggerAction(replyCountAction ?? repliesAction)}
               className="cursor-pointer"
             >
-              <span className="reply-count-shimmer text-sm text-bold">
-                <CompactCount value={totalReplies} />{" "}
-                {totalReplies === 1 ? "reply" : "replies"}
+              <span className="reply-count-shimmer text-sm font-semibold">
+                {replyCountLabel} {totalReplies === 1 ? "reply" : "replies"}
               </span>
             </button>
           )}

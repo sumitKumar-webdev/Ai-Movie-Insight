@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Download, Loader2, Share2 } from "lucide-react";
 import {
   Dialog,
@@ -152,7 +152,7 @@ export default function ReviewShareModal({
     };
   }, [open, review]);
 
-  const fileName = buildReviewShareCardFileName(review);
+  const fileName = useMemo(() => buildReviewShareCardFileName(review), [review]);
 
   const handleDownload = async () => {
     if (!review) {
@@ -171,6 +171,7 @@ export default function ReviewShareModal({
       anchor.click();
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      onOpenChange(false);
     } catch (downloadError) {
       setError(
         downloadError instanceof Error
@@ -223,8 +224,8 @@ export default function ReviewShareModal({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        contentWrapperClassName="overflow-hidden p-2 sm:p-4"
-        className="w-[min(100vw-1rem,460px)] max-w-[460px] overflow-hidden rounded-3xl! border border-white/8 bg-[#121212] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.62)] sm:rounded-[30px]"
+        contentWrapperClassName="overflow-hidden p-1.5 sm:p-4"
+        className="w-[min(100vw-0.75rem,420px)] max-w-[420px] overflow-hidden rounded-xl! border border-white/8 bg-[#121212] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.62)] sm:w-[min(100vw-1rem,460px)] sm:max-w-[460px] sm:rounded-[30px]"
       >
         <DialogHeader className="border-b border-white/8 bg-[#141414] px-4 py-3.5 text-left sm:px-5 sm:py-4">
           <DialogTitle className="text-[1rem] leading-none font-semibold sm:text-[1.1rem]">
@@ -236,9 +237,9 @@ export default function ReviewShareModal({
         </DialogHeader>
 
         <div className="bg-[#101010] px-3 py-2 sm:px-4 sm:py-3">
-          <div className="overflow-hidden rounded-lg! border border-[#2a2f3d] bg-[#0c0c0c] p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] sm:rounded-[24px] sm:p-3">
+          <div className="overflow-hidden rounded-lg! border border-[#2a2f3d] bg-[#0c0c0c] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] sm:rounded-[24px] sm:p-3">
           {loading || previewLoading ? (
-            <div className="flex h-[62vh] w-full flex-col items-center justify-center gap-3 rounded-[18px] border border-dashed border-white/8 bg-[#151515] text-center">
+            <div className="flex h-[52vh] w-full flex-col items-center justify-center gap-3 rounded-[18px] border border-dashed border-white/8 bg-[#151515] text-center sm:h-[62vh]">
               <Loader2 className="h-7 w-7 animate-spin text-white/70" />
               <div className="space-y-1">
                 <p className="text-sm font-medium text-white/86">Generating preview…</p>
@@ -252,10 +253,10 @@ export default function ReviewShareModal({
             <img
               src={previewUrl}
               alt="Review preview"
-              className="h-auto max-h-[62vh] w-full bg-[#0b0b0b] object-contain"
+              className="h-auto max-h-[52vh] w-full bg-[#0b0b0b] object-contain sm:max-h-[62vh]"
             />
           ) : (
-            <div className="flex h-[62vh] w-full items-center justify-center rounded-[18px] border border-rose-400/15 bg-[#171112] px-6 text-center text-sm text-rose-200">
+            <div className="flex h-[52vh] w-full items-center justify-center rounded-[18px] border border-rose-400/15 bg-[#171112] px-6 text-center text-sm text-rose-200 sm:h-[62vh]">
               {error || "Unable to load preview"}
             </div>
           )}

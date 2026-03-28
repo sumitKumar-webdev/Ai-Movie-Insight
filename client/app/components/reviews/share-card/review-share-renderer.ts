@@ -238,12 +238,12 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   const reviewText = (review.text?.trim() || "").slice(0, 1050);
   const posterHeight = Math.round(SHARE_CARD_HEIGHT * 0.55);
   const reviewFont = "400 38px sans-serif";
-  const reviewLineHeight = 46;
+  const reviewLineHeight = 58;        // was 46 — more breathing room between lines
   const reviewMaxWidth = SHARE_CARD_WIDTH - 96;
-  const dividerToTextGap = 34;
+  const dividerToTextGap = 52;        // was 34 — more space after divider
   const minFooterRuleY = 1652;
   const maxFooterRuleY = 1840;
-  const footerTextOffset = 48;
+  const footerTextOffset = 56;        // was 48 — more space below footer rule
 
   context.fillStyle = "#06080b";
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -316,11 +316,11 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   const movieYear = (review.content?.year?.trim() || "Unknown").toUpperCase();
   context.font = "600 28px sans-serif";
   context.fillStyle = "rgba(92,224,255,0.56)";
-  context.fillText(`${movieType} • ${movieYear}`, 48, 888);
+  context.fillText(`${movieType} • ${movieYear}`, 48, 900); // was 888
 
   drawMultilineText(context, review.content?.title?.trim() || "Untitled", {
     x: 48,
-    y: 975,
+    y: 990,                           // was 975
     maxWidth: 780,
     maxLines: 3,
     lineHeight: 98,
@@ -333,9 +333,9 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   context.font = "700 96px serif";
   const titleLines = fitTextToWidth(context, titleText, 780, 3);
   context.restore();
-  const titleBottomY = 942 + (Math.max(titleLines.length, 1) - 1) * 94 + 18;
-  const avatarGapFromTitle = 70;
-  const dividerGapFromAvatar = 18;
+  const titleBottomY = 990 + (Math.max(titleLines.length, 1) - 1) * 94 + 18; // was 942
+  const avatarGapFromTitle = 80;      // was 70
+  const dividerGapFromAvatar = 24;    // was 18
   const baseDividerY = titleBottomY + avatarGapFromTitle + 88 + dividerGapFromAvatar;
 
   context.font = reviewFont;
@@ -400,8 +400,8 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
     context.textBaseline = "alphabetic";
   }
 
-  const nameX = avatarX + avatarSize + 18;
-  const nameY = avatarY + 39;
+  const nameX = avatarX + avatarSize + 22;  // was 18
+  const nameY = avatarY + 42;               // was 39
   const userName = review.user?.name?.trim() || "Anonymous";
 
   context.font = "700 38px sans-serif";
@@ -424,7 +424,7 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
       })
     : "Today";
   const userMeta = `@${review.user?.username?.trim() || "cineai_user"} • ${reviewDate}`;
-  context.fillText(userMeta, nameX, avatarY + 78);
+  context.fillText(userMeta, nameX, avatarY + 84); // was 78
 
   context.fillStyle = "rgba(255,255,255,0.065)";
   context.fillRect(48, dividerY, SHARE_CARD_WIDTH - 96, 2);

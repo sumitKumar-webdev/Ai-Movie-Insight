@@ -77,7 +77,8 @@ export type PersonCredit = {
   id: string;
   name: string;
   imageUrl: string | null;
-  professions: string[];
+  roles: string[];
+  characters: string[];
 };
 
 export type MovieDetails = {
@@ -133,6 +134,12 @@ export type ImdbApiPerson = {
   primaryProfessions?: string[];
 };
 
+export type ImdbApiCredit = {
+  category?: string;
+  characters?: string[];
+  name?: ImdbApiPerson;
+};
+
 export type ImdbApiTitleResponse = {
   id?: string;
   type?: string;
@@ -146,6 +153,7 @@ export type ImdbApiTitleResponse = {
   directors?: ImdbApiPerson[];
   writers?: ImdbApiPerson[];
   stars?: ImdbApiPerson[];
+  credits?: ImdbApiCredit[];
   originCountries?: Array<{ name?: string }>;
   spokenLanguages?: Array<{ name?: string }>;
 };

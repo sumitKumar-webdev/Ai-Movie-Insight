@@ -3,6 +3,11 @@ import { formatLabel, getInitials } from "@/lib/resuable-component";
 import Image from "next/image";
 
 export const CreditCard = ({ person }: { person: PersonCredit }) => {
+  const formattedCharacters = person.characters.map(formatLabel).join(", ");
+  const formattedRoles = person.roles.map(formatLabel).join(", ");
+  const subtitle =
+    formattedCharacters || formattedRoles || "Contributor";
+
   return (
     <div className="w-37.5 shrink-0 rounded-2xl p-3 text-center">
       {person.imageUrl ? (
@@ -23,7 +28,7 @@ export const CreditCard = ({ person }: { person: PersonCredit }) => {
           {person.name}
         </p>
         <p className="mt-1 line-clamp-2 text-xs md:text-sm text-white/60">
-          {person.professions.map(formatLabel).join(", ") || "Contributor"}
+          {subtitle}
         </p>
       </div>
     </div>

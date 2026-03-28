@@ -33,6 +33,12 @@ export async function fetchImdbTitleVideos(imdbId) {
     ).catch(() => null);
 }
 
+export async function fetchImdbTitleCredits(imdbId) {
+    return fetchJson(
+        `${IMDB_API_BASE_URL}/titles/${encodeURIComponent(imdbId)}/credits`,
+    ).catch(() => null);
+}
+
 export async function fetchImdbTitleReleaseDates(imdbId) {
     const collectedReleaseDates = [];
     let pageToken = "";

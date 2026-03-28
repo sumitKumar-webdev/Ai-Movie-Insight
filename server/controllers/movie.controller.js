@@ -1,4 +1,10 @@
-import { fetchImdbTitleById, fetchImdbTitleReleaseDates, fetchImdbTitleVideos, searchMoviesByQuery } from "../lib/movie.js";
+import {
+  fetchImdbTitleById,
+  fetchImdbTitleCredits,
+  fetchImdbTitleReleaseDates,
+  fetchImdbTitleVideos,
+  searchMoviesByQuery,
+} from "../lib/movie.js";
 import { chatWithMovieAssistant } from "../lib/openai.js";
 import { getStoredMovieAiInsight } from "./movie-insight.controller.js";
 
@@ -134,7 +140,7 @@ function joinNames(items) {
   return value || "Unknown";
 }
 
-function uniquePeople(people) {
+function uniquePeople(people, fallbackRoles = []) {
   const seen = new Set();
   const result = [];
 
@@ -149,17 +155,76 @@ function uniquePeople(people) {
       id,
       name,
       imageUrl: person?.primaryImage?.url?.trim() || null,
-      professions: Array.isArray(person?.primaryProfessions)
-        ? person.primaryProfessions
-        : [],
+      roles: Array.isArray(fallbackRoles) ? fallbackRoles.filter(Boolean) : [],
+      characters: [],
     });
   }
 
   return result;
 }
 
+function normalizeCredits(credits, kind) {
+  const people = new Map();
+
+  for (const credit of credits ?? []) {
+    const category = typeof credit?.category === "string" ? credit.category.trim() : "";
+    const person = credit?.name;
+    const id = person?.id?.trim();
+    const name = person?.displayName?.trim();
+
+    if (!id || !name || !category) continue;
+
+    const isCastCredit = Array.isArray(credit?.characters) && credit.characters.length > 0;
+    if (kind === "cast" && !isCastCredit) continue;
+    if (kind === "crew" && isCastCredit) continue;
+
+    const current = people.get(id) || {
+      id,
+      name,
+      imageUrl: person?.primaryImage?.url?.trim() || null,
+      roles: [],
+      characters: [],
+    };
+
+    if (!current.roles.includes(category)) {
+      current.roles.push(category);
+    }
+
+    const characters = Array.isArray(credit?.characters) ? credit.characters : [];
+    for (const character of characters) {
+      const value = typeof character === "string" ? character.trim() : "";
+      if (value && !current.characters.includes(value)) {
+        current.characters.push(value);
+      }
+    }
+
+    people.set(id, current);
+  }
+
+  return Array.from(people.values());
+}
+
 function mergeCrew(directors, writers) {
-  return uniquePeople([...(directors ?? []), ...(writers ?? [])]);
+  const directorCredits = uniquePeople(directors, ["director"]);
+  const writerCredits = uniquePeople(writers, ["writer"]);
+  const merged = new Map();
+
+  for (const person of [...directorCredits, ...writerCredits]) {
+    const current = merged.get(person.id) || {
+      ...person,
+      roles: [],
+    };
+
+    for (const role of person.roles) {
+      if (role && !current.roles.includes(role)) {
+        current.roles.push(role);
+      }
+    }
+
+    merged.set(person.id, current);
+  }
+
+  return Array.from(merged.values());
 }
 
 function getBackdropFromVideos(payload) {
@@ -223,8 +288,12 @@ function getIndiaReleaseDetails(payload) {
 }
 
 function formatMovieInsight(title, fallbackImdbId, options = {}) {
-  const cast = uniquePeople(title.stars);
-  const crew = mergeCrew(title.directors, title.writers);
+  const credits = Array.isArray(options.credits) ? options.credits : [];
+  const cast = credits.length > 0 ? normalizeCredits(credits, "cast") : uniquePeople(title.stars);
+  const crew =
+    credits.length > 0
+      ? normalizeCredits(credits, "crew")
+      : mergeCrew(title.directors, title.writers);
 
   return {
     imdbId: title.id ?? fallbackImdbId,
@@ -350,8 +419,9 @@ export async function getMovieByImdbId(request, response) {
         : "";
     if (!IMDB_ID_REGEX.test(imdbId)) return response.status(400).json({ error: "Invalid IMDb ID" });
 
-    const [title, videosPayload, releaseDatesPayload] = await Promise.all([
+    const [title, creditsPayload, videosPayload, releaseDatesPayload] = await Promise.all([
       fetchImdbTitleById(imdbId),
+      fetchImdbTitleCredits(imdbId),
       fetchImdbTitleVideos(imdbId),
       fetchImdbTitleReleaseDates(imdbId),
     ]);
@@ -368,6 +438,7 @@ export async function getMovieByImdbId(request, response) {
       releaseDate: indiaRelease.releaseDate,
       isReleased: indiaRelease.isReleased,
       backdrop: backdropFromVideos || title.primaryImage?.url || "",
+      credits: Array.isArray(creditsPayload?.credits) ? creditsPayload.credits : [],
     });
 
     return response.status(200).json({ data: insight });

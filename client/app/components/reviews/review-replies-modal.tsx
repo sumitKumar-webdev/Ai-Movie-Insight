@@ -11,7 +11,6 @@ import {
 } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { toast } from "@/app/Hooks/use-toast";
 import { Review, ReviewReply } from "@/app/modal/service.modal";
 import {
   deleteReviewReply,
@@ -273,7 +272,7 @@ export default function ReviewRepliesModal({
                         <h4 className="font-semibold text-white text-lg">
                           {formatLabel(selectedReview.user?.name || "User")}
                         </h4>
-                        {selectedReview.user?.isVerified ? <VerifiedBadge className="h-4 w-4 shrink-0" /> : null}
+                        {selectedReview.user?.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0" />}
                       </div>
                       <p className="text-sm text-[#A0A0A0]">
                         @{selectedReview.user?.username}

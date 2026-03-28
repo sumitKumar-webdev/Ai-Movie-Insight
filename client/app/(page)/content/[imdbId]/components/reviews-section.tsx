@@ -68,9 +68,6 @@ async function loadReviews(
 export default function ReviewsSection({
   imdbId,
   movieTitle,
-  movieYear = "",
-  movieType = "",
-  posterUrl = "",
   currentUserId,
   ensureAuthenticated,
   onUnauthorized,
@@ -371,8 +368,8 @@ export default function ReviewsSection({
   ];
 
   return (
-    <section className="-px-4">
-      <Card className="border-none bg-white/3 text-white">
+    <section className="">
+      <Card className="border-none bg-white/3 text-white px-0">
         <CardHeader>
           {reviewsLoading ? (
             <Skeleton className="h-8 w-40 bg-white/12" />
@@ -383,7 +380,7 @@ export default function ReviewsSection({
           )}
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-1">
           {!reviewsLoading && shouldShowComposer && (
             <form
               onSubmit={(event) => {

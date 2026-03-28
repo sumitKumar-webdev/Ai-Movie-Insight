@@ -7,6 +7,7 @@ import ExpandableText from "../ExpandableText/ExpandableText";
 import RenderAvatar from "../avatar/render-avatar";
 import ActionButton, { ActionItem } from "@/app/components/actions/action-menu";
 import { HandleAction } from "@/app/models/action.model";
+import VerifiedBadge from "../verified-badge";
 
 type ReviewCardProps = {
   review: Review;
@@ -31,7 +32,6 @@ export default function ReviewCard({
   handleAction,
   className,
 }: ReviewCardProps) {
-
   const reviewDate = review.date
     ? new Date(review.date).toLocaleDateString("en-GB", {
         day: "numeric",
@@ -58,7 +58,12 @@ export default function ReviewCard({
     }
 
     if (item.action) {
-      void handleAction?.(item.action, item.actionValue, review, item.actionUse);
+      void handleAction?.(
+        item.action,
+        item.actionValue,
+        review,
+        item.actionUse,
+      );
     }
   };
 
@@ -72,17 +77,19 @@ export default function ReviewCard({
     >
       <CardContent className="flex flex-col gap-5 px-0 py-5">
         <div className="flex w-full items-center justify-between gap-4">
-            <div className="flex max-w-[75%] items-center gap-3">
+          <div className="flex max-w-[75%] items-center gap-3">
             <RenderAvatar
               name={review.user?.username ?? review.user?.name ?? "User"}
               imageUrl={review.user?.imageUrl}
-            
             />
             <div className="min-w-0">
               <div className="flex min-w-0 items-center gap-1.5 text-sm text-[#E2E2E2] md:text-base">
                 <p className="truncate font-semibold hover:text-white">
                   {review.user?.username}
                 </p>
+                {review.user?.isVerified && (
+                  <VerifiedBadge className="h-4 w-4 shrink-0" />
+                )}
               </div>
               <div className="flex items-center text-xs text-[#C6C6C6]">
                 <span className="truncate">{reviewDate}</span>
@@ -99,7 +106,7 @@ export default function ReviewCard({
         </div>
 
         <div className="relative">
-          <ExpandableText limit={350} text={reviewText} />
+          <ExpandableText limit={200} text={reviewText} />
         </div>
 
         <div className="flex items-center justify-between">
@@ -140,11 +147,14 @@ export default function ReviewCard({
                 </span>
               ) : null}
             </button>
-
           </div>
 
           {Boolean(totalReplies) && (
-            <button type="button" onClick={() => triggerAction(replyCountAction ?? repliesAction)} className="cursor-pointer">
+            <button
+              type="button"
+              onClick={() => triggerAction(replyCountAction ?? repliesAction)}
+              className="cursor-pointer"
+            >
               <span className="reply-count-shimmer text-sm text-bold">
                 {totalReplies} {totalReplies === 1 ? "reply" : "replies"}
               </span>

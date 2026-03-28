@@ -159,7 +159,10 @@ export default function AiAssistantLauncher() {
         },
       ]);
     } catch (error) {
-      if (error instanceof Error && /unauthorized|invalid token|user not found/i.test(error.message)) {
+      if (
+        error instanceof Error &&
+        /unauthorized|invalid token|user not found/i.test(error.message)
+      ) {
         clearAuthState();
         promptLogin();
         return;
@@ -236,6 +239,7 @@ export default function AiAssistantLauncher() {
     return (
       <RenderAvatar
         name={currentUserName}
+        imageUrl={user?.avatar}
         className="h-10 w-10 border border-white/10 bg-white/8 shadow-[0_10px_24px_rgba(15,23,42,0.2)] md:h-10 md:w-10"
         initialsClassName="text-xs font-semibold text-white"
       />
@@ -277,7 +281,9 @@ export default function AiAssistantLauncher() {
               )}
             >
               <p className="text-xs sm:text-sm md:text-base">
-                {isUser ? message.content : renderMessageContent(message.content)}
+                {isUser
+                  ? message.content
+                  : renderMessageContent(message.content)}
               </p>
             </div>
           </div>
@@ -316,9 +322,9 @@ export default function AiAssistantLauncher() {
         <button
           type="button"
           onClick={() => {
-             openAssistant();
+            openAssistant();
           }}
-          className="fixed overflow-hidden right-4 bottom-4 z-[330] inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-2 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#0c1017] sm:right-6 sm:bottom-6 sm:gap-1 sm:z-100"
+          className="fixed overflow-hidden right-4 bottom-4 z-330 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-2 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#0c1017] sm:right-6 sm:bottom-6 sm:gap-1 sm:z-100"
           aria-label="Open AI assistant"
         >
           <AiAvatar />
@@ -326,7 +332,9 @@ export default function AiAssistantLauncher() {
             <span className="text-brand-primary-muted text-[9px] font-medium tracking-[0.24em] uppercase">
               {brand.assistantEyebrow}
             </span>
-            <span className="text-[13px] font-semibold text-white">{brand.assistantTitle}</span>
+            <span className="text-[13px] font-semibold text-white">
+              {brand.assistantTitle}
+            </span>
           </span>
         </button>
 
@@ -337,86 +345,86 @@ export default function AiAssistantLauncher() {
           onPointerDownOutside={(event) => event.preventDefault()}
           className="data-[state=closed]:slide-out-to-bottom-8 data-[state=open]:slide-in-from-bottom-8 sm:data-[state=closed]:zoom-out-95 sm:data-[state=open]:zoom-in-95 flex h-dvh w-screen max-w-none flex-col overflow-hidden rounded-none border-0 bg-black/92 p-0 text-white shadow-2xl sm:h-[min(88vh,760px)] sm:w-[min(96vw,64rem)] sm:max-w-4xl sm:rounded-3xl sm:border sm:border-white/10 sm:bg-black/85 z-300"
         >
-        <DialogHeader
-          className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16 -space-y-2"
-          onTouchStart={handleHeaderTouchStart}
-          onTouchMove={handleHeaderTouchMove}
-          onTouchEnd={handleHeaderTouchEnd}
-          onTouchCancel={handleHeaderTouchEnd}
-        >
-          <div className="mb-2 flex justify-center sm:hidden">
-            <span className="h-1.5 w-12 rounded-full bg-white/18" />
-          </div>
-          <p className="text-brand-primary text-[10px] md:text-xs font-semibold tracking-[0.22em] uppercase">
-            {brand.assistantEyebrow}
-          </p>
-          <DialogTitle className="mt-1 text-base md:text-xl font-semibold sm:text-2xl">
-            {brand.assistantTitle}
-          </DialogTitle>
-          <DialogDescription className="mt-1 text-xs md:text-sm text-white/55">
-            {brand.assistantDescription}
-          </DialogDescription>
-        </DialogHeader>
+          <DialogHeader
+            className="shrink-0 border-b border-white/10 px-4 py-4 pr-14 text-left sm:px-6 sm:py-5 sm:pr-16 -space-y-2"
+            onTouchStart={handleHeaderTouchStart}
+            onTouchMove={handleHeaderTouchMove}
+            onTouchEnd={handleHeaderTouchEnd}
+            onTouchCancel={handleHeaderTouchEnd}
+          >
+            <div className="mb-2 flex justify-center sm:hidden">
+              <span className="h-1.5 w-12 rounded-full bg-white/18" />
+            </div>
+            <p className="text-brand-primary text-[10px] md:text-xs font-semibold tracking-[0.22em] uppercase">
+              {brand.assistantEyebrow}
+            </p>
+            <DialogTitle className="mt-1 text-base md:text-xl font-semibold sm:text-2xl">
+              {brand.assistantTitle}
+            </DialogTitle>
+            <DialogDescription className="mt-1 text-xs md:text-sm text-white/55">
+              {brand.assistantDescription}
+            </DialogDescription>
+          </DialogHeader>
 
-        <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex  p-1 md:p-2 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
-          <X className="h-4 w-4 md:h-5 md:w-5" />
-          <span className="sr-only">Close assistant</span>
-        </DialogClose>
+          <DialogClose className="focus-visible:ring-brand-primary-soft absolute top-3 right-3 inline-flex  p-1 md:p-2 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/65 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 sm:top-4 sm:right-4">
+            <X className="h-4 w-4 md:h-5 md:w-5" />
+            <span className="sr-only">Close assistant</span>
+          </DialogClose>
 
-        <div className="home-search-scroll flex-1 overflow-x-hidden overflow-y-auto bg-white/3 px-3 py-3 sm:px-6 sm:py-5">
-          <div className="min-w-0 space-y-4">
-            {messages.map(renderMessage)}
+          <div className="home-search-scroll flex-1 overflow-x-hidden overflow-y-auto bg-white/3 px-3 py-3 sm:px-6 sm:py-5">
+            <div className="min-w-0 space-y-4">
+              {messages.map(renderMessage)}
 
-            {loading && (
-              <div className="flex items-start gap-3">
-                <AiAvatar className="h-4 w-4" />
-                <div className="max-w-[92%] sm:max-w-[88%]">
-                  <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,22,34,0.96),rgba(9,14,24,0.98))] px-4 py-3 text-sm text-white/70 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Thinking about movies...
+              {loading && (
+                <div className="flex items-start gap-3">
+                  <AiAvatar className="h-4 w-4" />
+                  <div className="max-w-[92%] sm:max-w-[88%]">
+                    <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-[linear-gradient(180deg,rgba(15,22,34,0.96),rgba(9,14,24,0.98))] px-4 py-3 text-sm text-white/70 shadow-[0_18px_45px_rgba(0,0,0,0.18)]">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Thinking about movies...
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        <form
-          className="shrink-0 border-t border-white/10 bg-[#0b1018]/85 px-3 py-3 sm:px-6 sm:py-5"
-          onSubmit={onSubmit}
-        >
-          <div className="flex items-end gap-2 sm:gap-3">
-            <Textarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
-                  event.currentTarget.form?.requestSubmit();
-                }
-              }}
-              placeholder="Ask about a movie, genre, actor, or mood..."
-              rows={2}
-              className="min-h-11 flex-1 resize-none border-white/12 bg-[#10161f] text-sm leading-6 text-white placeholder:text-white/35"
-            />
-            <Button
-              type="submit"
-              disabled={loading || !input.trim()}
-              className="h-11 w-11 shrink-0 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))] px-0 text-slate-950 hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))]/60 cursor-pointer sm:w-auto sm:min-w-28 sm:px-4"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
               )}
-              <span className="hidden sm:inline">Send</span>
-            </Button>
+              <div ref={messagesEndRef} />
+            </div>
           </div>
-          <p className="mt-2 text-xs text-white/45">
-            Press Enter to send, Shift+Enter for a new line.
-          </p>
-        </form>
+
+          <form
+            className="shrink-0 border-t border-white/10 bg-[#0b1018]/85 px-3 py-3 sm:px-6 sm:py-5"
+            onSubmit={onSubmit}
+          >
+            <div className="flex items-end gap-2 sm:gap-3">
+              <Textarea
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+                placeholder="Ask about a movie, genre, actor, or mood..."
+                rows={2}
+                className="min-h-11 flex-1 resize-none border-white/12 bg-[#10161f] text-sm leading-6 text-white placeholder:text-white/35"
+              />
+              <Button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="h-11 w-11 shrink-0 bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))] px-0 text-slate-950 hover:bg-[linear-gradient(160deg,rgba(255,255,255,0.96),rgba(236,242,248,0.94))]/60 cursor-pointer sm:w-auto sm:min-w-28 sm:px-4"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">Send</span>
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-white/45">
+              Press Enter to send, Shift+Enter for a new line.
+            </p>
+          </form>
         </DialogContent>
       </Dialog>
       <AuthRequiredModal

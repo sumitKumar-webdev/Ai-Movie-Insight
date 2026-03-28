@@ -122,7 +122,7 @@ export default function ReviewThreadItem({
                   {review.user?.isVerified ? <VerifiedBadge className="ml-1 h-3.5 w-3.5 shrink-0" /> : null}
                 </div>
 
-                <div className="mb-2 text-sm leading-[17px] break-words text-[#c6c6c6]">
+                <div className="mb-2 text-sm leading-4.25 wrap-break-words text-[#c6c6c6]">
                   <ExpandableText limit={350} text={reviewText} />
                 </div>
 

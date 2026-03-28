@@ -115,48 +115,69 @@ export default function ProfilePage() {
             </div>
 
             <div className="p-6 sm:p-8">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-                <RenderAvatar
-                  name={user.name || user.username || "User"}
-                  imageUrl={user.avatar}
-                  className="h-20 w-20 rounded-[1.6rem] border border-white/12 bg-white/8 sm:h-24 sm:w-24"
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-white/55">Signed in as</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <h2 className="truncate text-2xl font-semibold sm:text-3xl">
-                      {user.name}
-                    </h2>
-                    {user.isVerified ? (
-                      <VerifiedBadge className="h-5 w-5 shrink-0" />
-                    ) : null}
-                  </div>
-                  <p className="mt-2 truncate text-sm text-white/62 sm:text-base">
-                    @{user.username}
-                  </p>
-                </div>
-              </div>
+              <div className="flex flex-col gap-8">
+                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
+                    <RenderAvatar
+                      name={user.name || user.username || "User"}
+                      imageUrl={user.avatar}
+                      className="h-20 w-20 rounded-[1.6rem] border border-white/12 bg-white/8 sm:h-24 sm:w-24"
+                    />
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
-                  <p className="text-[11px] font-medium tracking-[0.18em] text-white/45 uppercase">
-                    Status
-                  </p>
-                  <p className="mt-3 text-lg font-semibold text-white">
-                    {user.emailVerified ? "Verified" : "Pending"}
-                  </p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-white/55">Signed in as</p>
+                      <div className="mt-1 flex min-w-0 items-center gap-2">
+                        <h2 className="truncate text-2xl font-semibold tracking-tight sm:text-3xl">
+                          {user.name || user.username}
+                        </h2>
+                        {user.isVerified ? (
+                          <VerifiedBadge className="h-5 w-5 shrink-0" />
+                        ) : null}
+                      </div>
+                      <p className="mt-2 truncate text-sm text-white/62 sm:text-base">
+                        @{user.username}
+                      </p>
+                      <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
+                        Your CineAI profile keeps your account, assistant activity, and recommendations connected in one place.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 sm:justify-end">
+                    <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/70">
+                      {providerLabel}
+                    </span>
+                    <span className="inline-flex rounded-full border border-cyan-300/18 bg-cyan-400/10 px-3 py-1.5 text-xs font-medium text-cyan-100">
+                      {user.emailVerified ? "Verified account" : "Verification pending"}
+                    </span>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
-                  <p className="text-[11px] font-medium tracking-[0.18em] text-white/45 uppercase">
-                    Provider
-                  </p>
-                  <p className="mt-3 text-lg font-semibold text-white">{providerLabel}</p>
-                </div>
-                <div className="rounded-2xl border border-white/8 bg-white/4 p-4">
-                  <p className="text-[11px] font-medium tracking-[0.18em] text-white/45 uppercase">
-                    Account
-                  </p>
-                  <p className="mt-3 text-lg font-semibold text-white">Active</p>
+
+                <div className="grid gap-4 border-t border-white/8 pt-6 sm:grid-cols-3">
+                  <div>
+                    <p className="text-[11px] font-medium tracking-[0.18em] text-white/45 uppercase">
+                      Status
+                    </p>
+                    <p className="mt-3 text-lg font-semibold text-white">
+                      {user.emailVerified ? "Verified" : "Pending"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium tracking-[0.18em] text-white/45 uppercase">
+                      Email
+                    </p>
+                    <p className="mt-3 break-all text-base text-white/88">
+                      {user.email}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-medium tracking-[0.18em] text-white/45 uppercase">
+                      Account ID
+                    </p>
+                    <p className="mt-3 break-all text-base text-white/70">
+                      {user.id}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

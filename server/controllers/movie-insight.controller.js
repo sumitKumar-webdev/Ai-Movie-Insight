@@ -117,7 +117,6 @@ function mapSavedInsight(savedInsight, options) {
       || "No community reviews yet. Be the first to share what you thought about this movie.",
     sentiment: savedInsight.sentiment || "NoReviews",
     confidence: confidencePercentage / 100,
-    communityReviews: options.communityReviews,
   };
 }
 
@@ -130,7 +129,6 @@ async function buildFreshInsight(context, preferredTitle) {
     summary: "At least two community reviews are needed before CineAI can generate an insight.",
     sentiment: "NoReviews",
     confidence: 0,
-    communityReviews: context.communityReviews,
     canPersist: true,
   };
 
@@ -200,7 +198,6 @@ export async function getStoredMovieAiInsight(imdbId, title = "", options = {}) 
     return mapSavedInsight(savedInsight, {
       imdbId: context.imdbId,
       title: preferredTitle,
-      communityReviews: context.communityReviews,
     });
   }
 
@@ -210,7 +207,6 @@ export async function getStoredMovieAiInsight(imdbId, title = "", options = {}) 
     return mapSavedInsight(savedInsight, {
       imdbId: context.imdbId,
       title: preferredTitle,
-      communityReviews: context.communityReviews,
     });
   }
 

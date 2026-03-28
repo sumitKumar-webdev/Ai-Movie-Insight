@@ -237,6 +237,8 @@ function formatMovieInsight(title, fallbackImdbId, options = {}) {
     isReleased: options.isReleased ?? false,
     runtime: formatRuntime(title.runtimeSeconds),
     rating: title.rating?.aggregateRating?.toFixed(1) ?? "N/A",
+    ratingCount:
+      typeof title.rating?.voteCount === "number" ? title.rating.voteCount : undefined,
     language: joinNames(title.spokenLanguages),
     country: joinNames(title.originCountries),
     ageRating:
@@ -367,12 +369,6 @@ export async function getMovieByImdbId(request, response) {
       isReleased: indiaRelease.isReleased,
       backdrop: backdropFromVideos || title.primaryImage?.url || "",
     });
-
-    const aiInsight = await getStoredMovieAiInsight(imdbId, insight.title);
-    insight.summary = aiInsight.summary;
-    insight.sentiment = aiInsight.sentiment;
-    insight.confidence = aiInsight.confidence;
-    insight.communityReviews = aiInsight.communityReviews;
 
     return response.status(200).json({ data: insight });
   } catch (error) {

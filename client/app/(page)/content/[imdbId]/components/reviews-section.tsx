@@ -18,7 +18,7 @@ import { authenticatedFetch } from "@/app/services/api-client";
 import { getMovieReviews } from "@/app/services/movie.service";
 import { toast } from "@/app/Hooks/use-toast";
 import { useHandleAction } from "@/app/Hooks/use-handle-action";
-import { MovieInsight, Review } from "@/app/modal/service.modal";
+import { Review } from "@/app/modal/service.modal";
 import ReviewCard from "@/app/components/cards/Review-card";
 import { ActionItem } from "@/app/components/actions/action-menu";
 
@@ -46,7 +46,7 @@ type ReviewMutationResponse = {
 async function loadReviews(
   imdbId: string,
   setLoading: (value: boolean) => void,
-  setCommunityReviews: (value: MovieInsight["communityReviews"]) => void,
+  setCommunityReviews: (value: Review[]) => void,
 ) {
   if (!imdbId) {
     setLoading(false);
@@ -73,9 +73,7 @@ export default function ReviewsSection({
   onUnauthorized,
   onRefreshInsight,
 }: ReviewsSectionProps) {
-  const [communityReviews, setCommunityReviews] = useState<
-    MovieInsight["communityReviews"]
-  >([]);
+  const [communityReviews, setCommunityReviews] = useState<Review[]>([]);
   const [reviewInput, setReviewInput] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [reviewsLoading, setReviewsLoading] = useState(true);

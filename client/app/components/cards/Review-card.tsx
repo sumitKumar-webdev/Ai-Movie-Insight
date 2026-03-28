@@ -1,6 +1,7 @@
 "use client";
 import { Heart, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/app/components/ui/card";
+import CompactCount from "@/app/components/ui/compact-count";
 import { cn } from "@/lib/utils";
 import { Review } from "@/app/modal/service.modal";
 import ExpandableText from "../ExpandableText/ExpandableText";
@@ -125,11 +126,10 @@ export default function ReviewCard({
                 )}
                 strokeWidth={1.5}
               />
-              {Boolean(review.likeCount) && (
-                <span className="ml-1 min-w-5 text-sm font-normal text-[#f5f5f5]">
-                  {review.likeCount}
-                </span>
-              )}
+              <CompactCount
+                value={review.likeCount}
+                className="ml-1 min-w-5 text-sm font-normal text-[#f5f5f5]"
+              />
             </button>
 
             <button
@@ -141,11 +141,10 @@ export default function ReviewCard({
                 className="h-6 w-6 fill-none stroke-[#f5f5f5] text-[#f5f5f5]"
                 strokeWidth={1.5}
               />
-              {totalReplies ? (
-                <span className="ml-1 min-w-5 text-sm font-normal text-[#f5f5f5]">
-                  {totalReplies}
-                </span>
-              ) : null}
+              <CompactCount
+                value={totalReplies}
+                className="ml-1 min-w-5 text-sm font-normal text-[#f5f5f5]"
+              />
             </button>
           </div>
 
@@ -156,7 +155,8 @@ export default function ReviewCard({
               className="cursor-pointer"
             >
               <span className="reply-count-shimmer text-sm text-bold">
-                {totalReplies} {totalReplies === 1 ? "reply" : "replies"}
+                <CompactCount value={totalReplies} />{" "}
+                {totalReplies === 1 ? "reply" : "replies"}
               </span>
             </button>
           )}

@@ -15,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
+import CompactCount from "@/app/components/ui/compact-count";
 import ExpandableText from "@/app/components/ExpandableText/ExpandableText";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
 import { formatLabel } from "@/lib/resuable-component";
@@ -155,9 +156,10 @@ export default function ReviewThreadItem({
                     strokeWidth={1.5}
                   />
                 </button>
-                <span className="pt-1 text-xs font-normal leading-none text-[#919191]">
-                  {likes}
-                </span>
+                <CompactCount
+                  value={likes}
+                  className="pt-1 text-xs font-normal leading-none text-[#919191]"
+                />
                 {showMenu ? (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -296,7 +298,7 @@ export default function ReviewThreadItem({
                     )}
                     strokeWidth={1.8}
                   />
-                  <span className="text-sm font-normal">{likes}</span>
+                  <CompactCount value={likes} className="text-sm font-normal" />
                 </button>
 
                 {onOpenReplies ? (
@@ -306,7 +308,10 @@ export default function ReviewThreadItem({
                     className="inline-flex items-center gap-2 transition hover:text-white"
                   >
                     <MessageCircle className="h-7 w-7" strokeWidth={1.8} />
-                    <span className="text-sm font-normal">{totalReplies}</span>
+                    <CompactCount
+                      value={totalReplies}
+                      className="text-sm font-normal"
+                    />
                   </button>
                 ) : null}
               </div>

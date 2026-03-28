@@ -3,7 +3,7 @@ import {
   AssistantMessage,
   AssistantSuggestion,
   MovieAiInsight,
-  MovieInsight,
+  MovieDetails,
   MovieSearchItem,
   RepliesPayload,
   Review,
@@ -13,6 +13,9 @@ import { apiFetch, authenticatedFetch, buildApiUrl } from "./api-client";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
 const movieSearchCache = new Map<string, MovieSearchItem[]>(); //TODO: replace with redis in future
+const movieDetailsRequests = new Map<string, Promise<MovieDetails>>();
+const movieInsightRequests = new Map<string, Promise<MovieAiInsight>>();
+const movieReviewsRequests = new Map<string, Promise<Review[]>>();
 
 export async function searchMovies(
   query: string,
@@ -44,22 +47,37 @@ export async function searchMovies(
   }
 }
 
-export async function getMovieByImdbId(imdbId: string): Promise<MovieInsight> {
+export async function getMovieByImdbId(imdbId: string): Promise<MovieDetails> {
   const normalized = imdbId.trim().toLowerCase();
   if (!IMDB_ID_REGEX.test(normalized)) throw new Error("Invalid IMDb ID");
 
-  const response = await fetch(
-    buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}`),
-    { cache: "no-store" },
-  );
-  const payload = (await response.json()) as {
-    data?: MovieInsight;
-    error?: string;
-  };
-  if (!response.ok || !payload.data) {
-    throw new Error(payload.error ?? "Movie not found");
+  const existingRequest = movieDetailsRequests.get(normalized);
+  if (existingRequest) {
+    return existingRequest;
   }
-  return payload.data;
+
+  const request = (async () => {
+    const response = await fetch(
+      buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}`),
+      { cache: "no-store" },
+    );
+    const payload = (await response.json()) as {
+      data?: MovieDetails;
+      error?: string;
+    };
+    if (!response.ok || !payload.data) {
+      throw new Error(payload.error ?? "Movie not found");
+    }
+    return payload.data;
+  })();
+
+  movieDetailsRequests.set(normalized, request);
+
+  try {
+    return await request;
+  } finally {
+    movieDetailsRequests.delete(normalized);
+  }
 }
 
 export async function getMovieAiInsightByImdbId(
@@ -68,38 +86,68 @@ export async function getMovieAiInsightByImdbId(
   const normalized = imdbId.trim().toLowerCase();
   if (!IMDB_ID_REGEX.test(normalized)) throw new Error("Invalid IMDb ID");
 
-  const response = await fetch(
-    buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}/insight`),
-    { cache: "no-store" },
-  );
-  const payload = (await response.json()) as {
-    data?: MovieAiInsight;
-    error?: string;
-  };
-  if (!response.ok || !payload.data) {
-    throw new Error(payload.error ?? "Movie insight not found");
+  const existingRequest = movieInsightRequests.get(normalized);
+  if (existingRequest) {
+    return existingRequest;
   }
-  return payload.data;
+
+  const request = (async () => {
+    const response = await fetch(
+      buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}/insight`),
+      { cache: "no-store" },
+    );
+    const payload = (await response.json()) as {
+      data?: MovieAiInsight;
+      error?: string;
+    };
+    if (!response.ok || !payload.data) {
+      throw new Error(payload.error ?? "Movie insight not found");
+    }
+    return payload.data;
+  })();
+
+  movieInsightRequests.set(normalized, request);
+
+  try {
+    return await request;
+  } finally {
+    movieInsightRequests.delete(normalized);
+  }
 }
 
 export async function getMovieReviews(imdbId: string): Promise<Review[]> {
   const normalized = imdbId.trim().toLowerCase();
   if (!IMDB_ID_REGEX.test(normalized)) return [];
 
-  try {
-    const response = await apiFetch(
-      buildApiUrl(`/api/reviews?imdbId=${encodeURIComponent(normalized)}`),
-      { cache: "no-store" },
-    );
-    if (!response.ok) return [];
-    const payload = (await response.json()) as {
-      data?: {
-        reviews?: Review[];
+  const existingRequest = movieReviewsRequests.get(normalized);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = (async () => {
+    try {
+      const response = await apiFetch(
+        buildApiUrl(`/api/reviews?imdbId=${encodeURIComponent(normalized)}`),
+        { cache: "no-store" },
+      );
+      if (!response.ok) return [];
+      const payload = (await response.json()) as {
+        data?: {
+          reviews?: Review[];
+        };
       };
-    };
-    return Array.isArray(payload.data?.reviews) ? payload.data.reviews : [];
-  } catch {
-    return [];
+      return Array.isArray(payload.data?.reviews) ? payload.data.reviews : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  movieReviewsRequests.set(normalized, request);
+
+  try {
+    return await request;
+  } finally {
+    movieReviewsRequests.delete(normalized);
   }
 }
 

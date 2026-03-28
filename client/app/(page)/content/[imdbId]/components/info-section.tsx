@@ -1,13 +1,14 @@
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
+import CompactCount from "@/app/components/ui/compact-count";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { MovieInsight } from "@/app/modal/service.modal";
+import { MovieDetails } from "@/app/modal/service.modal";
 import { formatLabel } from "@/lib/resuable-component";
 import { Star } from "lucide-react";
 import Image from "next/image";
 
 type InfoSectionProps = {
   loading: boolean;
-  movie: MovieInsight | null;
+  movie: MovieDetails | null;
 };
 
 const InfoSection = ({ loading, movie }: InfoSectionProps) => {
@@ -16,7 +17,7 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
     .join(" • ");
 
   return (
-    <section className="relative overflow-hidden border-b border-white/10 min-h-[25rem] sm:min-h-[36rem] md:h-[78vh] md:min-h-155">
+    <section className="relative overflow-hidden border-b border-white/10 min-h-100 sm:min-h-144 md:h-[78vh] md:min-h-155">
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
       ) : (
@@ -64,7 +65,7 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                     <p className="overflow-x-auto whitespace-nowrap text-[11px] leading-4 text-white/65 [scrollbar-width:none] sm:text-sm">
                       {metaData}
                     </p>
-                    <h1 className="mt-1 max-w-[11rem] text-[1.95rem] font-semibold leading-[1.03] tracking-[-0.03em] sm:mt-2 sm:max-w-none sm:text-4xl md:text-5xl">
+                    <h1 className="max-w-44 text-[1.75rem] font-semibold leading-[1.03] tracking-[-0.03em] sm:max-w-none sm:text-3xl md:text-4xl">
                       {movie?.title}
                     </h1>
                   </>
@@ -96,10 +97,17 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                   </div>
                   <div>
                     <p className="text-white/50">IMDb</p>
-                    <p className="mt-1 flex items-center gap-1 font-medium">
-                      <Star className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4" />
-                      {movie?.rating}
-                    </p>
+                    <div className="mt-1 space-y-1 flex gap-2">
+                      <p className="flex items-center font-medium">
+                        <Star className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4 mr-1" />
+                        {movie?.rating}<span className="text-white/60">/10</span>
+                      </p>
+                      <CompactCount
+                        value={movie?.ratingCount}
+                        suffix="reviews"
+                        className="text-[10px] text-white/55 sm:text-xs"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

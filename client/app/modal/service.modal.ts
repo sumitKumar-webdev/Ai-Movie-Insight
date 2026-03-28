@@ -80,7 +80,7 @@ export type PersonCredit = {
   professions: string[];
 };
 
-export type MovieInsight = {
+export type MovieDetails = {
   imdbId: string;
   type: string;
   title: string;
@@ -89,6 +89,7 @@ export type MovieInsight = {
   isReleased?: boolean;
   runtime: string;
   rating: string;
+  ratingCount?: number;
   language: string;
   country: string;
   ageRating: string;
@@ -98,22 +99,15 @@ export type MovieInsight = {
   genres: string[];
   cast: PersonCredit[];
   crew: PersonCredit[];
+};
+
+export type MovieAiInsight = {
+  imdbId: string;
+  title: string;
   summary: string;
   sentiment: Sentiment;
   confidence: number;
-  reviews: Review[];
-  communityReviews?: Review[];
 };
-
-export type MovieAiInsight = Pick<
-  MovieInsight,
-  | "imdbId"
-  | "title"
-  | "summary"
-  | "sentiment"
-  | "confidence"
-  | "communityReviews"
->;
 
 export type MovieSearchItem = {
   imdbId: string;
@@ -147,7 +141,7 @@ export type ImdbApiTitleResponse = {
   startYear?: number;
   runtimeSeconds?: number;
   genres?: string[];
-  rating?: { aggregateRating?: number };
+  rating?: { aggregateRating?: number; voteCount?: number };
   plot?: string;
   directors?: ImdbApiPerson[];
   writers?: ImdbApiPerson[];

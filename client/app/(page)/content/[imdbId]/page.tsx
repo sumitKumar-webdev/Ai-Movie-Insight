@@ -14,7 +14,7 @@ import {
   getMovieAiInsightByImdbId,
   getMovieByImdbId,
 } from "@/app/services/movie.service";
-import { MovieAiInsight, MovieInsight } from "@/app/modal/service.modal";
+import { MovieAiInsight, MovieDetails } from "@/app/modal/service.modal";
 import {
   clearAuthState,
   fetchCurrentUser,
@@ -36,7 +36,7 @@ export default function MovieInsightPage() {
     ? (params.imdbId[0] ?? "")
     : (params.imdbId ?? "");
 
-  const [movie, setMovie] = useState<MovieInsight | null>(null);
+  const [movie, setMovie] = useState<MovieDetails | null>(null);
   const [aiInsight, setAiInsight] = useState<MovieAiInsight | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [insightLoading, setInsightLoading] = useState(true);
@@ -49,7 +49,13 @@ export default function MovieInsightPage() {
 
   useEffect(() => {
     const fetchDetails = async () => {
+      if (!imdbId) {
+        setDetailsLoading(false);
+        return;
+      }
+
       setDetailsLoading(true);
+      setError(null);
       try {
         const movieResponse = await getMovieByImdbId(imdbId);
         setMovie(movieResponse);
@@ -75,10 +81,7 @@ export default function MovieInsightPage() {
 
       try {
         const insightResponse = await getMovieAiInsightByImdbId(imdbId);
-        setAiInsight({
-          ...insightResponse,
-          title: insightResponse.title || movie?.title || "",
-        });
+        setAiInsight(insightResponse);
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "Movie insight not found";
@@ -88,7 +91,7 @@ export default function MovieInsightPage() {
       }
     };
     fetchAiInsight();
-  }, [imdbId, movie?.title]);
+  }, [imdbId, refreshAI]);
 
   useEffect(() => {
     setRouteProgressLoading(isPageLoading);
@@ -229,7 +232,7 @@ export default function MovieInsightPage() {
                 clearAuthState();
                 setAuthModalOpen(true);
               }}
-              onRefreshInsight={() => setRefreshAI(!refreshAI)}
+              onRefreshInsight={() => setRefreshAI((current) => !current)}
             />
           ) : null}
         </div>

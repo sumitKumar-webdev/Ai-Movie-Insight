@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
+import CompactCount from "@/app/components/ui/compact-count";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Review, ReviewReply } from "@/app/modal/service.modal";
 import {
@@ -286,12 +287,16 @@ export default function ReviewRepliesModal({
 
                   <div className="flex flex-wrap items-center gap-2 text-sm text-white/60">
                     <Heart className="h-4 w-4" />
-                    <span>{selectedReview.likeCount ?? 0} likes</span>
+                    <CompactCount
+                      value={selectedReview.likeCount}
+                      suffix="likes"
+                    />
                     <span className="text-white/25">•</span>
                     <MessageCircle className="h-4 w-4" />
-                    <span>
-                      {selectedReview.commentCount ?? replies.length} replies
-                    </span>
+                    <CompactCount
+                      value={selectedReview.commentCount ?? replies.length}
+                      suffix="replies"
+                    />
                   </div>
                 </div>
               ) : null}
@@ -375,7 +380,7 @@ export default function ReviewRepliesModal({
                                         className={`h-4 w-4 stroke-current ${reply.likedByUser ? "fill-current" : "fill-none"}`}
                                         strokeWidth={1.5}
                                       />
-                                      {reply.likeCount ?? 0}
+                                      <CompactCount value={reply.likeCount} />
                                     </button>
                                     <button
                                       type="button"

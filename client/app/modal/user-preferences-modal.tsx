@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { saveUserPreferences } from "@/app/services/auth.service";
+import type { AuthUser } from "@/app/store/auth-slice";
 import { setAuthenticatedUser, useAuthStore } from "@/app/store/store";
 
 type UserPreferencesModalProps = {
@@ -153,18 +154,8 @@ function toggleSelection(
   }));
 }
 
-function createEmptyPreferences(): PreferencesState {
-  return {
-    cinemas: [],
-    genres: [],
-    languages: [],
-    moods: [],
-    formats: [],
-  };
-}
-
 function buildPreferencesFromUser(
-  user: ReturnType<typeof useAuthStore.getState>["user"],
+  user: AuthUser | null,
 ): PreferencesState {
   return {
     cinemas: Array.isArray(user?.preferences?.cinemas) ? user.preferences.cinemas : [],
@@ -345,8 +336,30 @@ export default function UserPreferencesModal({
   onOpenChange,
 }: UserPreferencesModalProps) {
   const user = useAuthStore((auth) => auth.user);
+  const modalKey = `${user?.id ?? "guest"}-${JSON.stringify(user?.preferences ?? {})}`;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <UserPreferencesModalContent
+          key={modalKey}
+          user={user}
+          onOpenChange={onOpenChange}
+        />
+      ) : null}
+    </Dialog>
+  );
+}
+
+function UserPreferencesModalContent({
+  user,
+  onOpenChange,
+}: {
+  user: AuthUser | null;
+  onOpenChange: (open: boolean) => void;
+}) {
   const [preferences, setPreferences] = useState<PreferencesState>(
-    createEmptyPreferences(),
+    () => buildPreferencesFromUser(user),
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -355,13 +368,6 @@ export default function UserPreferencesModal({
     () => totalSelectedCount(preferences),
     [preferences],
   );
-
-  useEffect(() => {
-    if (!open) return;
-
-    setPreferences(buildPreferencesFromUser(user));
-    setError("");
-  }, [open, user]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -381,103 +387,101 @@ export default function UserPreferencesModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        showCloseButton={false}
-        className="home-search-scroll flex w-[calc(100vw-1rem)] max-h-[88vh] max-w-4xl flex-col overflow-hidden border border-white/8 bg-[#000000] p-0 text-white shadow-[0_40px_140px_rgba(0,0,0,0.9)]"
-        style={{ borderRadius: 0 }}
-      >
-        <div className="border-b border-white/6 px-6 py-5 sm:px-8 sm:py-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <DialogHeader className="text-left">
-              <DialogTitle className="text-xl font-semibold tracking-tight text-white">
-                Your taste, your way
-              </DialogTitle>
-              <DialogDescription className="mt-1.5 max-w-xl text-sm leading-6 text-white/35">
-                Pick industries, languages, genres, moods, and formats so CineAI knows exactly what to surface for you.
-              </DialogDescription>
-            </DialogHeader>
+    <DialogContent
+      showCloseButton={false}
+      className="home-search-scroll flex w-[calc(100vw-1rem)] max-h-[88vh] max-w-4xl flex-col overflow-hidden border border-white/8 bg-[#000000] p-0 text-white shadow-[0_40px_140px_rgba(0,0,0,0.9)]"
+      style={{ borderRadius: 0 }}
+    >
+      <div className="border-b border-white/6 px-6 py-5 sm:px-8 sm:py-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-xl font-semibold tracking-tight text-white">
+              Your taste, your way
+            </DialogTitle>
+            <DialogDescription className="mt-1.5 max-w-xl text-sm leading-6 text-white/35">
+              Pick industries, languages, genres, moods, and formats so CineAI knows exactly what to surface for you.
+            </DialogDescription>
+          </DialogHeader>
 
-            {totalSelected > 0 && (
-              <span className="rounded-sm border border-cyan-400/20 bg-cyan-400/6 px-2.5 py-1 text-xs font-medium tabular-nums text-cyan-400">
-                {totalSelected} selected
-              </span>
-            )}
-          </div>
+          {totalSelected > 0 && (
+            <span className="rounded-sm border border-cyan-400/20 bg-cyan-400/6 px-2.5 py-1 text-xs font-medium tabular-nums text-cyan-400">
+              {totalSelected} selected
+            </span>
+          )}
         </div>
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-8 sm:py-5">
-          <div className="space-y-7">
-            <CinemaPreferenceGroup
-              selected={preferences.cinemas}
-              onToggle={(value) => toggleSelection("cinemas", value, setPreferences)}
-            />
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 sm:px-8 sm:py-5">
+        <div className="space-y-7">
+          <CinemaPreferenceGroup
+            selected={preferences.cinemas}
+            onToggle={(value) => toggleSelection("cinemas", value, setPreferences)}
+          />
 
-            <div className="border-t border-white/5" />
+          <div className="border-t border-white/5" />
 
-            <LanguagePreferenceGroup
-              selected={preferences.languages}
-              onToggle={(value) => toggleSelection("languages", value, setPreferences)}
-            />
+          <LanguagePreferenceGroup
+            selected={preferences.languages}
+            onToggle={(value) => toggleSelection("languages", value, setPreferences)}
+          />
 
-            <div className="border-t border-white/5" />
+          <div className="border-t border-white/5" />
 
-            <PreferenceGroup
-              title="Genres"
-              description="Choose the kinds of stories you keep coming back to."
-              options={GENRE_OPTIONS}
-              selected={preferences.genres}
-              onToggle={(value) => toggleSelection("genres", value, setPreferences)}
-            />
+          <PreferenceGroup
+            title="Genres"
+            description="Choose the kinds of stories you keep coming back to."
+            options={GENRE_OPTIONS}
+            selected={preferences.genres}
+            onToggle={(value) => toggleSelection("genres", value, setPreferences)}
+          />
 
-            <div className="border-t border-white/5" />
+          <div className="border-t border-white/5" />
 
-            <PreferenceGroup
-              title="Mood"
-              description="The emotional tone you usually want from a watch."
-              options={MOOD_OPTIONS}
-              selected={preferences.moods}
-              onToggle={(value) => toggleSelection("moods", value, setPreferences)}
-            />
+          <PreferenceGroup
+            title="Mood"
+            description="The emotional tone you usually want from a watch."
+            options={MOOD_OPTIONS}
+            selected={preferences.moods}
+            onToggle={(value) => toggleSelection("moods", value, setPreferences)}
+          />
 
-            <div className="border-t border-white/5" />
+          <div className="border-t border-white/5" />
 
-            <PreferenceGroup
-              title="Formats"
-              description="Extra signals about the kind of watch you enjoy."
-              options={FORMAT_OPTIONS}
-              selected={preferences.formats}
-              onToggle={(value) => toggleSelection("formats", value, setPreferences)}
-            />
+          <PreferenceGroup
+            title="Formats"
+            description="Extra signals about the kind of watch you enjoy."
+            options={FORMAT_OPTIONS}
+            selected={preferences.formats}
+            onToggle={(value) => toggleSelection("formats", value, setPreferences)}
+          />
 
-            {error ? (
-              <p className="border border-rose-400/15 bg-rose-500/8 px-4 py-3 text-sm text-rose-300">
-                {error}
-              </p>
-            ) : null}
-          </div>
+          {error ? (
+            <p className="border border-rose-400/15 bg-rose-500/8 px-4 py-3 text-sm text-rose-300">
+              {error}
+            </p>
+          ) : null}
         </div>
+      </div>
 
-        <div className="flex flex-col gap-3 border-t border-white/6 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            disabled={saving}
-            className="text-sm text-white/35 transition-colors hover:text-white/60 disabled:opacity-40"
-          >
-            Maybe later
-          </button>
+      <div className="flex flex-col gap-3 border-t border-white/6 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          disabled={saving}
+          className="text-sm text-white/35 transition-colors hover:text-white/60 disabled:opacity-40"
+        >
+          Maybe later
+        </button>
 
-          <button
-            type="button"
-            onClick={() => void handleSave()}
-            disabled={saving || totalSelected === 0}
-            className="rounded-sm bg-white px-5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            {saving ? "Saving..." : "Save preferences"}
-          </button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        <button
+          type="button"
+          onClick={() => void handleSave()}
+          disabled={saving || totalSelected === 0}
+          className="rounded-sm bg-white px-5 py-2.5 text-sm font-semibold text-black transition-all hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          {saving ? "Saving..." : "Save preferences"}
+        </button>
+      </div>
+    </DialogContent>
   );
 }

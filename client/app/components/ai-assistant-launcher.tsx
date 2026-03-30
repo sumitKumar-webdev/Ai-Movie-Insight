@@ -14,7 +14,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { Textarea } from "@/app/components/ui/textarea";
-import MovieResultCard from "@/app/components/cards/movie-result-card";
+import CompactMovieCard from "@/app/components/cards/compact-movie-card";
 import AuthRequiredModal from "@/app/modal/auth-required-modal";
 import { AssistantMessage } from "@/app/modal/service.modal";
 import { chatWithAssistant } from "@/app/services/movie.service";
@@ -299,13 +299,15 @@ export default function AiAssistantLauncher() {
             )}
           >
             {message.suggestions.map((movie) => (
-              <MovieResultCard
+              <CompactMovieCard
                 key={`${message.id}-${movie.imdbId}`}
-                imdbId={movie.imdbId}
-                title={movie.title}
-                releaseYear={movie.year}
-                posterUrl={movie.poster}
-                titleType={movie.type}
+                movie={{
+                  imdbId: movie.imdbId,
+                  title: movie.title,
+                  releaseYear: movie.year,
+                  posterUrl: movie.poster,
+                  titleType: movie.type,
+                }}
                 className="border-white/8 bg-[#10161f] text-white hover:bg-[#17202c]"
                 onClick={() => openMovie(movie.imdbId)}
               />

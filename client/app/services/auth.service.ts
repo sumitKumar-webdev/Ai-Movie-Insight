@@ -1,4 +1,5 @@
-import { apiFetch } from "./api-client";
+import { AuthUser } from "@/app/store/auth-slice";
+import { apiFetch, authenticatedFetch } from "./api-client";
 
 type loginProps = {
   identifier: string;
@@ -60,4 +61,35 @@ export const checkUserName = async (username: string) => {
     },
   );
   return await res.json();
+};
+
+type SaveUserPreferencesPayload = {
+  cinemas: string[];
+  genres: string[];
+  languages: string[];
+  moods: string[];
+  formats: string[];
+};
+
+export const saveUserPreferences = async (payload: SaveUserPreferencesPayload) => {
+  console.log("prefrence: ", payload)
+  const res = await authenticatedFetch("/api/auth/preferences", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const data = (await res.json()) as {
+    message?: string;
+    error?: string;
+    data?: {
+      user?: AuthUser;
+    };
+  };
+
+  return {
+    ok: res.ok,
+    message: data.message ?? data.error ?? "Failed to save preferences",
+    user: data.data?.user ?? null,
+  };
 };

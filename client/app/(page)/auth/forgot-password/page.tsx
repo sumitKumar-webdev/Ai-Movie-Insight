@@ -9,7 +9,7 @@ import { Input } from "@/app/components/ui/input";
 import { buildApiUrl } from "@/app/services/api-client";
 
 export default function ForgotPasswordPage() {
-  const [safeNext, setSafeNext] = useState("/");
+  const [safeNext, setSafeNext] = useState("/home");
   const [token, setToken] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
-    setSafeNext(next?.startsWith("/") ? next : "/");
+    setSafeNext(next?.startsWith("/") ? next : "/home");
     setToken(params.get("token")?.trim() ?? "");
   }, []);
 
@@ -137,10 +137,10 @@ export default function ForgotPasswordPage() {
         </>
       }
     >
-      <form
-        className="mt-6 space-y-4"
-        onSubmit={isResetMode ? onResetSubmit : onForgotSubmit}
-      >
+        <form
+          className="mt-6 space-y-4"
+          onSubmit={isResetMode ? onResetSubmit : onForgotSubmit}
+        >
         {isResetMode ? (
           <>
             <div className="space-y-2">
@@ -278,25 +278,25 @@ export default function ForgotPasswordPage() {
             "Send reset link"
           )}
         </Button>
-      </form>
+        </form>
 
-      {!isResetMode && !notice ? (
-        <p className="mt-4 text-sm text-slate-500">
-          We&apos;ll send a secure link to your inbox if the account exists.
-        </p>
-      ) : null}
+        {!isResetMode && !notice ? (
+          <p className="mt-4 text-sm text-slate-500">
+            We&apos;ll send a secure link to your inbox if the account exists.
+          </p>
+        ) : null}
 
-      {isResetMode && !token ? (
-        <p className="mt-5 text-sm text-slate-600">
-          Need a fresh link?{" "}
-          <Link
-            href="/auth/forgot-password"
-            className="font-medium text-slate-950 transition hover:text-cyan-700"
-          >
-            Request another reset email
-          </Link>
-        </p>
-      ) : null}
+        {isResetMode && !token ? (
+          <p className="mt-5 text-sm text-slate-600">
+            Need a fresh link?{" "}
+            <Link
+              href="/auth/forgot-password"
+              className="font-medium text-slate-950 transition hover:text-cyan-700"
+            >
+              Request another reset email
+            </Link>
+          </p>
+        ) : null}
     </AuthShell>
   );
 }

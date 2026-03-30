@@ -39,8 +39,7 @@ export default function HeaderProfileMenu({
     try {
       setLoggingOut(true);
       await logoutUser();
-      navigateTo("/");
-      router.refresh();
+      window.location.assign("/");
     } finally {
       setLoggingOut(false);
     }

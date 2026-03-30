@@ -2,29 +2,40 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { fetchCurrentUser, getAuthStoreState } from "@/app/store/store";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token")?.trim();
-    const next = params.get("next")?.trim();
-    const query = new URLSearchParams();
+    const redirect = async () => {
+      const currentUser = getAuthStoreState().user ?? await fetchCurrentUser();
+      if (currentUser?.id) {
+        router.replace("/home");
+        return;
+      }
 
-    if (token) {
-      query.set("token", token);
-    }
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token")?.trim();
+      const next = params.get("next")?.trim() || "/home";
+      const query = new URLSearchParams();
 
-    if (next?.startsWith("/")) {
-      query.set("next", next);
-    }
+      if (token) {
+        query.set("token", token);
+      }
 
-    const target = query.size
-      ? `/auth/forgot-password?${query.toString()}`
-      : "/auth/forgot-password";
+      if (next.startsWith("/")) {
+        query.set("next", next);
+      }
 
-    router.replace(target);
+      const target = query.size
+        ? `/auth/forgot-password?${query.toString()}`
+        : "/auth/forgot-password";
+
+      router.replace(target);
+    };
+
+    void redirect();
   }, [router]);
 
   return null;

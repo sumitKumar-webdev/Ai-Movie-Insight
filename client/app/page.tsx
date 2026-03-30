@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import MovieResultCard from "@/app/components/cards/movie-result-card";
+import CompactMovieCard from "@/app/components/cards/compact-movie-card";
 import BrandWordmark from "@/app/components/brand/wordmark";
 import useDebounce from "@/app/Hooks/use-debounce";
+import { saveSelectedMovieToSearchHistory } from "@/lib/saveToStorage/search-selection-history";
 import MovieResultCardSkeleton from "./components/skeleton-loader/movie-result-card-skeleton";
 import { MovieSearchItem } from "./modal/service.modal";
 import { searchMovies } from "./services/movie.service";
@@ -70,9 +71,10 @@ export default function Home() {
     };
   }, [debouncedQuery]);
 
-  const navigateToMovie = (imdbId: string) => {
-    if (!imdbId) return;
-    router.push(`/content/${imdbId}`);
+  const navigateToMovie = (movie?: MovieSearchItem) => {
+    if (!movie?.imdbId) return;
+    saveSelectedMovieToSearchHistory(movie);
+    router.push(`/content/${movie.imdbId}`);
   };
 
   return (
@@ -108,7 +110,7 @@ export default function Home() {
                 onChange={(event) => setQuery(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && results[0]?.imdbId) {
-                    navigateToMovie(results[0].imdbId);
+                    navigateToMovie(results[0]);
                   }
                 }}
                 placeholder="Enter movie name (e.g. Inception)"
@@ -117,8 +119,8 @@ export default function Home() {
               <Button
                 className="h-12 rounded-xl bg-[linear-gradient(135deg,#f8fafc,#e8eef7)] text-slate-950 shadow-none hover:bg-[#f4f7fb]"
                 onClick={() => {
-                  if (results[0]?.imdbId) {
-                    navigateToMovie(results[0].imdbId);
+                  if (results[0]) {
+                    navigateToMovie(results[0]);
                   }
                 }}
               >
@@ -135,15 +137,17 @@ export default function Home() {
                   ))
                 ) : results.length > 0 ? (
                   results.map((movie) => (
-                    <MovieResultCard
+                    <CompactMovieCard
                       key={movie.imdbId}
-                      imdbId={movie.imdbId}
-                      title={movie.title}
-                      releaseYear={movie.year}
-                      posterUrl={movie.poster}
-                      titleType={movie.type}
+                      movie={{
+                        imdbId: movie.imdbId,
+                        title: movie.title,
+                        releaseYear: movie.year,
+                        posterUrl: movie.poster,
+                        titleType: movie.type,
+                      }}
                       className="border-white/10 bg-[linear-gradient(180deg,rgba(18,24,34,0.96),rgba(11,15,22,0.98))] shadow-none hover:bg-[linear-gradient(180deg,rgba(24,31,43,0.98),rgba(14,20,29,0.99))]"
-                      onClick={() => navigateToMovie(movie.imdbId)}
+                      onClick={() => navigateToMovie(movie)}
                     />
                   ))
                 ) : (

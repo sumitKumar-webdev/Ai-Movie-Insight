@@ -116,6 +116,67 @@ export type MovieSearchItem = {
   year: string;
   poster: string;
   type: string;
+  genres?: string[];
+};
+
+export type TitleSortBy =
+  | "SORT_BY_POPULARITY"
+  | "SORT_BY_RELEASE_DATE"
+  | "SORT_BY_USER_RATING"
+  | "SORT_BY_USER_RATING_COUNT"
+  | "SORT_BY_YEAR";
+
+export type TitleSortOrder = "ASC" | "DESC";
+
+export type TitleType =
+  | "MOVIE"
+  | "TV_SERIES"
+  | "TV_MINI_SERIES"
+  | "TV_SPECIAL"
+  | "TV_MOVIE"
+  | "SHORT"
+  | "VIDEO"
+  | "VIDEO_GAME";
+
+export type ListTitlesParams = {
+  types?: TitleType[];
+  genres?: string[];
+  countryCodes?: string[];
+  languageCodes?: string[];
+  nameIds?: string[];
+  interestIds?: string[];
+  startYear?: number;
+  endYear?: number;
+  minVoteCount?: number;
+  maxVoteCount?: number;
+  minAggregateRating?: number;
+  maxAggregateRating?: number;
+  sortBy?: TitleSortBy;
+  sortOrder?: TitleSortOrder;
+  pageToken?: string;
+};
+
+export type ListTitlesState = {
+  types: TitleType[];
+  genres: string[];
+  countryCodes: string[];
+  languageCodes: string[];
+  nameIds: string[];
+  interestIds: string[];
+  startYear: string;
+  endYear: string;
+  minVoteCount: string;
+  maxVoteCount: string;
+  minAggregateRating: string;
+  maxAggregateRating: string;
+  sortBy: TitleSortBy | "";
+  sortOrder: TitleSortOrder | "";
+  pageToken: string;
+};
+
+export type MovieTitleListResponse = {
+  items: MovieSearchItem[];
+  nextPageToken?: string;
 };
 
 export type AssistantSuggestion = MovieSearchItem;

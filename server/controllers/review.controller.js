@@ -221,9 +221,7 @@ export async function saveReview(req, res) {
       if (movieTitle) review.movieTitle = movieTitle;
       await review.save();
 
-      await getStoredMovieAiInsight(review.movieImdbId, review.movieTitle, {
-        forceRefresh: true,
-      }).catch((error) => {
+      await getStoredMovieAiInsight(review.movieImdbId, review.movieTitle).catch((error) => {
         console.error("[review:sync-insight:update]", error);
       });
 
@@ -298,9 +296,7 @@ export async function deleteReview(req, res) {
     const deletedMovieTitle = review.movieTitle;
     await review.deleteOne();
 
-    await getStoredMovieAiInsight(deletedMovieImdbId, deletedMovieTitle, {
-      forceRefresh: true,
-    }).catch((error) => {
+    await getStoredMovieAiInsight(deletedMovieImdbId, deletedMovieTitle).catch((error) => {
       console.error("[review:sync-insight:delete]", error);
     });
 

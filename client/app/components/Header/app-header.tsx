@@ -6,20 +6,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import BrandWordmark from "@/app/components/brand/wordmark";
 import { Input } from "@/app/components/ui/input";
-import MovieResultCard from "@/app/components/cards/movie-result-card";
+import CompactMovieCard from "@/app/components/cards/compact-movie-card";
 import MovieResultCardSkeleton from "@/app/components/skeleton-loader/movie-result-card-skeleton";
 import useDebounce from "@/app/Hooks/use-debounce";
 import { searchMovies } from "@/app/services/movie.service";
 import { MovieSearchItem } from "@/app/modal/service.modal";
 import { startRouteProgress } from "@/app/components/ui/route-progress";
 import HeaderProfileMenu from "@/app/components/Header/header-profile-menu";
+import { saveSelectedMovieToSearchHistory } from "@/lib/saveToStorage/search-selection-history";
 
 type SearchSuggestionsProps = {
   loading: boolean;
   normalizedQuery: string;
   debouncedQuery: string;
   results: MovieSearchItem[];
-  onSelectMovie: (imdbId: string) => void;
+  onSelectMovie: (movie: MovieSearchItem) => void;
   className: string;
   cardClassName: string;
 };
@@ -44,15 +45,17 @@ function SearchSuggestions({
       ) : results.length > 0 ? (
         <div className="space-y-2">
           {results.map((movie) => (
-            <MovieResultCard
+            <CompactMovieCard
               key={movie.imdbId}
-              imdbId={movie.imdbId}
-              title={movie.title}
-              releaseYear={movie.year}
-              posterUrl={movie.poster}
-              titleType={movie.type}
+              movie={{
+                imdbId: movie.imdbId,
+                title: movie.title,
+                releaseYear: movie.year,
+                posterUrl: movie.poster,
+                titleType: movie.type,
+              }}
               className={cardClassName}
-              onClick={() => onSelectMovie(movie.imdbId)}
+              onClick={() => onSelectMovie(movie)}
             />
           ))}
         </div>
@@ -181,21 +184,22 @@ export default function AppHeader() {
     router.push(href);
   };
 
-  const navigateToMovie = (imdbId: string) => {
-    if (!imdbId) return;
+  const navigateToMovie = (movie?: MovieSearchItem) => {
+    if (!movie?.imdbId) return;
     setDesktopSearchFocused(false);
     setMobileSearchFocused(false);
     setDesktopSearchOpen(false);
     setMobileSearchOpen(false);
     setQuery("");
     setResults([]);
+    saveSelectedMovieToSearchHistory(movie);
     startRouteProgress();
-    navigateTo(`/content/${imdbId}`);
+    navigateTo(`/content/${movie.imdbId}`);
   };
 
   const navigateToFirstResult = () => {
-    if (results[0]?.imdbId) {
-      navigateToMovie(results[0].imdbId);
+    if (results[0]) {
+      navigateToMovie(results[0]);
     }
   };
 
@@ -219,7 +223,7 @@ export default function AppHeader() {
     <>
       <header className="relative z-220 isolate border-b border-white/8 bg-black/95 backdrop-blur-xl">
         <div
-          className={`mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 ${
+          className={`mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-2 sm:px-6 ${
             isDetailPage
               ? "items-center justify-between"
               : "justify-between lg:flex-row lg:justify-between"
@@ -231,7 +235,7 @@ export default function AppHeader() {
               isDetailPage ? "hidden sm:inline-flex" : ""
             }`}
           >
-            <BrandWordmark compact />
+            <BrandWordmark compact/>
           </Link>
 
           <div className="flex min-w-0 items-center justify-end gap-2 sm:flex-1 sm:gap-3 md:flex-none">

@@ -10,8 +10,10 @@ import {
   register,
   resendVerificationEmail,
   resetPassword,
+  updatePreferences,
   verifyEmail,
 } from "../controllers/auth.controller.js";
+import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -24,6 +26,7 @@ router.post("/google", googleAuth);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.get("/me", getCurrentUser);
+router.patch("/preferences", requireAuth, updatePreferences);
 router.get("/check-username", checkUsernameAvailability);
 router.get("/verify-email", verifyEmail);
 

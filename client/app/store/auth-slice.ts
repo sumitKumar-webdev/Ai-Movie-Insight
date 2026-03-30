@@ -12,6 +12,14 @@ export type AuthUser = {
   isVerified?: boolean;
   authProvider: string[];
   emailVerified: boolean;
+  preferences: {
+    cinemas: string[];
+    genres: string[];
+    languages: string[];
+    moods: string[];
+    formats: string[];
+    onboardingCompleted: boolean;
+  };
 };
 
 export type AuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated";

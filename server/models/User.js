@@ -3,6 +3,91 @@ import mongoose from "mongoose";
 
 const { Schema, model, models } = mongoose;
 
+const UserPreferenceSchema = new Schema(
+  {
+    cinemas: {
+      type: [String],
+      default: [],
+    },
+    genres: {
+      type: [String],
+      default: [],
+    },
+    languages: {
+      type: [String],
+      default: [],
+    },
+    moods: {
+      type: [String],
+      default: [],
+    },
+    formats: {
+      type: [String],
+      default: [],
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const UserPersonalSelectionItemSchema = new Schema(
+  {
+    imdbId: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    year: {
+      type: String,
+      default: "N/A",
+      trim: true,
+    },
+    poster: {
+      type: String,
+      default: null,
+      trim: true,
+    },
+    type: {
+      type: String,
+      default: "movie",
+      trim: true,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
+const UserPersonalSelectionSchema = new Schema(
+  {
+    items: {
+      type: [UserPersonalSelectionItemSchema],
+      default: [],
+    },
+    updatedAt: {
+      type: Date,
+      default: null,
+    },
+    refreshAfter: {
+      type: Date,
+      default: null,
+    },
+  },
+  {
+    _id: false,
+  },
+);
+
 const UserSchema = new Schema(
   {
     name: {
@@ -79,6 +164,25 @@ const UserSchema = new Schema(
         return providers.includes("local");
       },
       default: null,
+    },
+    preferences: {
+      type: UserPreferenceSchema,
+      default: () => ({
+        cinemas: [],
+        genres: [],
+        languages: [],
+        moods: [],
+        formats: [],
+        onboardingCompleted: false,
+      }),
+    },
+    personalSelection: {
+      type: UserPersonalSelectionSchema,
+      default: () => ({
+        items: [],
+        updatedAt: null,
+        refreshAfter: null,
+      }),
     },
   },
   {

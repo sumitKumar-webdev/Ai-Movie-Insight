@@ -2,6 +2,9 @@ import { summarizeWithOpenAI } from "../lib/openai.js";
 import MovieInsight from "../models/MovieInsight.js";
 import Review from "../models/Review.js";
 
+const MIN_REVIEWS_FOR_AI_INSIGHT = 2;
+const REFRESH_DEBOUNCE_MS = 10 * 60 * 1000;
+
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -53,7 +56,7 @@ async function loadInsightReviewContext(imdbId) {
     .sort({ createdAt: -1 })
     .populate("user", "name username avatar is_verified")
     .populate("replies.user", "name username avatar is_verified")
-    .select("movieImdbId movieTitle message likes createdAt user replies")
+    .select("movieImdbId movieTitle message likes createdAt updatedAt user replies")
     .lean();
 
   const formattedReviews = communityReviews
@@ -67,6 +70,18 @@ async function loadInsightReviewContext(imdbId) {
       (review) => typeof review?.movieTitle === "string" && review.movieTitle.trim(),
     )?.movieTitle?.trim()
     || `Movie ${normalizedImdbId}`;
+  const latestActivityAt = communityReviews.reduce((latest, review) => {
+    const reviewUpdatedAt = review?.updatedAt ? new Date(review.updatedAt) : null;
+    if (!reviewUpdatedAt || !Number.isFinite(reviewUpdatedAt.getTime())) {
+      return latest;
+    }
+
+    if (!latest || reviewUpdatedAt.getTime() > latest.getTime()) {
+      return reviewUpdatedAt;
+    }
+
+    return latest;
+  }, null);
 
   return {
     imdbId: normalizedImdbId,
@@ -74,21 +89,41 @@ async function loadInsightReviewContext(imdbId) {
     reviewTexts,
     reviewCount: reviewTexts.length,
     fallbackTitle,
+    latestActivityAt,
   };
 }
 
-function shouldRefreshSavedInsight(savedInsight, reviewCount, forceRefresh) {
+function shouldRefreshSavedInsight(savedInsight, context, forceRefresh) {
   if (forceRefresh || !savedInsight) {
     return true;
   }
 
   const savedReviewCount = Number(savedInsight.reviewCount ?? 0);
+  const reviewCount = Number(context.reviewCount ?? 0);
+  const latestActivityAt = context.latestActivityAt instanceof Date
+    ? context.latestActivityAt
+    : null;
+  const savedInsightUpdatedAt = savedInsight?.updatedAt ? new Date(savedInsight.updatedAt) : null;
+  const nextRefreshAt =
+    savedInsightUpdatedAt && Number.isFinite(savedInsightUpdatedAt.getTime())
+      ? new Date(savedInsightUpdatedAt.getTime() + REFRESH_DEBOUNCE_MS)
+      : null;
+  const hasSourceChange = Boolean(
+    latestActivityAt
+      && Number.isFinite(latestActivityAt.getTime())
+      && (
+        !savedInsightUpdatedAt
+        || !Number.isFinite(savedInsightUpdatedAt.getTime())
+        || latestActivityAt.getTime() > savedInsightUpdatedAt.getTime()
+      ),
+  );
+  const debounceElapsed = !nextRefreshAt || nextRefreshAt.getTime() <= Date.now();
 
-  if (savedReviewCount < 2 && reviewCount >= 2) {
+  if (savedReviewCount < MIN_REVIEWS_FOR_AI_INSIGHT && reviewCount >= MIN_REVIEWS_FOR_AI_INSIGHT) {
     return true;
   }
 
-  if (reviewCount >= savedReviewCount + 3) {
+  if (reviewCount < MIN_REVIEWS_FOR_AI_INSIGHT && savedReviewCount >= MIN_REVIEWS_FOR_AI_INSIGHT) {
     return true;
   }
 
@@ -96,7 +131,7 @@ function shouldRefreshSavedInsight(savedInsight, reviewCount, forceRefresh) {
     return true;
   }
 
-  return false;
+  return hasSourceChange && debounceElapsed;
 }
 
 function mapSavedInsight(savedInsight, options) {
@@ -132,7 +167,7 @@ async function buildFreshInsight(context, preferredTitle) {
     canPersist: true,
   };
 
-  if (context.reviewCount < 2) return insight;
+  if (context.reviewCount < MIN_REVIEWS_FOR_AI_INSIGHT) return insight;
 
   const joinedReviews = context.reviewTexts
     .slice(0, 10)
@@ -194,7 +229,7 @@ export async function getStoredMovieAiInsight(imdbId, title = "", options = {}) 
   const savedInsight = await MovieInsight.findOne({ imdbId: context.imdbId }).lean();
   const forceRefresh = options.forceRefresh === true;
 
-  if (!shouldRefreshSavedInsight(savedInsight, context.reviewCount, forceRefresh)) {
+  if (!shouldRefreshSavedInsight(savedInsight, context, forceRefresh)) {
     return mapSavedInsight(savedInsight, {
       imdbId: context.imdbId,
       title: preferredTitle,

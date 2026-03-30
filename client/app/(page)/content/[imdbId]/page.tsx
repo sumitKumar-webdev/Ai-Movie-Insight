@@ -148,7 +148,7 @@ export default function MovieInsightPage() {
     <main className="min-h-screen bg-black text-white">
       <InfoSection loading={detailsLoading} movie={movie} />
 
-      <section className="mx-auto grid w-full grid-cols-1 gap-6 px-2 py-8 md:px-20 xl:grid-cols-[1fr_400px]">
+      <section className="mx-auto grid w-full grid-cols-1 gap-6 px-2 py-8 md:px-12 xl:grid-cols-[1fr_450px]">
         <div className="max-w-4xl space-y-6">
           <Card className="border-white/10 bg-white/3 text-white">
             <CardHeader>

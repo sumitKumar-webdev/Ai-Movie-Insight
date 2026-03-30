@@ -15,6 +15,15 @@ export async function fetchJson(url) {
     return response.json();
 }
 
+function appendQueryValues(params, key, values) {
+    values.forEach((value) => {
+        const normalized = typeof value === "string" ? value.trim() : "";
+        if (normalized) {
+            params.append(key, normalized);
+        }
+    });
+}
+
 export async function fetchImdbTitleById(imdbId) {
     const data = await fetchJson(
         `${IMDB_API_BASE_URL}/titles/${encodeURIComponent(imdbId)}`,
@@ -25,6 +34,23 @@ export async function fetchImdbTitleById(imdbId) {
     }
 
     return data;
+}
+
+export async function fetchImdbTitleGenresById(imdbId) {
+    const data = await fetchJson(
+        `${IMDB_API_BASE_URL}/titles/${encodeURIComponent(imdbId)}`,
+    ).catch(() => null);
+
+    if (!data?.id) {
+        return null;
+    }
+
+    return {
+        id: data.id,
+        title: data.primaryTitle || data.originalTitle || data.id,
+        genres: Array.isArray(data.genres) ? data.genres : [],
+        type: data.type || "movie",
+    };
 }
 
 export async function fetchImdbTitleVideos(imdbId) {
@@ -99,4 +125,69 @@ export async function searchMoviesByQuery(query, options = {}) {
         }))
         .filter(Boolean)
         .slice(0, limit);
+}
+
+export async function listImdbTitles(filters = {}) {
+    const params = new URLSearchParams();
+
+    appendQueryValues(params, "types", Array.isArray(filters.types) ? filters.types : []);
+    appendQueryValues(params, "genres", Array.isArray(filters.genres) ? filters.genres : []);
+    appendQueryValues(
+        params,
+        "countryCodes",
+        Array.isArray(filters.countryCodes) ? filters.countryCodes : [],
+    );
+    appendQueryValues(
+        params,
+        "languageCodes",
+        Array.isArray(filters.languageCodes) ? filters.languageCodes : [],
+    );
+    appendQueryValues(params, "nameIds", Array.isArray(filters.nameIds) ? filters.nameIds : []);
+    appendQueryValues(
+        params,
+        "interestIds",
+        Array.isArray(filters.interestIds) ? filters.interestIds : [],
+    );
+
+    const scalarEntries = [
+        ["startYear", filters.startYear],
+        ["endYear", filters.endYear],
+        ["minVoteCount", filters.minVoteCount],
+        ["maxVoteCount", filters.maxVoteCount],
+        ["minAggregateRating", filters.minAggregateRating],
+        ["maxAggregateRating", filters.maxAggregateRating],
+        ["sortBy", filters.sortBy],
+        ["sortOrder", filters.sortOrder],
+        ["pageToken", filters.pageToken],
+    ];
+
+    scalarEntries.forEach(([key, value]) => {
+        if (value !== undefined && value !== null && String(value).trim() !== "") {
+            params.set(key, String(value).trim());
+        }
+    });
+
+    const payload = await fetchJson(
+        `${IMDB_API_BASE_URL}/titles${params.toString() ? `?${params.toString()}` : ""}`,
+    ).catch(() => null);
+
+    const titles = Array.isArray(payload?.titles) ? payload.titles : [];
+
+    return {
+        items: titles
+            .map((item) => ({
+                imdbId: item?.id ?? "",
+                title: item?.primaryTitle || item?.originalTitle || item?.id,
+                year:
+                    typeof item?.startYear === "number" ? String(item.startYear) : "N/A",
+                poster: item?.primaryImage?.url ?? null,
+                type: item?.type || "movie",
+                genres: Array.isArray(item?.genres) ? item.genres : [],
+            }))
+            .filter((item) => item.imdbId),
+        nextPageToken:
+            typeof payload?.nextPageToken === "string" && payload.nextPageToken.trim()
+                ? payload.nextPageToken.trim()
+                : undefined,
+    };
 }

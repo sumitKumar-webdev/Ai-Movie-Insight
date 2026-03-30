@@ -24,7 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [safeNext, setSafeNext] = useState("/");
+  const [safeNext, setSafeNext] = useState("/home");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,7 +49,7 @@ export default function LoginPage() {
     const emailVerification = params.get("emailVerification");
     const message = params.get("message");
 
-    setSafeNext(next?.startsWith("/") ? next : "/");
+    setSafeNext(next?.startsWith("/") ? next : "/home");
 
     if (emailVerification === "success") {
       setError("");
@@ -164,142 +164,142 @@ export default function LoginPage() {
         </>
       }
     >
-      {Boolean(error) && (
-        <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          {error}
-        </p>
-      )}
+        {Boolean(error) && (
+          <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+            {error}
+          </p>
+        )}
 
-      {Boolean(notice) && (
-        <p className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {notice}
-        </p>
-      )}
+        {Boolean(notice) && (
+          <p className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+            {notice}
+          </p>
+        )}
 
-      <form
-        className="mt-5 space-y-2"
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-      >
-        {fields.map((field) => {
-          const fieldError = errors[field.name];
-          const isPasswordField = field.hasVisibilityToggle;
+        <form
+          className="mt-5 space-y-2"
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+        >
+          {fields.map((field) => {
+            const fieldError = errors[field.name];
+            const isPasswordField = field.hasVisibilityToggle;
 
-          return (
-            <div key={field.name} className="space-y-2">
-              <label
-                htmlFor={field.id}
-                className="pb-2 text-sm font-medium text-slate-700"
-              >
-                {field.label}
-              </label>
+            return (
+              <div key={field.name} className="space-y-2">
+                <label
+                  htmlFor={field.id}
+                  className="pb-2 text-sm font-medium text-slate-700"
+                >
+                  {field.label}
+                </label>
 
-              <div className="relative">
-                <Input
-                  id={field.id}
-                  type={isPasswordField && showPassword ? "text" : field.type}
-                  autoComplete={field.autoComplete}
-                  required
-                  placeholder={field.placeholder}
-                  className={`h-12 rounded-xl ${isPasswordField ? "pr-12" : ""}`}
-                  aria-invalid={fieldError ? "true" : "false"}
-                  {...register(field.name)}
-                />
+                <div className="relative">
+                  <Input
+                    id={field.id}
+                    type={isPasswordField && showPassword ? "text" : field.type}
+                    autoComplete={field.autoComplete}
+                    required
+                    placeholder={field.placeholder}
+                    className={`h-12 rounded-xl ${isPasswordField ? "pr-12" : ""}`}
+                    aria-invalid={fieldError ? "true" : "false"}
+                    {...register(field.name)}
+                  />
 
-                {isPasswordField ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((value) => !value)}
-                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-500 transition hover:text-slate-800"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    aria-pressed={showPassword}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </button>
-                ) : null}
+                  {isPasswordField ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((value) => !value)}
+                      className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-500 transition hover:text-slate-800"
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      aria-pressed={showPassword}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  ) : null}
+                </div>
+
+                {fieldError && (
+                  <p className="text-sm text-rose-600">{fieldError.message}</p>
+                )}
               </div>
+            );
+          })}
 
-              {fieldError && (
-                <p className="text-sm text-rose-600">{fieldError.message}</p>
-              )}
-            </div>
-          );
-        })}
-
-        <div className="-mt-3 text-right">
-          <Link
-            href={`/auth/forgot-password?next=${encodeURIComponent(safeNext)}`}
-            className="text-sm font-medium text-slate-600 transition hover:text-cyan-700"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
-        <Button type="submit" className="mb-5 h-12 w-full" disabled={loading}>
-          {loading ? (
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="h-5 w-5 animate-spin" />
-              Logging in...
-            </div>
-          ) : (
-            "Login"
-          )}
-        </Button>
-      </form>
-
-      {error === "Please verify your email before logging in" && (
-        <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-sm font-medium text-slate-800">
-            Need a new verification email?
-          </p>
-          <p className="mt-1 text-sm text-slate-600">
-            Enter the email for your account and we&apos;ll send a fresh
-            verification link.
-          </p>
-          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-            <Input
-              type="email"
-              value={resendEmail}
-              onChange={(event) => setResendEmail(event.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              className="h-11"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onResendVerification}
-              disabled={resendLoading}
-              className="h-11 sm:min-w-44"
+          <div className="-mt-3 text-right">
+            <Link
+              href={`/auth/forgot-password?next=${encodeURIComponent(safeNext)}`}
+              className="text-sm font-medium text-slate-600 transition hover:text-cyan-700"
             >
-              {resendLoading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Sending...
-                </span>
-              ) : (
-                "Resend email"
-              )}
-            </Button>
+              Forgot password?
+            </Link>
           </div>
+
+          <Button type="submit" className="mb-5 h-12 w-full" disabled={loading}>
+            {loading ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Logging in...
+              </div>
+            ) : (
+              "Login"
+            )}
+          </Button>
+        </form>
+
+        {error === "Please verify your email before logging in" && (
+          <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-800">
+              Need a new verification email?
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              Enter the email for your account and we&apos;ll send a fresh
+              verification link.
+            </p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              <Input
+                type="email"
+                value={resendEmail}
+                onChange={(event) => setResendEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className="h-11"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onResendVerification}
+                disabled={resendLoading}
+                className="h-11 sm:min-w-44"
+              >
+                {resendLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Sending...
+                  </span>
+                ) : (
+                  "Resend email"
+                )}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className="my-2 -mt-1 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs uppercase tracking-wide text-slate-500">
+            or
+          </span>
+          <div className="h-px flex-1 bg-slate-200" />
         </div>
-      )}
 
-      <div className="my-2 -mt-1 flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs uppercase tracking-wide text-slate-500">
-          or
-        </span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-
-      <GoogleAuthButton mode="login" nextPath={safeNext} onError={setError} />
+        <GoogleAuthButton mode="login" nextPath={safeNext} onError={setError} />
     </AuthShell>
   );
 }

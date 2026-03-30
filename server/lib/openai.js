@@ -181,3 +181,46 @@ Return JSON only.`,
     suggestions,
   };
 }
+
+export async function getPersonalSuggestionAI({
+  searchHistory,
+  preferences,
+  limit = 8,
+}) {
+  const parsed = await generateGeminiJson({
+    temperature: 0.35,
+    systemInstruction: `You create one user's personal weekly movie selection.
+
+Respond ONLY in valid JSON with exactly this key:
+- titles (array of strings)
+
+Rules:
+1. Return at most ${Math.max(1, limit)} movie or series titles.
+2. Stay close to the user's search history and genre/language/mood preferences.
+3. Prefer diverse, relevant, strong picks rather than obvious duplicates.
+4. Prefer titles that are real and searchable.
+5. Use title names only, with no year and no commentary.
+6. Return JSON only.`,
+    conversation: [
+      {
+        role: "user",
+        content: JSON.stringify({
+          searchHistory: Array.isArray(searchHistory) ? searchHistory : [],
+          preferences: preferences ?? {},
+          limit: Math.max(1, limit),
+        }),
+      },
+    ],
+  });
+
+  console.log(parsed)
+
+  return Array.isArray(parsed?.titles)
+    ? parsed.titles
+      .map((item) => String(item ?? "").trim().toLowerCase())
+      .filter(Boolean)
+      .slice(0, Math.max(1, limit))
+    : [];
+}
+
+export const suggestPersonalMovieSelections = getPersonalSuggestionAI;

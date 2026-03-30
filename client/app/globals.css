@@ -51,8 +51,8 @@
 
 :root {
   --radius: 0.625rem;
-  --brand-primary: oklch(0.865 0.118 195.3);
-  --brand-secondary: oklch(0.585 0.102 205.9);
+  --brand-primary: #5ed8ff;
+  --brand-secondary: #1698ff;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -87,8 +87,8 @@
 }
 
 .dark {
-  --brand-primary: oklch(0.865 0.118 195.3);
-  --brand-secondary: oklch(0.7 0.104 201.9);
+  --brand-primary: #5ed8ff;
+  --brand-secondary: #1698ff;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -322,4 +322,89 @@
   text-shadow: 0 0 18px rgba(255, 255, 255, 0.06);
   animation: replyCountShimmer 1.5s linear infinite;
   will-change: background-position;
+}
+
+@keyframes movieTitleMarquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-50% - 0.75rem));
+  }
+}
+
+.movie-title-marquee {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.movie-title-marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 1.2rem;
+  animation: movieTitleMarquee 7s linear infinite;
+  will-change: transform;
+}
+
+.movie-title-marquee-item {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.movie-title-scroll {
+  will-change: transform;
+}
+
+@keyframes homeAmbientFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes homeAmbientDriftOne {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(16px, 10px, 0) scale(1.03);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes homeAmbientDriftTwo {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-14px, 12px, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.home-ambient-fade-in {
+  opacity: 0;
+  animation: homeAmbientFadeIn 900ms ease-out 350ms forwards;
+  will-change: opacity, transform;
+}
+
+.home-ambient-drift-one {
+  animation:
+    homeAmbientFadeIn 900ms ease-out 350ms forwards,
+    homeAmbientDriftOne 14s ease-in-out 1.3s infinite;
+}
+
+.home-ambient-drift-two {
+  animation:
+    homeAmbientFadeIn 900ms ease-out 550ms forwards,
+    homeAmbientDriftTwo 16s ease-in-out 1.6s infinite;
 }

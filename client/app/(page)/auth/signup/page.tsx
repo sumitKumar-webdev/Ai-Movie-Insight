@@ -36,7 +36,7 @@ type UsernameStatus = "idle" | "invalid" | "checking" | "available" | "taken";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [safeNext, setSafeNext] = useState("/");
+  const [safeNext, setSafeNext] = useState("/home");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [verificationUrl, setVerificationUrl] = useState("");
@@ -68,7 +68,7 @@ export default function SignupPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const next = params.get("next");
-    setSafeNext(next?.startsWith("/") ? next : "/");
+    setSafeNext(next?.startsWith("/") ? next : "/home");
   }, []);
 
   useEffect(() => {
@@ -224,11 +224,11 @@ export default function SignupPage() {
         </>
       }
     >
-      <form
-        className="mt-5i space-y-2"
-        onSubmit={handleSubmit(onSubmit)}
-        noValidate
-      >
+        <form
+          className="mt-5i space-y-2"
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+        >
           <div className="space-y-2">
             <label htmlFor="name" className="text-sm font-medium text-slate-700">
               Name
@@ -375,15 +375,15 @@ export default function SignupPage() {
               "Sign up"
             )}
           </Button>
-      </form>
+        </form>
 
-      <div className="my-3 flex items-center gap-3">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs uppercase tracking-wide text-slate-500">or</span>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
+        <div className="my-3 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs uppercase tracking-wide text-slate-500">or</span>
+          <div className="h-px flex-1 bg-slate-200" />
+        </div>
 
-      <GoogleAuthButton mode="signup" nextPath={safeNext} onError={setError} />
+        <GoogleAuthButton mode="signup" nextPath={safeNext} onError={setError} />
     </AuthShell>
   );
 }

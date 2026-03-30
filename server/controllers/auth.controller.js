@@ -35,6 +35,8 @@ const clientPublicUrl = (
 ).replace(/\/+$/, "");
 
 function sanitizeUser(user) {
+  const preferences = user.preferences ?? {};
+
   return {
     id: String(user._id),
     name: user.name,
@@ -48,7 +50,37 @@ function sanitizeUser(user) {
         ? [user.authProvider]
         : [],
     emailVerified: Boolean(user.emailVerified),
+    preferences: {
+      cinemas: Array.isArray(preferences.cinemas) ? preferences.cinemas : [],
+      genres: Array.isArray(preferences.genres) ? preferences.genres : [],
+      languages: Array.isArray(preferences.languages) ? preferences.languages : [],
+      moods: Array.isArray(preferences.moods) ? preferences.moods : [],
+      formats: Array.isArray(preferences.formats) ? preferences.formats : [],
+      onboardingCompleted: Boolean(preferences.onboardingCompleted),
+    },
   };
+}
+
+function normalizePreferenceList(value, limit = 8) {
+  const items = Array.isArray(value) ? value : [];
+  const seen = new Set();
+
+  return items
+    .map((item) => String(item ?? "").trim())
+    .filter((item) => {
+      if (!item) {
+        return false;
+      }
+
+      const normalized = item.toLowerCase();
+      if (seen.has(normalized)) {
+        return false;
+      }
+
+      seen.add(normalized);
+      return true;
+    })
+    .slice(0, limit);
 }
 
 function isValidUsername(value) {
@@ -660,6 +692,34 @@ export const getCurrentUser = async (req, res) => {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch current user";
+    return errorRes(res, 500, message);
+  }
+};
+
+export const updatePreferences = async (req, res) => {
+  try {
+    const user = req.user ? await User.findById(req.user._id) : null;
+    if (!user) {
+      return errorRes(res, 401, "Unauthorized");
+    }
+
+    user.preferences = {
+      cinemas: normalizePreferenceList(req.body?.cinemas, 8),
+      genres: normalizePreferenceList(req.body?.genres, 12),
+      languages: normalizePreferenceList(req.body?.languages, 10),
+      moods: normalizePreferenceList(req.body?.moods, 10),
+      formats: normalizePreferenceList(req.body?.formats, 8),
+      onboardingCompleted: true,
+    };
+
+    await user.save();
+
+    return successRes(res, 200, "Preferences saved successfully", {
+      user: sanitizeUser(user),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to save preferences";
     return errorRes(res, 500, message);
   }
 };

@@ -20,7 +20,7 @@ export default function BrandWordmark({
       <div
         className={cn(
           "flex items-baseline gap-0 text-[clamp(1.75rem,5vw,4.5rem)] font-black uppercase tracking-[0.08em] text-white",
-          compact && "text-[1.1rem] tracking-[0.1em] sm:text-[1.55rem] sm:tracking-[0.12em]",
+          compact && "text-[1.3rem] tracking-[0.1em] sm:text-[1.65rem] sm:tracking-[0.12em]",
           titleClassName,
         )}
       >

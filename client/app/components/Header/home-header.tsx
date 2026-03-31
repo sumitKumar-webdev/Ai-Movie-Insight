@@ -13,13 +13,13 @@ export default function HomeHeader() {
           href="/"
           className="pointer-events-auto relative z-10 inline-flex items-center rounded-xl px-2 py-1 text-white/92 transition hover:text-white"
         >
-          <BrandWordmark compact titleClassName="text-md" subtitleClassName="text-[0.35rem] tracking-[0.24em] sm:text-[0.54rem]"/>
+          <BrandWordmark compact titleClassName="text-md" subtitleClassName="text-[0.55rem] tracking-[0.24em] sm:text-[0.75rem]"/>
         </Link>
 
         <div className="pointer-events-auto relative z-10">
           <HeaderProfileMenu
             triggerClassName="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 md:h-10 md:w-10"
-            avatarClassName="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
+            avatarClassName="h-8 w-8 md:h-9 md:w-9"
             menuClassName="z-60 w-44"
           />
         </div>

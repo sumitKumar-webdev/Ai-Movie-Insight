@@ -94,7 +94,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
             </div>
 
             <span className="animate-pulse text-[11px] uppercase tracking-widest text-white/30">
-              Verifying session
+              Loading
             </span>
           </div>
         </main>

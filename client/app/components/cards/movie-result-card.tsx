@@ -97,7 +97,6 @@ export default function MovieResultCard({
               src={posterUrl}
               alt={title}
               fill
-              loading="eager"
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
               className={cn(
                 "object-cover transition-transform duration-700",

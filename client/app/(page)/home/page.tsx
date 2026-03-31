@@ -369,9 +369,9 @@ export default function UserHomePage() {
                   ))}
                 </div>
               ) : interestReleaseMovies.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 transition-all duration-300">
                   {interestReleaseMovies.map((movie) => (
-                    <div key={movie.imdbId} className="transition-all duration-300">
+                    <div key={movie.imdbId}>
                       <MovieResultCard
                         movie={{
                           imdbId: movie.imdbId,

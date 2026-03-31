@@ -360,7 +360,7 @@ export default function UserHomePage() {
           style={{
             animationDelay: "550ms",
             background:
-              "radial-gradient(circle, rgba(251, 191, 36, 0.34) 0%, rgba(244, 114, 182, 0.24) 36%, rgba(168, 85, 247, 0.08) 62%, transparent 76%)",
+              "radial-gradient(circle, rgba(251, 191, 36, 0.34) 5%, rgba(244, 114, 182, 0.24) 32%, rgba(168, 85, 247, 0.08) 61%, transparent 76%)",
           }}
         />
       </div>
@@ -369,7 +369,7 @@ export default function UserHomePage() {
           <div className="space-y-10 lg:col-span-9">
             <section>
               <div className="mb-6">
-                <h1 className="text-[1rem] md:text-[1.5rem] font-semibold tracking-tight text-white">
+                <h1 className="text-[1rem] md:text-[1.5rem] font-semibold tracking-tight text-white/90">
                   New Releases for Your Interest
                 </h1>
                 <p className="text-sm md:text-base text-white/45">

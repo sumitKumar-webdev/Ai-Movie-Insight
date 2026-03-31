@@ -89,7 +89,7 @@ function SearchInputShell({
 }: SearchInputShellProps) {
   return (
     <div className={wrapperClassName} onClick={() => inputRef.current?.focus()}>
-      <Search className="h-4 w-4 shrink-0 text-white/45" />
+      <Search className="h-5 w-5 shrink-0 text-white/45" />
       <div className="relative flex-1">
         <Input
           ref={inputRef}
@@ -265,10 +265,10 @@ export default function AppHeader() {
                     setDesktopSearchFocused(false);
                     setDesktopSearchOpen(false);
                   }}
-                  wrapperClassName="flex h-11 cursor-text items-center rounded-full border border-white/12 bg-[#0b0b0b] pl-3 pr-2 shadow-[0_10px_30px_rgba(0,0,0,0.28)]"
+                  wrapperClassName="flex h-12 cursor-text items-center rounded-full border border-white/12 bg-[#0b0b0b] pl-3 pr-2 shadow-[0_10px_30px_rgba(0,0,0,0.28)]"
                 />
 
-                {shouldShowDesktopSuggestions ? (
+                {shouldShowDesktopSuggestions && (
                   <SearchSuggestions
                     loading={loading}
                     normalizedQuery={normalizedQuery}
@@ -278,7 +278,7 @@ export default function AppHeader() {
                     className="absolute right-0 top-[calc(100%+0.55rem)] z-260 max-h-80 w-full overflow-y-auto rounded-[1.4rem] border border-white/10 bg-[#050505] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.72)] home-search-scroll"
                     cardClassName="bg-[#101010] hover:bg-[#171717]"
                   />
-                ) : null}
+                )}
               </div>
 
               <button
@@ -351,10 +351,10 @@ export default function AppHeader() {
               onFocus={() => setMobileSearchFocused(true)}
               onBlur={syncMobileFocusState}
               onSubmit={navigateToFirstResult}
-              wrapperClassName="flex h-11 cursor-text items-center rounded-full border border-white/12 bg-white/6 pl-3 pr-2"
+              wrapperClassName="flex h-12 cursor-text items-center rounded-full border border-white/12 bg-white/6 pl-3 pr-2"
             />
 
-            {shouldShowMobileSuggestions ? (
+            {shouldShowMobileSuggestions && (
               <SearchSuggestions
                 loading={loading}
                 normalizedQuery={normalizedQuery}
@@ -364,7 +364,7 @@ export default function AppHeader() {
                 className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-230 max-h-80 overflow-y-auto rounded-none border-y border-white/10 bg-[#050505] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.72)] home-search-scroll sm:rounded-4xl"
                 cardClassName="bg-[#101010] hover:bg-[#171717]"
               />
-            ) : null}
+            )}
           </div>
         </div>
       </header>

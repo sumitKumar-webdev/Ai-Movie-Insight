@@ -26,7 +26,13 @@ function normalizeMetaValues(values?: string | string[] | null) {
     .filter(Boolean);
 }
 
-function MetaValueList({ values }: { values?: string | string[] | null }) {
+function MetaValueList({
+  values,
+  label,
+}: {
+  values?: string | string[] | null;
+  label: string;
+}) {
   const normalizedValues = normalizeMetaValues(values);
 
   if (!normalizedValues.length) {
@@ -46,8 +52,17 @@ function MetaValueList({ values }: { values?: string | string[] | null }) {
         </div>
       )}
       {Boolean(remainingValues.length) && (
-        <div className="pointer-events-none absolute left-0 top-[calc(100%+0.45rem)] z-20 min-w-max rounded-xl border border-white/10 bg-[#080808]/96 px-3 py-2 text-[10px] leading-5 text-white/75 opacity-0 shadow-[0_18px_45px_rgba(0,0,0,0.45)] transition-opacity duration-200 group-hover:opacity-100 sm:text-xs">
-          {remainingValues.join(", ")}
+        <div className="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-0 z-50 min-w-40 rounded-xl border border-white/10 bg-[#080808]/96 px-3 py-2.5 text-[10px] text-white/75 opacity-0 shadow-[0_18px_45px_rgba(0,0,0,0.45)] transition-opacity duration-200 group-hover:opacity-100 sm:text-xs">
+          <p className="mb-1.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-white/50 sm:text-[9px]">
+            Remaining {label}
+          </p>
+          <ul className="space-y-1 leading-5">
+            {remainingValues.map((value) => (
+              <li key={value} className="font-medium text-white/80">
+                {value}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
@@ -128,11 +143,11 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-[11px] leading-4 text-white/80 sm:text-sm md:grid-cols-4 md:gap-4">
                   <div>
                     <p className="text-white/50">Country</p>
-                    <MetaValueList values={movie?.country} />
+                    <MetaValueList values={movie?.country} label="countries" />
                   </div>
                   <div>
                     <p className="text-white/50">Language</p>
-                    <MetaValueList values={movie?.language} />
+                    <MetaValueList values={movie?.language} label="languages" />
                   </div>
                   <div>
                     <p className="text-white/50">Release Date</p>

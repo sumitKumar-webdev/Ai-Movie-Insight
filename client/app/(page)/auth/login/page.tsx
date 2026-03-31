@@ -11,7 +11,8 @@ import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { toast } from "@/app/Hooks/use-toast";
-import { login, resendVerificationEmail } from "@/app/services/auth.service";
+import ResendVerificationModal from "@/app/modal/resend-verification-modal";
+import { login } from "@/app/services/auth.service";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { brand } from "@/app/config/brand";
 
@@ -28,8 +29,8 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
   const [resendEmail, setResendEmail] = useState("");
+  const [resendModalOpen, setResendModalOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const {
     register,
@@ -92,33 +93,6 @@ export default function LoginPage() {
     }
   };
 
-  const onResendVerification = async () => {
-    setError("");
-    setNotice("");
-
-    const email = resendEmail.trim().toLowerCase();
-    if (!email) {
-      setError("Enter your email to resend the verification link.");
-      return;
-    }
-
-    try {
-      setResendLoading(true);
-      const response = await resendVerificationEmail(email);
-
-      if (!response.status) {
-        setError(response.message ?? "Unable to resend verification email.");
-        return;
-      }
-
-      setNotice(response.message ?? "A new verification email has been sent.");
-    } catch {
-      setError("Unable to resend verification email.");
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
   const fields: Array<{
     name: keyof LoginFormValues;
     label: string;
@@ -165,9 +139,20 @@ export default function LoginPage() {
       }
     >
         {Boolean(error) && (
-          <p className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-            {error}
-          </p>
+          <div className="mt-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+              <p>{error}</p>
+              {error === "Please verify your email before logging in" ? (
+                <button
+                  type="button"
+                  onClick={() => setResendModalOpen(true)}
+                  className="shrink-0 font-medium text-rose-700 underline-offset-4 transition hover:underline"
+                >
+                  Resend email
+                </button>
+              ) : null}
+            </div>
+          </div>
         )}
 
         {Boolean(notice) && (
@@ -253,44 +238,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {error === "Please verify your email before logging in" && (
-          <div className="mb-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-medium text-slate-800">
-              Need a new verification email?
-            </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Enter the email for your account and we&apos;ll send a fresh
-              verification link.
-            </p>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row">
-              <Input
-                type="email"
-                value={resendEmail}
-                onChange={(event) => setResendEmail(event.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                className="h-11"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onResendVerification}
-                disabled={resendLoading}
-                className="h-11 sm:min-w-44"
-              >
-                {resendLoading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Sending...
-                  </span>
-                ) : (
-                  "Resend email"
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
-
         <div className="my-2 -mt-1 flex items-center gap-3">
           <div className="h-px flex-1 bg-slate-200" />
           <span className="text-xs uppercase tracking-wide text-slate-500">
@@ -298,11 +245,20 @@ export default function LoginPage() {
           </span>
           <div className="h-px flex-1 bg-slate-200" />
         </div>
-
-        <p className="text-center text-sm text-slate-500">
-          Continue with Google
-        </p>
         <GoogleAuthButton nextPath={safeNext} onError={setError} />
+        <ResendVerificationModal
+          open={resendModalOpen}
+          onOpenChange={setResendModalOpen}
+          initialEmail={resendEmail}
+          onSuccess={(message) => {
+            setError("");
+            setNotice(message);
+          }}
+          onError={(message) => {
+            setNotice("");
+            setError(message);
+          }}
+        />
     </AuthShell>
   );
 }

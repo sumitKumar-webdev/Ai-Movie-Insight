@@ -11,10 +11,12 @@ import {
   Mail,
   PencilLine,
   ShieldCheck,
+  Edit,
 } from "lucide-react";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
 import VerifiedBadge from "@/app/components/verified-badge";
 import { Skeleton } from "@/app/components/ui/skeleton";
+import ProfileSettingsModal from "@/app/modal/profile-settings-modal";
 import UserPreferencesModal from "@/app/modal/user-preferences-modal";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 
@@ -87,7 +89,7 @@ function PreferenceTagList({
   items: string[];
 }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+    <div className="rounded-2xl border border-white/8 bg-white/0.03 p-4">
       <p className="text-[11px] font-medium tracking-[0.16em] text-white/45 uppercase">
         {label}
       </p>
@@ -115,6 +117,7 @@ export default function ProfilePage() {
   const user = useAuthStore((auth) => auth.user);
   const status = useAuthStore((auth) => auth.status);
   const [preferencesModalOpen, setPreferencesModalOpen] = useState(false);
+  const [profileSettingsOpen, setProfileSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (status === "idle") {
@@ -127,15 +130,7 @@ export default function ProfilePage() {
     }
   }, [router, status]);
 
-  if (status === "idle" || status === "loading") {
-    return <ProfileSkeleton />;
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  const providerLabel = user.authProvider?.length
+  const providerLabel = user?.authProvider?.length
     ? user.authProvider
         .map((provider) => provider.charAt(0).toUpperCase() + provider.slice(1))
         .join(", ")
@@ -145,17 +140,25 @@ export default function ProfilePage() {
     () =>
       preferenceGroups.map((group) => ({
         ...group,
-        items: Array.isArray(user.preferences?.[group.key])
+        items: Array.isArray(user?.preferences?.[group.key])
           ? user.preferences[group.key]
           : [],
       })),
-    [user.preferences],
+    [user],
   );
 
   const totalPreferenceCount = preferenceSummary.reduce(
     (total, group) => total + group.items.length,
     0,
   );
+
+  if (status === "idle" || status === "loading") {
+    return <ProfileSkeleton />;
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <>
@@ -175,7 +178,15 @@ export default function ProfilePage() {
                 </p>
               </div>
 
-              <div className="p-6 sm:p-8">
+              <div className="relative p-6 sm:p-8">
+                <button
+                  type="button"
+                  onClick={() => setProfileSettingsOpen(true)}
+                  className="absolute inline-flex h-8 w-8 items-center justify-center rounded-full text-white/72 transition hover:text-white top-2 right-2"
+                  aria-label="Open profile settings"
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
                 <div className="flex flex-col gap-8">
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
@@ -200,6 +211,9 @@ export default function ProfilePage() {
                         </p>
                         <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
                           Your CineAI profile keeps your account, assistant activity, and recommendations connected in one place.
+                        </p>
+                        <p className="mt-2 text-xs text-white/45">
+                          Profile photo and extra profile customization will be included in coming versions.
                         </p>
                       </div>
                     </div>
@@ -294,11 +308,18 @@ export default function ProfilePage() {
                   <p className="mt-2 break-all text-base text-white">{user.email}</p>
                 </div>
 
+                <div className="border-b border-white/8 pb-5">
+                  <p className="text-[11px] font-medium tracking-[0.16em] text-white/45 uppercase">
+                    Full name
+                  </p>
+                  <p className="mt-2 text-base text-white">{user.name}</p>
+                </div>
+
                 <div>
                   <p className="text-[11px] font-medium tracking-[0.16em] text-white/45 uppercase">
                     Username
                   </p>
-                  <p className="mt-2 text-base text-white">{user.username}</p>
+                  <p className="mt-2 text-base text-white">@{user.username}</p>
                 </div>
               </div>
             </section>
@@ -380,7 +401,7 @@ export default function ProfilePage() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-2xl border border-dashed border-white/12 bg-white/[0.02] p-6 text-center">
+                <div className="rounded-2xl border border-dashed border-white/12 bg-white/0.02 p-6 text-center">
                   <BadgePlus className="mx-auto h-8 w-8 text-cyan-300/80" />
                   <h3 className="mt-4 text-lg font-semibold text-white">
                     Add your interests
@@ -406,6 +427,11 @@ export default function ProfilePage() {
       <UserPreferencesModal
         open={preferencesModalOpen}
         onOpenChange={setPreferencesModalOpen}
+      />
+      <ProfileSettingsModal
+        open={profileSettingsOpen}
+        onOpenChange={setProfileSettingsOpen}
+        user={user}
       />
     </>
   );

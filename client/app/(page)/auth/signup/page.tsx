@@ -87,7 +87,7 @@ export default function SignupPage() {
       }
 
     setUsernameStatus("checking");
-    setUsernameMessage("Checking username...");
+    setUsernameMessage("");
 
     const timer = window.setTimeout(async () => {
       try {
@@ -116,7 +116,7 @@ export default function SignupPage() {
 
         if (payload.data?.available) {
           setUsernameStatus("available");
-          setUsernameMessage("Username is available.");
+          setUsernameMessage("");
           return;
         }
 
@@ -278,16 +278,10 @@ export default function SignupPage() {
             </div>
             {errors.username ? (
               <p className="text-sm text-rose-600">{errors.username.message}</p>
-            ) : usernameMessage ? (
-              <p
-                className={`text-sm ${
-                  usernameStatus === "available"
-                    ? "text-emerald-600"
-                    : usernameStatus === "checking"
-                      ? "text-slate-500"
-                      : "text-rose-600"
-                }`}
-              >
+            ) : usernameMessage &&
+              usernameStatus !== "available" &&
+              usernameStatus !== "checking" ? (
+              <p className="text-sm text-rose-600">
                 {usernameMessage}
               </p>
             ) : null}
@@ -382,10 +376,6 @@ export default function SignupPage() {
           <span className="text-xs uppercase tracking-wide text-slate-500">or</span>
           <div className="h-px flex-1 bg-slate-200" />
         </div>
-
-        <p className="text-center text-sm text-slate-500">
-          Continue with Google
-        </p>
         <GoogleAuthButton nextPath={safeNext} onError={setError} />
     </AuthShell>
   );

@@ -71,6 +71,11 @@ type SaveUserPreferencesPayload = {
   formats: string[];
 };
 
+type UpdateProfilePayload = {
+  name: string;
+  username: string;
+};
+
 export const saveUserPreferences = async (payload: SaveUserPreferencesPayload) => {
   console.log("prefrence: ", payload)
   const res = await authenticatedFetch("/api/auth/preferences", {
@@ -90,6 +95,31 @@ export const saveUserPreferences = async (payload: SaveUserPreferencesPayload) =
   return {
     ok: res.ok,
     message: data.message ?? data.error ?? "Failed to save preferences",
+    user: data.data?.user ?? null,
+  };
+};
+
+export const saveProfile = async (payload: UpdateProfilePayload) => {
+  const res = await authenticatedFetch("/api/auth/profile", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: payload.name.trim(),
+      username: payload.username.trim(),
+    }),
+  });
+
+  const data = (await res.json()) as {
+    message?: string;
+    error?: string;
+    data?: {
+      user?: AuthUser;
+    };
+  };
+
+  return {
+    ok: res.ok,
+    message: data.message ?? data.error ?? "Failed to save profile",
     user: data.data?.user ?? null,
   };
 };

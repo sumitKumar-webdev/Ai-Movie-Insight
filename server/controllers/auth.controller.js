@@ -22,44 +22,17 @@ import {
   sendVerificationEmail,
   sendWelcomeEmail,
 } from "../lib/email.js";
+import { isValidUsername, sanitizeUser } from "../lib/user-profile.js";
 import { errorRes, successRes } from "../lib/res.js";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClient = googleClientId ? new OAuth2Client(googleClientId) : null;
-const USERNAME_PATTERN = /^[a-zA-Z0-9_]{3,20}$/;
 const isDevelopment = process.env.NODE_ENV === "development";
 const clientPublicUrl = (
   process.env.CLIENT_PUBLIC_URL ||
   process.env.CLIENT_ORIGIN ||
   "http://localhost:3000"
 ).replace(/\/+$/, "");
-
-function sanitizeUser(user) {
-  const preferences = user.preferences ?? {};
-
-  return {
-    id: String(user._id),
-    name: user.name,
-    email: user.email,
-    username: user.username ?? "",
-    avatar: user.avatar ?? "",
-    isVerified: Boolean(user.is_verified),
-    authProvider: Array.isArray(user.authProvider)
-      ? user.authProvider
-      : user.authProvider
-        ? [user.authProvider]
-        : [],
-    emailVerified: Boolean(user.emailVerified),
-    preferences: {
-      cinemas: Array.isArray(preferences.cinemas) ? preferences.cinemas : [],
-      genres: Array.isArray(preferences.genres) ? preferences.genres : [],
-      languages: Array.isArray(preferences.languages) ? preferences.languages : [],
-      moods: Array.isArray(preferences.moods) ? preferences.moods : [],
-      formats: Array.isArray(preferences.formats) ? preferences.formats : [],
-      onboardingCompleted: Boolean(preferences.onboardingCompleted),
-    },
-  };
-}
 
 function normalizePreferenceList(value, limit = 8) {
   const items = Array.isArray(value) ? value : [];
@@ -81,10 +54,6 @@ function normalizePreferenceList(value, limit = 8) {
       return true;
     })
     .slice(0, limit);
-}
-
-function isValidUsername(value) {
-  return USERNAME_PATTERN.test(value.trim());
 }
 
 function buildTokenWithExpiry(hours = 24) {
@@ -305,6 +274,7 @@ export const googleAuth = async (req, res) => {
     }
 
     let user;
+    let createdWithGoogle = false;
     const ticket = await googleClient.verifyIdToken({
       idToken: googleToken,
       audience: googleClientId,
@@ -338,6 +308,7 @@ export const googleAuth = async (req, res) => {
       });
 
       await user.save();
+      createdWithGoogle = true;
     } else {
       const providers = Array.isArray(user.authProvider)
         ? user.authProvider
@@ -365,6 +336,16 @@ export const googleAuth = async (req, res) => {
       }
 
       await user.save();
+    }
+
+    if (createdWithGoogle) {
+      try {
+        await sendWelcomeEmail(user.email, user.name);
+      } catch (error) {
+        const reason =
+          error instanceof Error ? error.message : "Unknown welcome email error";
+        console.error(`[email:welcome] Failed after Google signup for ${user.email}: ${reason}`);
+      }
     }
 
     const session = buildAuthSession(user);

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { type FormEvent, useEffect, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "@/app/Hooks/use-toast";
 import { AuthShell } from "@/app/components/auth/auth-shell";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -107,6 +108,11 @@ export default function ForgotPasswordPage() {
       }
 
       setNotice(payload.message ?? "Password reset successfully.");
+      toast({
+        title: "Password updated",
+        description: "Your password was changed successfully.",
+        variant: "success",
+      });
       setPassword("");
       setConfirmPassword("");
     } catch {

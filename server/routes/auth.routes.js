@@ -2,7 +2,6 @@ import { Router } from "express";
 import {
   checkUsernameAvailability,
   forgotPassword,
-  getCurrentUser,
   googleAuth,
   login,
   logout,
@@ -13,6 +12,7 @@ import {
   updatePreferences,
   verifyEmail,
 } from "../controllers/auth.controller.js";
+import { getProfile, saveProfile } from "../controllers/profile.controller.js";
 import { requireAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -25,7 +25,9 @@ router.post("/resend-verification", resendVerificationEmail);
 router.post("/google", googleAuth);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
-router.get("/me", getCurrentUser);
+router.get("/me", requireAuth, getProfile);
+router.get("/profile", requireAuth, getProfile);
+router.patch("/profile", requireAuth, saveProfile);
 router.patch("/preferences", requireAuth, updatePreferences);
 router.get("/check-username", checkUsernameAvailability);
 router.get("/verify-email", verifyEmail);

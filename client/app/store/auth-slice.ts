@@ -38,7 +38,7 @@ export const fetchCurrentUserThunk = createAsyncThunk<
   AuthUser | null,
   boolean | undefined
 >("auth/fetchCurrentUser", async () => {
-  const response = await authenticatedFetch("/api/auth/me", {
+  const response = await authenticatedFetch("/api/auth/profile", {
     method: "GET",
     cache: "no-store",
   });

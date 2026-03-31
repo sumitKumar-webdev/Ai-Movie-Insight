@@ -101,7 +101,10 @@ function buildEmailLayout({
   return { html, text };
 }
 
-export function getTemplatePayload(template, { name, message, token, serverPublicUrl, clientPublicUrl } = {}) {
+export function getTemplatePayload(
+  template,
+  { name, message, token, serverPublicUrl, clientPublicUrl, meta } = {},
+) {
   switch (template) {
     case "verification": {
       const verificationUrl = `${serverPublicUrl}/api/auth/verify-email?token=${encodeURIComponent(token ?? "")}`;
@@ -182,6 +185,33 @@ export function getTemplatePayload(template, { name, message, token, serverPubli
               "If this was not you, secure your account immediately and contact support.",
             ],
           note: "If you did not make this change, please reset your password again right away.",
+        }),
+      };
+    }
+    case "username-changed": {
+      const previousUsername = escapeHtml(meta?.previousUsername || "Not available");
+      const username = escapeHtml(meta?.username || name);
+
+      return {
+        subject: "Your CineAI username was changed",
+        ...buildEmailLayout({
+          eyebrow: "Account Update",
+          title: "Username Updated",
+          subtitle: "Your CineAI username has been changed successfully.",
+          greeting: `Hi ${name},`,
+          message:
+            message || [
+              "Your username was updated on your CineAI account.",
+              "If you made this change, no further action is needed.",
+            ],
+          secondaryBlock: `
+            <p style="margin:0 0 10px;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#06b6d4;">Username details</p>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.7;color:#94a3b8;">Previous username</p>
+            <p style="margin:0 0 14px;font-size:18px;font-weight:700;line-height:1.3;color:#ffffff;">@${previousUsername}</p>
+            <p style="margin:0 0 8px;font-size:13px;line-height:1.7;color:#94a3b8;">New username</p>
+            <p style="margin:0;font-size:18px;font-weight:700;line-height:1.3;color:#ffffff;">@${username}</p>
+          `,
+          note: "If this was not you, please review your account immediately and change your password.",
         }),
       };
     }

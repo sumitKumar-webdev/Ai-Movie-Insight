@@ -37,6 +37,7 @@ export async function sendTemplateEmail(email, name, message, template, options 
     token: options.token,
     serverPublicUrl,
     clientPublicUrl,
+    meta: options.meta,
   });
 
   if (!resend) {
@@ -121,5 +122,15 @@ export async function sendPasswordResetSuccessEmail(email, name) {
     name,
     "Your password was changed successfully. If this was not you, please secure your account immediately.",
     "password-reset-success",
+  );
+}
+
+export async function sendUsernameChangedEmail(email, name, meta) {
+  return sendTemplateEmail(
+    email,
+    name,
+    "Your username was changed successfully. If this was not you, please have a look at your account activity and secure your account.",
+    "username-changed",
+    { meta },
   );
 }

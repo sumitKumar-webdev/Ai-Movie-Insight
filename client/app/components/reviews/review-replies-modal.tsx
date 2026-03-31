@@ -12,7 +12,7 @@ import {
 import { Button } from "@/app/components/ui/button";
 import CompactCount from "@/app/components/ui/compact-count";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { Review, ReviewReply } from "@/app/modal/service.modal";
+import { Review, ReviewReply } from "@/app/models/service.modal";
 import {
   deleteReviewReply,
   getReviewReplies,

@@ -91,8 +91,8 @@ export type MovieDetails = {
   runtime: string;
   rating: string;
   ratingCount?: number;
-  language: string;
-  country: string;
+  language: string | string[];
+  country: string | string[];
   ageRating: string;
   poster: string;
   backdrop: string;

@@ -10,7 +10,7 @@ import CompactMovieCard from "@/app/components/cards/compact-movie-card";
 import MovieResultCardSkeleton from "@/app/components/skeleton-loader/movie-result-card-skeleton";
 import useDebounce from "@/app/Hooks/use-debounce";
 import { searchMovies } from "@/app/services/movie.service";
-import { MovieSearchItem } from "@/app/modal/service.modal";
+import { MovieSearchItem } from "@/app/models/service.modal";
 import { startRouteProgress } from "@/app/components/ui/route-progress";
 import HeaderProfileMenu from "@/app/components/Header/header-profile-menu";
 import { saveSelectedMovieToSearchHistory } from "@/lib/saveToStorage/search-selection-history";
@@ -223,7 +223,7 @@ export default function AppHeader() {
     <>
       <header className="relative z-220 isolate border-b border-white/8 bg-black/95 backdrop-blur-xl">
         <div
-          className={`mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-2 sm:px-6 ${
+          className={`mx-auto flex w-full max-w-7xl items-center gap-2 px-3 py-1.5 sm:gap-3 sm:px-6 sm:py-2 ${
             isDetailPage
               ? "items-center justify-between"
               : "justify-between lg:flex-row lg:justify-between"
@@ -238,7 +238,7 @@ export default function AppHeader() {
             <BrandWordmark compact/>
           </Link>
 
-          <div className="flex min-w-0 items-center justify-end gap-2 sm:flex-1 sm:gap-3 md:flex-none">
+          <div className="flex min-w-0 items-center justify-end gap-1.5 sm:flex-1 sm:gap-3 md:flex-none">
             <div
               ref={desktopContainerRef}
               className={`relative hidden min-w-0 items-center gap-3 sm:flex ${
@@ -314,18 +314,18 @@ export default function AppHeader() {
                   return nextOpen;
                 });
               }}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 sm:hidden"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 sm:hidden"
             >
               {mobileSearchOpen ? (
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               ) : (
-                <Search className="h-5 w-5" />
+                <Search className="h-4 w-4" />
               )}
             </button>
 
             <HeaderProfileMenu
-              triggerClassName="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
-              avatarClassName="h-8 w-8 md:h-9 md:w-9"
+              triggerClassName="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 sm:h-10 sm:w-10"
+              avatarClassName="h-7 w-7 sm:h-8 sm:w-8 md:h-9 md:w-9"
               menuClassName="z-230 w-44"
             />
           </div>
@@ -334,13 +334,13 @@ export default function AppHeader() {
         <div
           className={`overflow-hidden border-white/8 transition-all duration-300 ease-out sm:hidden ${
             mobileSearchOpen
-              ? "max-h-104 overflow-visible border-t pb-3 opacity-100"
+              ? "max-h-104 overflow-visible border-t pb-2.5 opacity-100"
               : "max-h-0 border-t-0 pb-0 opacity-0"
           }`}
         >
           <div
             ref={mobileContainerRef}
-            className={`relative mx-auto max-w-7xl px-4 pt-3 transition-transform duration-300 ease-out ${
+            className={`relative mx-auto max-w-7xl px-3 pt-2.5 transition-transform duration-300 ease-out ${
               mobileSearchOpen ? "translate-y-0" : "-translate-y-3"
             }`}
           >

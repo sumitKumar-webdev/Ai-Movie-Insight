@@ -18,7 +18,7 @@ import { authenticatedFetch } from "@/app/services/api-client";
 import { getMovieReviews } from "@/app/services/movie.service";
 import { toast } from "@/app/Hooks/use-toast";
 import { useHandleAction } from "@/app/Hooks/use-handle-action";
-import { Review } from "@/app/modal/service.modal";
+import { Review } from "@/app/models/service.modal";
 import ReviewCard from "@/app/components/cards/Review-card";
 import { ActionItem } from "@/app/components/actions/action-menu";
 

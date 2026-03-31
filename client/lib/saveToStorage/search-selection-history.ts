@@ -1,6 +1,6 @@
 "use client";
 
-import { MovieSearchItem } from "@/app/modal/service.modal";
+import { MovieSearchItem } from "@/app/models/service.modal";
 import {
   getFromLocalStorage,
   saveToLocalStorage,

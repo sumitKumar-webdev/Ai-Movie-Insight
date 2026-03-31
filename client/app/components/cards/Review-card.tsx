@@ -3,7 +3,7 @@ import { Heart, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import CompactCount, { formatCompactCount } from "@/app/components/ui/compact-count";
 import { cn } from "@/lib/utils";
-import { Review } from "@/app/modal/service.modal";
+import { Review } from "@/app/models/service.modal";
 import ExpandableText from "../ExpandableText/ExpandableText";
 import RenderAvatar from "../avatar/render-avatar";
 import ActionButton, { ActionItem } from "@/app/components/actions/action-menu";

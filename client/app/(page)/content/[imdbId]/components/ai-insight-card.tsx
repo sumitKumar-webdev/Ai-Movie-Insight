@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { Sentiment } from "@/app/modal/service.modal";
+import { Sentiment } from "@/app/models/service.modal";
 import { brand } from "@/app/config/brand";
 
 type AIInsightCardProps = {

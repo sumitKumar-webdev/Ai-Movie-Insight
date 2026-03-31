@@ -10,7 +10,7 @@ import BrandWordmark from "@/app/components/brand/wordmark";
 import useDebounce from "@/app/Hooks/use-debounce";
 import { saveSelectedMovieToSearchHistory } from "@/lib/saveToStorage/search-selection-history";
 import MovieResultCardSkeleton from "./components/skeleton-loader/movie-result-card-skeleton";
-import { MovieSearchItem } from "./modal/service.modal";
+import { MovieSearchItem } from "./models/service.modal";
 import { searchMovies } from "./services/movie.service";
 import { PosterRail } from "./components/poster rail/poster-rail";
 import { brand } from "./config/brand";

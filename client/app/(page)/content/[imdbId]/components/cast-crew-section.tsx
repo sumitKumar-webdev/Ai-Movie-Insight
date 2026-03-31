@@ -1,6 +1,6 @@
 import { CreditCard } from "@/app/components/cards/creadit-card";
 import CreditCardSkeleton from "@/app/components/skeleton-loader/credit-card-skeleton";
-import { PersonCredit } from "@/app/modal/service.modal";
+import { PersonCredit } from "@/app/models/service.modal";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 

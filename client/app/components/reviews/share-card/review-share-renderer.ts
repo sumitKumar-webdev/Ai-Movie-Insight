@@ -1,6 +1,6 @@
 "use client";
 
-import { ReviewShareCardPayload } from "@/app/modal/service.modal";
+import { ReviewShareCardPayload } from "@/app/models/service.modal";
 
 export const SHARE_CARD_WIDTH = 1080;
 export const SHARE_CARD_HEIGHT = 1920;

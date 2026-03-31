@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
-import { ReviewShareCardPayload } from "@/app/modal/service.modal";
+import { ReviewShareCardPayload } from "@/app/models/service.modal";
 import { getReviewShareCard } from "@/app/services/movie.service";
 import {
   buildReviewShareCardFileName,

@@ -16,7 +16,7 @@ import {
 import { Textarea } from "@/app/components/ui/textarea";
 import CompactMovieCard from "@/app/components/cards/compact-movie-card";
 import AuthRequiredModal from "@/app/modal/auth-required-modal";
-import { AssistantMessage } from "@/app/modal/service.modal";
+import { AssistantMessage } from "@/app/models/service.modal";
 import { chatWithAssistant } from "@/app/services/movie.service";
 import {
   clearAuthState,

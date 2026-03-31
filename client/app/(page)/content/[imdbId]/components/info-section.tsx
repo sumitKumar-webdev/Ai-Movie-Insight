@@ -1,7 +1,7 @@
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
 import CompactCount from "@/app/components/ui/compact-count";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { MovieDetails } from "@/app/modal/service.modal";
+import { MovieDetails } from "@/app/models/service.modal";
 import { formatLabel } from "@/lib/resuable-component";
 import { Star } from "lucide-react";
 import Image from "next/image";
@@ -10,6 +10,49 @@ type InfoSectionProps = {
   loading: boolean;
   movie: MovieDetails | null;
 };
+
+function normalizeMetaValues(values?: string | string[] | null) {
+  if (Array.isArray(values)) {
+    return values.map((value) => value.trim()).filter(Boolean);
+  }
+
+  if (typeof values !== "string") {
+    return [];
+  }
+
+  return values
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
+function MetaValueList({ values }: { values?: string | string[] | null }) {
+  const normalizedValues = normalizeMetaValues(values);
+
+  if (!normalizedValues.length) {
+    return <p className="mt-1 font-medium text-white/60">N/A</p>;
+  }
+
+  const [firstValue, ...remainingValues] = normalizedValues;
+
+  return (
+    <div className="group relative mt-1 flex flex-wrap items-center cursor-default gap-2">
+      <p className="font-medium">{firstValue}</p>
+      {Boolean(remainingValues.length) && (
+        <div>
+          <span className="inline-flex cursor-default text-[11px] font-medium text-white/80 sm:text-[12px]">
+            +{remainingValues.length}
+          </span>
+        </div>
+      )}
+      {Boolean(remainingValues.length) && (
+        <div className="pointer-events-none absolute left-0 top-[calc(100%+0.45rem)] z-20 min-w-max rounded-xl border border-white/10 bg-[#080808]/96 px-3 py-2 text-[10px] leading-5 text-white/75 opacity-0 shadow-[0_18px_45px_rgba(0,0,0,0.45)] transition-opacity duration-200 group-hover:opacity-100 sm:text-xs">
+          {remainingValues.join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const InfoSection = ({ loading, movie }: InfoSectionProps) => {
   const metaData = [formatLabel(movie?.type ?? ""), movie?.year, movie?.runtime]
@@ -85,11 +128,11 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-[11px] leading-4 text-white/80 sm:text-sm md:grid-cols-4 md:gap-4">
                   <div>
                     <p className="text-white/50">Country</p>
-                    <p className="mt-1 font-medium">{movie?.country}</p>
+                    <MetaValueList values={movie?.country} />
                   </div>
                   <div>
                     <p className="text-white/50">Language</p>
-                    <p className="mt-1 font-medium">{movie?.language}</p>
+                    <MetaValueList values={movie?.language} />
                   </div>
                   <div>
                     <p className="text-white/50">Release Date</p>
@@ -100,7 +143,8 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                     <div className="mt-1 space-y-1 flex gap-2">
                       <p className="flex items-center font-medium">
                         <Star className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4 mr-1" />
-                        {movie?.rating}<span className="text-white/60">/10</span>
+                        {movie?.rating}
+                        <span className="text-white/60">/10</span>
                       </p>
                       <CompactCount
                         value={movie?.ratingCount}

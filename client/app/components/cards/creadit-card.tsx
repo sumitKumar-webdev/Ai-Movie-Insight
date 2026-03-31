@@ -1,4 +1,4 @@
-import { PersonCredit } from "@/app/modal/service.modal";
+import { PersonCredit } from "@/app/models/service.modal";
 import { formatLabel, getInitials } from "@/lib/resuable-component";
 import Image from "next/image";
 

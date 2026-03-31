@@ -14,7 +14,7 @@ import {
   getMovieAiInsightByImdbId,
   getMovieByImdbId,
 } from "@/app/services/movie.service";
-import { MovieAiInsight, MovieDetails } from "@/app/modal/service.modal";
+import { MovieAiInsight, MovieDetails } from "@/app/models/service.modal";
 import {
   clearAuthState,
   fetchCurrentUser,

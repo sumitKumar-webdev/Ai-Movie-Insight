@@ -8,7 +8,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { Review, ReviewReply } from "@/app/modal/service.modal";
+import { Review, ReviewReply } from "@/app/models/service.modal";
 import {
   DropdownMenu,
   DropdownMenuContent,

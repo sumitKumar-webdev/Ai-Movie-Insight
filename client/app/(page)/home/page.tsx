@@ -7,7 +7,7 @@ import { getSelectedMovieSearchHistory } from "@/lib/saveToStorage/search-select
 import { Badge } from "@/app/components/ui/badge";
 import InterestPanelSkeleton from "@/app/components/skeleton-loader/interest-panel-skeleton";
 import MovieCardSkeleton from "@/app/components/skeleton-loader/movie-card-skeleton";
-import { MovieSearchItem } from "@/app/modal/service.modal";
+import { MovieSearchItem } from "@/app/models/service.modal";
 import UserPreferencesModal from "@/app/modal/user-preferences-modal";
 import {
   getPersonalSelection,
@@ -332,7 +332,7 @@ export default function UserHomePage() {
 
   return (
     <main className="min-h-screen relative bg-[#0a0a0f] text-white">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className={`pointer-events-none inset-0 overflow-hidden ${!releaseLoading ? "absolute" : "hidden"}`}>
         <div
           className="home-ambient-fade-in home-ambient-drift-one absolute -left-20 top-0 h-96 w-96 rounded-full blur-3xl"
           style={{
@@ -349,7 +349,7 @@ export default function UserHomePage() {
           }}
         />
       </div>
-      <div className="relative z-10 mx-auto max-w-350 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto max-w-350 px-4 py-4 md:py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-7 lg:grid-cols-13">
           <div className="space-y-10 lg:col-span-9">
             <section>
@@ -371,7 +371,7 @@ export default function UserHomePage() {
               ) : interestReleaseMovies.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
                   {interestReleaseMovies.map((movie) => (
-                    <div key={movie.imdbId}>
+                    <div key={movie.imdbId} className="transition-all duration-300">
                       <MovieResultCard
                         movie={{
                           imdbId: movie.imdbId,

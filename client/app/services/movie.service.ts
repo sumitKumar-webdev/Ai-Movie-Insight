@@ -10,7 +10,7 @@ import {
   RepliesPayload,
   Review,
   ReviewShareCardPayload,
-} from "../modal/service.modal";
+} from "../models/service.modal";
 import { apiFetch, authenticatedFetch, buildApiUrl } from "./api-client";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;

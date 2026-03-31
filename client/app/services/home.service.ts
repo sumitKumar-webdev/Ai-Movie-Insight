@@ -1,4 +1,4 @@
-import { ListTitlesParams, ListTitlesState } from "../modal/service.modal";
+import { ListTitlesParams, ListTitlesState } from "../models/service.modal";
 
 export const EMPTY_LIST_TITLES_STATE: ListTitlesState = {
   types: [],

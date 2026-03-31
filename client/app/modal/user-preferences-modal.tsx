@@ -2,6 +2,25 @@
 
 import Image from "next/image";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  BrainCircuit,
+  Clapperboard,
+  Compass,
+  Film,
+  Flame,
+  Ghost,
+  Heart,
+  MoonStar,
+  Rocket,
+  Search,
+  Shield,
+  Smile,
+  Sparkles,
+  Tv,
+  Users,
+  Zap,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +53,8 @@ type LanguageOption = {
 type KeyLabelOption = {
   key: string;
   label: string;
+  subtitle: string;
+  icon: LucideIcon;
 };
 
 type PreferencesState = {
@@ -48,66 +69,126 @@ const CINEMA_OPTIONS: CinemaOption[] = [
   {
     key: "Bollywood",
     label: "Bollywood",
-    image: "/preferences/industries/bollywood-shah-rukh.jpeg",
+    image: "/preferences/industries/vo6fkkelpgqwhryprzdb.avif",
     subtitle: "Hindi Cinema",
   },
   {
     key: "Hollywood",
     label: "Hollywood",
-    image: "/preferences/industries/hollywood-leonardo.jpeg",
+    image: "/preferences/industries/zbufdbk0xe4fwutnenru.avif",
     subtitle: "English Cinema",
   },
   {
     key: "Telugu",
     label: "Telugu",
-    image: "/preferences/industries/telugu-allu-arjun.jpeg",
+    image: "/preferences/industries/rmawjrxiylwk463tnlwl.avif",
     subtitle: "Telugu Cinema",
   },
   {
     key: "Tamil",
     label: "Tamil",
-    image: "/preferences/industries/tamil-rajinikanth.jpeg",
+    image: "/preferences/industries/cny18vaqqlrk5bkznooj.avif",
     subtitle: "Tamil Cinema",
   },
   {
     key: "Malayalam",
     label: "Malayalam",
-    image: "/preferences/industries/malayalam-mohanlal.jpeg",
+    image: "/preferences/industries/prdx1yp7xjcyxfbaavig.avif",
     subtitle: "Malayalam Cinema",
   },
   {
     key: "Kannada",
     label: "Kannada",
-    image: "/preferences/industries/kannada-yash.jpeg",
+    image: "/preferences/industries/zgrqdxj4eanjqbx2aaqj.avif",
     subtitle: "Kannada Cinema",
   },
   {
     key: "Korean",
     label: "Korean",
-    image: "/preferences/industries/korean-gong-yoo.jpeg",
+    image: "/preferences/industries/lnstmpeax2fle2881ojn.avif",
     subtitle: "Korean Cinema",
   },
   {
     key: "Japanese",
     label: "Japanese",
-    image: "/preferences/industries/japanese-takeshi-kitano.jpeg",
+    image: "/preferences/industries/ldqrl9bzbuyyflcgo1ib.avif",
     subtitle: "Japanese Cinema",
   },
 ];
 
 const GENRE_OPTIONS: KeyLabelOption[] = [
-  { key: "Action", label: "Action" },
-  { key: "Comedy", label: "Comedy" },
-  { key: "Drama", label: "Drama" },
-  { key: "Romance", label: "Romance" },
-  { key: "Thriller", label: "Thriller" },
-  { key: "Horror", label: "Horror" },
-  { key: "Sci-Fi", label: "Sci-Fi" },
-  { key: "Crime", label: "Crime" },
-  { key: "Adventure", label: "Adventure" },
-  { key: "Fantasy", label: "Fantasy" },
-  { key: "Mystery", label: "Mystery" },
-  { key: "Family", label: "Family" },
+  {
+    key: "Action",
+    label: "Action",
+    subtitle: "Impact, velocity, set pieces",
+    icon: Zap,
+  },
+  {
+    key: "Comedy",
+    label: "Comedy",
+    subtitle: "Witty, light, rewatchable",
+    icon: Smile,
+  },
+  {
+    key: "Drama",
+    label: "Drama",
+    subtitle: "Character-driven and layered",
+    icon: Clapperboard,
+  },
+  {
+    key: "Romance",
+    label: "Romance",
+    subtitle: "Tender, intimate, heartfelt",
+    icon: Heart,
+  },
+  {
+    key: "Thriller",
+    label: "Thriller",
+    subtitle: "Suspense with sharp turns",
+    icon: Shield,
+  },
+  {
+    key: "Horror",
+    label: "Horror",
+    subtitle: "Dread, chills, dark atmosphere",
+    icon: Ghost,
+  },
+  {
+    key: "Sci-Fi",
+    label: "Sci-Fi",
+    subtitle: "Futures, tech, cosmic ideas",
+    icon: Rocket,
+  },
+  {
+    key: "Crime",
+    label: "Crime",
+    subtitle: "Tension, secrets, underworld",
+    icon: Search,
+  },
+  {
+    key: "Adventure",
+    label: "Adventure",
+    subtitle: "Big journeys and discovery",
+    icon: Compass,
+  },
+  {
+    key: "Fantasy",
+    label: "Fantasy",
+    subtitle: "Mythic worlds and wonder",
+    icon: Sparkles,
+  },
+  {
+    key: "Mystery",
+    label: "Mystery",
+    subtitle: "Clues, puzzles, slow reveals",
+    icon: BrainCircuit,
+  },
+  {
+    key: "Family",
+    label: "Family",
+    subtitle: "Warm and all-ages friendly",
+    icon: Users,
+  },
 ];
 
 const LANGUAGE_OPTIONS: LanguageOption[] = [
@@ -122,23 +203,93 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 const MOOD_OPTIONS: KeyLabelOption[] = [
-  { key: "Feel-good", label: "Feel-good" },
-  { key: "Mind-bending", label: "Mind-bending" },
-  { key: "Emotional", label: "Emotional" },
-  { key: "Dark", label: "Dark" },
-  { key: "Fast-paced", label: "Fast-paced" },
-  { key: "Romantic", label: "Romantic" },
-  { key: "Intense", label: "Intense" },
-  { key: "Comfort watch", label: "Comfort watch" },
+  {
+    key: "Feel-good",
+    label: "Feel-good",
+    subtitle: "Bright, easy, uplifting",
+    icon: Smile,
+  },
+  {
+    key: "Mind-bending",
+    label: "Mind-bending",
+    subtitle: "Twisty and idea-heavy",
+    icon: BrainCircuit,
+  },
+  {
+    key: "Emotional",
+    label: "Emotional",
+    subtitle: "Raw, human, moving",
+    icon: Heart,
+  },
+  {
+    key: "Dark",
+    label: "Dark",
+    subtitle: "Brooding and shadowy",
+    icon: MoonStar,
+  },
+  {
+    key: "Fast-paced",
+    label: "Fast-paced",
+    subtitle: "Quick hooks, no drag",
+    icon: Zap,
+  },
+  {
+    key: "Romantic",
+    label: "Romantic",
+    subtitle: "Soft chemistry and longing",
+    icon: Sparkles,
+  },
+  {
+    key: "Intense",
+    label: "Intense",
+    subtitle: "High stakes and pressure",
+    icon: Flame,
+  },
+  {
+    key: "Comfort watch",
+    label: "Comfort watch",
+    subtitle: "Cozy and familiar",
+    icon: Film,
+  },
 ];
 
 const FORMAT_OPTIONS: KeyLabelOption[] = [
-  { key: "New releases", label: "New releases" },
-  { key: "Classic films", label: "Classic films" },
-  { key: "Franchise movies", label: "Franchise movies" },
-  { key: "Indie films", label: "Indie films" },
-  { key: "Biopics", label: "Biopics" },
-  { key: "Series", label: "Series" },
+  {
+    key: "New releases",
+    label: "New releases",
+    subtitle: "Fresh drops and current buzz",
+    icon: Sparkles,
+  },
+  {
+    key: "Classic films",
+    label: "Classic films",
+    subtitle: "Timeless favorites and landmarks",
+    icon: Film,
+  },
+  {
+    key: "Franchise movies",
+    label: "Franchise movies",
+    subtitle: "Universes, sequels, big arcs",
+    icon: Clapperboard,
+  },
+  {
+    key: "Indie films",
+    label: "Indie films",
+    subtitle: "Offbeat, intimate, original",
+    icon: Compass,
+  },
+  {
+    key: "Biopics",
+    label: "Biopics",
+    subtitle: "Lives, legacies, real stories",
+    icon: Users,
+  },
+  {
+    key: "Series",
+    label: "Series",
+    subtitle: "Episode-driven longer watches",
+    icon: Tv,
+  },
 ];
 
 function toggleSelection(
@@ -194,22 +345,41 @@ function PreferenceGroup({
         </h3>
         <p className="mt-1 text-xs leading-5 text-white/30">{description}</p>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {options.map((option) => {
           const active = selected.includes(option.key);
+          const Icon = option.icon;
 
           return (
             <button
               key={option.key}
               type="button"
               onClick={() => onToggle(option.key)}
-              className={`rounded-sm border px-3 py-1.5 text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-3 rounded-sm border px-3 py-3 text-left transition-all duration-200 ${
                 active
-                  ? "border-cyan-400/30 bg-cyan-400/8 text-cyan-300"
-                  : "border-white/8 bg-transparent text-white/50 hover:border-white/15 hover:text-white/75"
+                  ? "border-cyan-400/25 bg-cyan-400/6"
+                  : "border-white/8 bg-white/0.02 hover:border-white/14 hover:bg-white/0.04"
               }`}
             >
-              {option.label}
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-white/10 bg-black/30 transition-colors ${
+                  active ? "text-white" : "text-white/60"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <p
+                  className={`truncate text-sm font-semibold transition-colors ${
+                    active ? "text-white" : "text-white/70"
+                  }`}
+                >
+                  {option.label}
+                </p>
+                <p className="mt-1 text-[11px] leading-4 text-white/30">
+                  {option.subtitle}
+                </p>
+              </div>
             </button>
           );
         })}
@@ -255,6 +425,7 @@ function CinemaPreferenceGroup({
                   src={option.image}
                   alt={option.label}
                   fill
+                  loading="eager"
                   sizes="50px"
                   className="object-cover opacity-90"
                 />
@@ -389,6 +560,7 @@ function UserPreferencesModalContent({
   return (
     <DialogContent
       showCloseButton={false}
+      overlayClassName="bg-black/72 backdrop-blur-none"
       className="home-search-scroll flex w-[calc(100vw-1rem)] max-h-[88vh] max-w-4xl flex-col overflow-hidden border border-white/8 bg-[#000000] p-0 text-white shadow-[0_40px_140px_rgba(0,0,0,0.9)]"
       style={{ borderRadius: 0 }}
     >

@@ -30,7 +30,6 @@ declare global {
 }
 
 type GoogleAuthButtonProps = {
-  mode: "login" | "signup";
   nextPath: string;
   onError: (message: string) => void;
 };
@@ -38,7 +37,6 @@ type GoogleAuthButtonProps = {
 const GOOGLE_SCRIPT_ID = "google-identity-services";
 
 export function GoogleAuthButton({
-  mode,
   nextPath,
   onError,
 }: GoogleAuthButtonProps) {
@@ -106,7 +104,7 @@ export function GoogleAuthButton({
       window.google.accounts.id.renderButton(buttonRef.current, {
         theme: "outline",
         size: "large",
-        text: mode === "login" ? "signin_with" : "signup_with",
+        text: "continue_with",
         shape: "rectangular",
         width: buttonWidth,
       });
@@ -138,7 +136,7 @@ export function GoogleAuthButton({
     return () => {
       script.onload = null;
     };
-  }, [buttonWidth, mode, nextPath, onError]);
+  }, [buttonWidth, nextPath, onError]);
 
   useEffect(() => {
     const updateWidth = () => {

@@ -299,7 +299,10 @@ export default function LoginPage() {
           <div className="h-px flex-1 bg-slate-200" />
         </div>
 
-        <GoogleAuthButton mode="login" nextPath={safeNext} onError={setError} />
+        <p className="text-center text-sm text-slate-500">
+          Continue with Google
+        </p>
+        <GoogleAuthButton nextPath={safeNext} onError={setError} />
     </AuthShell>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AppHeader from "@/app/components/Header/app-header";
 import AiAssistantLauncher from "@/app/components/ai-assistant-launcher";
+import BrandWordmark from "@/app/components/brand/wordmark";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 import HomeHeader from "./components/Header/home-header";
 import UserPreferencesModal from "./modal/user-preferences-modal";
@@ -19,6 +20,8 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const isLandingPage = pathname === "/";
   const isHomePage = pathname === "/";
   const isProtectedHomePage = pathname === "/home";
+  const isSessionSensitiveRoute =
+    isAuthPage || isLandingPage || isProtectedHomePage;
   const authStatus = useAuthStore((auth) => auth.status);
   const user = useAuthStore((auth) => auth.user);
   const userId = user?.id;
@@ -32,10 +35,10 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     !preferencesModalDismissed;
 
   useEffect(() => {
-    if ((isAuthPage || isProtectedHomePage) && authStatus === "idle") {
+    if (isSessionSensitiveRoute && authStatus === "idle") {
       void fetchCurrentUser();
     }
-  }, [authStatus, isAuthPage, isProtectedHomePage]);
+  }, [authStatus, isSessionSensitiveRoute]);
 
   useEffect(() => {
     if (isAuthResolving) {
@@ -57,8 +60,25 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
     }
   }, [authStatus, isAuthPage, isAuthResolving, isLandingPage, isProtectedHomePage, router, userId]);
 
-  if ((isAuthPage || isProtectedHomePage) && isAuthResolving) {
-    return null;
+  if (isSessionSensitiveRoute && isAuthResolving) {
+    return (
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-6 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_30%),radial-gradient(circle_at_75%_25%,rgba(94,216,255,0.16),transparent_24%),linear-gradient(to_bottom,#040404,#090d16)]" />
+        <div className="relative z-10 flex max-w-md flex-col items-center text-center">
+          <BrandWordmark
+            className="items-center"
+            titleClassName="text-4xl sm:text-5xl"
+            subtitleClassName="text-[0.55rem] tracking-[0.28em] text-white/70"
+          />
+          <div className="mt-6 h-1.5 w-24 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-1/2 animate-pulse rounded-full bg-[linear-gradient(90deg,#5ed8ff_0%,#1698ff_100%)]" />
+          </div>
+          <p className="mt-4 text-sm text-white/62">
+            Restoring your CineAI session...
+          </p>
+        </div>
+      </main>
+    );
   }
 
   if (isAuthPage && authStatus === "authenticated" && userId) {

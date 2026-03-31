@@ -13,7 +13,7 @@ export default function HomeHeader() {
           href="/"
           className="pointer-events-auto relative z-10 inline-flex items-center rounded-xl px-2 py-1 text-white/92 transition hover:text-white"
         >
-          <BrandWordmark compact titleClassName="text-md" subtitleClassName="text-[0.55rem] tracking-[0.24em] sm:text-[0.75rem]"/>
+          <BrandWordmark compact/>
         </Link>
 
         <div className="pointer-events-auto relative z-10">

@@ -20,7 +20,7 @@ export default function BrandWordmark({
       <div
         className={cn(
           "flex items-baseline gap-0 text-[clamp(1.75rem,5vw,4.5rem)] font-black uppercase tracking-[0.08em] text-white",
-          compact && "text-[1.3rem] tracking-[0.1em] sm:text-[1.65rem] sm:tracking-[0.12em]",
+          compact && "text-[1.5rem] tracking-[0.1em] sm:text-[1.8rem] sm:tracking-[0.12em]",
           titleClassName,
         )}
       >
@@ -32,7 +32,7 @@ export default function BrandWordmark({
       <p
         className={cn(
           "mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.34em] text-white/78",
-          compact && "mt-0 text-[0.38rem] tracking-[0.18em] text-white/68 sm:mt-0.5 sm:text-[0.54rem] sm:tracking-[0.24em]",
+          compact && "mt-0 text-[0.55rem] tracking-[0.18em] text-white/68 sm:mt-0.5 sm:text-[0.64rem] sm:tracking-[0.24em]",
           subtitleClassName,
         )}
       >

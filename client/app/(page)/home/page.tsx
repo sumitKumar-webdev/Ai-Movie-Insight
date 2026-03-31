@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
+import { setRouteProgressLoading } from "@/app/components/ui/route-progress";
 import { getSelectedMovieSearchHistory } from "@/lib/saveToStorage/search-selection-history";
 import { Badge } from "@/app/components/ui/badge";
 import InterestPanelSkeleton from "@/app/components/skeleton-loader/interest-panel-skeleton";
@@ -330,6 +331,20 @@ export default function UserHomePage() {
     );
   }, [user?.preferences?.cinemas, user?.preferences?.formats]);
 
+  const isHomeDataLoading =
+    profileLoading ||
+    releaseLoading ||
+    interestLoading ||
+    personalSelectionLoading;
+
+  useEffect(() => {
+    setRouteProgressLoading(isHomeDataLoading);
+
+    return () => {
+      setRouteProgressLoading(false);
+    };
+  }, [isHomeDataLoading]);
+
   return (
     <main className="min-h-screen relative bg-[#0a0a0f] text-white">
       <div className={`pointer-events-none inset-0 overflow-hidden ${!releaseLoading ? "absolute" : "hidden"}`}>
@@ -369,7 +384,7 @@ export default function UserHomePage() {
                   ))}
                 </div>
               ) : interestReleaseMovies.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5 transition-all duration-300">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
                   {interestReleaseMovies.map((movie) => (
                     <div key={movie.imdbId}>
                       <MovieResultCard

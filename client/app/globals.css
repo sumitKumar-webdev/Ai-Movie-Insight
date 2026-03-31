@@ -125,7 +125,7 @@
 @layer base {
   html {
     background: #050505;
-    scrollbar-gutter: stable both-edges;
+    scrollbar-gutter: stable;
     overflow-y: scroll;
   }
 

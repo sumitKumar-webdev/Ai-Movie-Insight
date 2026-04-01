@@ -55,7 +55,7 @@ function MetaValueList({
 
   return (
     <div className="group relative mt-1 flex flex-wrap items-center cursor-default gap-2">
-      <p className="font-medium">{firstValue}</p>
+      <p className="font-medium">{firstValue ?? "N/A"}</p>
       {Boolean(remainingValues.length) && (
         <div>
           <span className="inline-flex cursor-default text-[11px] font-medium text-white/80 sm:text-[12px]">

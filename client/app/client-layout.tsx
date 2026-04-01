@@ -9,6 +9,22 @@ import UserPreferencesModal from "./modal/user-preferences-modal";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 import { useAuthSessionRefreshing } from "@/app/services/auth-session-state";
 
+function AppBootScreen() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
+      <div className="flex flex-col items-center gap-5">
+        <div className="relative h-24 w-24">
+          <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-cyan-400" />
+          <div className="absolute inset-0 rounded-full border border-white/10" />
+        </div>
+        <span className="animate-pulse text-[11px] uppercase tracking-widest text-white/30">
+          Loading
+        </span>
+      </div>
+    </main>
+  );
+}
+
 export default function ClientLayout({
   children,
 }: {
@@ -66,13 +82,14 @@ export default function ClientLayout({
     router,
   ]);
 
-  if (
+  const shouldShowBootScreen =
     (isAuthPage && isAuthenticated) ||
     (isLandingPage && isAuthenticated) ||
     (isProtectedHomePage && isAuthChecking) ||
-    (isProtectedHomePage && authStatus === "unauthenticated")
-  ) {
-    return null;
+    (isProtectedHomePage && authStatus === "unauthenticated");
+
+  if (shouldShowBootScreen) {
+    return <AppBootScreen />;
   }
 
   return (
@@ -80,17 +97,7 @@ export default function ClientLayout({
       {!isAuthPage && (isLandingPage ? <HomeHeader /> : <AppHeader />)}
 
       {isSessionSensitiveRoute && isRefreshingAuthSession ? (
-        <main className="flex h-screen items-center justify-center bg-[#0c0c0e]">
-          <div className="flex flex-col items-center gap-5">
-            <div className="relative h-24 w-24">
-              <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-cyan-400" />
-              <div className="absolute inset-0 rounded-full border border-white/10" />
-            </div>
-            <span className="animate-pulse text-[11px] uppercase tracking-widest text-white/30">
-              Loading
-            </span>
-          </div>
-        </main>
+        <AppBootScreen />
       ) : (
         children
       )}

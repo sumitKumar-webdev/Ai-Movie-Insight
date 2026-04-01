@@ -14,9 +14,18 @@ type InfoSectionProps = {
   movie: MovieDetails | null;
 };
 
+function isAvailableValue(value?: string | null) {
+  if (typeof value !== "string") {
+    return false;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return Boolean(normalized) && normalized !== "n/a" && normalized !== "unavailable";
+}
+
 function normalizeMetaValues(values?: string | string[] | null) {
   if (Array.isArray(values)) {
-    return values.map((value) => value.trim()).filter(Boolean);
+    return values.map((value) => value.trim()).filter(isAvailableValue);
   }
 
   if (typeof values !== "string") {
@@ -26,7 +35,7 @@ function normalizeMetaValues(values?: string | string[] | null) {
   return values
     .split(",")
     .map((value) => value.trim())
-    .filter(Boolean);
+    .filter(isAvailableValue);
 }
 
 function MetaValueList({
@@ -39,7 +48,7 @@ function MetaValueList({
   const normalizedValues = normalizeMetaValues(values);
 
   if (!normalizedValues.length) {
-    return <p className="mt-1 font-medium text-white/60">N/A</p>;
+    return null;
   }
 
   const [firstValue, ...remainingValues] = normalizedValues;
@@ -76,7 +85,7 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
   const [loadedBackdropSrc, setLoadedBackdropSrc] = useState("");
   const [loadedPosterSrc, setLoadedPosterSrc] = useState("");
   const metaData = [formatLabel(movie?.type ?? ""), movie?.year, movie?.runtime]
-    .filter(Boolean)
+    .filter(isAvailableValue)
     .join(" • ");
 
   return (
@@ -170,7 +179,7 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                       <p className="flex items-center font-medium">
                         <Star className="mr-1 h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4" />
                         {movie?.rating}
-                        <span className="text-white/60">/10</span>
+                        {movie?.rating != "N/A" && <span className="text-white/60">/10</span>}
                       </p>
                       <CompactCount
                         value={movie?.ratingCount}

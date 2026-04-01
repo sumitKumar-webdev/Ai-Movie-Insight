@@ -160,9 +160,26 @@ async function loadInterestReleaseMovies(
     return [];
   }
 
-  const { items } = await listTitles(filters);
+  const primaryResult = await listTitles(filters);
+  const primaryPicks = pickUniqueMovies(primaryResult.items, excludedMovieIds, 10);
 
-  return pickUniqueMovies(items, excludedMovieIds, 10);
+  if (primaryPicks.length >= 8) {
+    return primaryPicks;
+  }
+
+  const fallbackFilters = {
+    ...filters,
+    startYear:
+      typeof filters.startYear === "number" ? filters.startYear - 1 : undefined,
+    endYear: new Date().getUTCFullYear() + 1,
+    minVoteCount: 5,
+    genres: filters.genres?.length ? filters.genres.slice(0, 3) : undefined,
+  };
+
+  const fallbackResult = await listTitles(fallbackFilters);
+  const fallbackPicks = pickUniqueMovies(fallbackResult.items, excludedMovieIds, 10);
+
+  return [...primaryPicks, ...fallbackPicks].slice(0, 10);
 }
 
 async function loadInterestContentMovies(

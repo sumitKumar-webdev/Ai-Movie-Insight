@@ -127,6 +127,7 @@ export function buildHomeTitleFilters(options: {
   };
 }): ListTitlesParams {
   const currentYear = new Date().getUTCFullYear();
+  const currentMonth = new Date().getUTCMonth() + 1;
   const preferences = options.preferences ?? {};
   const cinemas = normalizePreferenceList(preferences.cinemas, 6).map((item) =>
     item.toLowerCase(),
@@ -156,20 +157,23 @@ export function buildHomeTitleFilters(options: {
 
   const selectedGenres = (genres.length ? genres : options.fallbackGenres).slice(0, 4);
   if (options.mode === "release") {
+    const releaseStartYear = currentMonth <= 3 ? currentYear - 1 : currentYear;
+
     return {
-      types: ["MOVIE"],
+      types: ["MOVIE", "TV_MOVIE", "TV_SERIES"],
+      genres: selectedGenres.length ? [selectedGenres[0]] : undefined,
       countryCodes: countryCodes.length ? countryCodes.slice(0, 1) : undefined,
-      languageCodes: languageCodes.length ? languageCodes.slice(0, 2) : undefined,
-      startYear: currentYear - 1,
+      languageCodes: languageCodes.length ? [languageCodes[0]] : undefined,
+      startYear: releaseStartYear,
+      minVoteCount: 5,
       endYear: currentYear + 1,
-      minVoteCount: 10,
       sortBy: "SORT_BY_RELEASE_DATE",
       sortOrder: "DESC",
     };
   }
 
   return {
-    types: ["MOVIE"],
+    types: ["MOVIE", "TV_MOVIE", "TV_SERIES"],
     genres: selectedGenres.length ? selectedGenres.slice(0, 2) : undefined,
     startYear: currentYear - 4,
     endYear: currentYear + 1,

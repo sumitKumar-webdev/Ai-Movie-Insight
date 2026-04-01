@@ -2,19 +2,24 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { fetchCurrentUser, getAuthStoreState } from "@/app/store/store";
+import { useAuthStore } from "@/app/store/store";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const status = useAuthStore((auth) => auth.status);
+  const userId = useAuthStore((auth) => auth.user?.id);
 
   useEffect(() => {
-    const redirect = async () => {
-      const currentUser = getAuthStoreState().user ?? await fetchCurrentUser();
-      if (currentUser?.id) {
-        router.replace("/home");
-        return;
-      }
+    if (status === "idle" || status === "loading") {
+      return;
+    }
 
+    if (status === "authenticated" && userId) {
+      router.replace("/home");
+      return;
+    }
+
+    const redirect = () => {
       const params = new URLSearchParams(window.location.search);
       const token = params.get("token")?.trim();
       const next = params.get("next")?.trim() || "/home";
@@ -35,8 +40,8 @@ export default function ResetPasswordPage() {
       router.replace(target);
     };
 
-    void redirect();
-  }, [router]);
+    redirect();
+  }, [router, status, userId]);
 
   return null;
 }

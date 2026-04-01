@@ -2,56 +2,53 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import AppHeader from "@/app/components/Header/app-header";
-import AiAssistantLauncher from "@/app/components/ai-assistant-launcher";
-import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 import HomeHeader from "./components/Header/home-header";
+import AiAssistantLauncher from "@/app/components/ai-assistant-launcher";
 import UserPreferencesModal from "./modal/user-preferences-modal";
+import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
+import { useAuthSessionRefreshing } from "@/app/services/auth-session-state";
 
-type ClientLayoutProps = {
+export default function ClientLayout({
+  children,
+}: {
   children: React.ReactNode;
-};
-
-export default function ClientLayout({ children }: ClientLayoutProps) {
+}) {
   const router = useRouter();
   const pathname = usePathname();
+
+  const authStatus = useAuthStore((state) => state.status);
+  const user = useAuthStore((state) => state.user);
+  const isRefreshingAuthSession = useAuthSessionRefreshing();
+
+  const [preferencesModalDismissed, setPreferencesModalDismissed] =
+    useState(false);
+
   const isAuthPage = pathname?.startsWith("/auth/");
   const isLandingPage = pathname === "/";
-  const isHomePage = pathname === "/";
   const isProtectedHomePage = pathname === "/home";
   const isSessionSensitiveRoute =
     isAuthPage || isLandingPage || isProtectedHomePage;
-  const authStatus = useAuthStore((auth) => auth.status);
-  const user = useAuthStore((auth) => auth.user);
-  const userId = user?.id;
-  const [preferencesModalDismissed, setPreferencesModalDismissed] =
-    useState(false);
-  const isAuthResolving = authStatus === "idle" || authStatus === "loading";
+
+  const isAuthChecking = authStatus === "loading";
+  const isAuthenticated = authStatus === "authenticated" && !!user?.id;
+
   const shouldShowPreferencesModal =
     !isAuthPage &&
-    authStatus === "authenticated" &&
-    Boolean(userId) &&
+    isAuthenticated &&
     !user?.preferences?.onboardingCompleted &&
     !preferencesModalDismissed;
 
   useEffect(() => {
     if (isSessionSensitiveRoute && authStatus === "idle") {
-      void fetchCurrentUser();
+      fetchCurrentUser();
     }
   }, [authStatus, isSessionSensitiveRoute]);
 
   useEffect(() => {
-    if (isAuthResolving) {
-      return;
-    }
+    if (isAuthChecking) return;
 
-    if (isAuthPage && authStatus === "authenticated" && userId) {
-      router.replace("/home");
-      return;
-    }
-
-    if (isLandingPage && authStatus === "authenticated" && userId) {
+    if ((isAuthPage || isLandingPage) && isAuthenticated) {
       router.replace("/home");
       return;
     }
@@ -62,37 +59,33 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   }, [
     authStatus,
     isAuthPage,
-    isAuthResolving,
     isLandingPage,
     isProtectedHomePage,
+    isAuthChecking,
+    isAuthenticated,
     router,
-    userId,
   ]);
 
-  if (isAuthPage && authStatus === "authenticated" && userId) {
-    return null;
-  }
-
-  if (isLandingPage && authStatus === "authenticated" && userId) {
-    return null;
-  }
-
-  if (isProtectedHomePage && authStatus === "unauthenticated") {
+  if (
+    (isAuthPage && isAuthenticated) ||
+    (isLandingPage && isAuthenticated) ||
+    (isProtectedHomePage && isAuthChecking) ||
+    (isProtectedHomePage && authStatus === "unauthenticated")
+  ) {
     return null;
   }
 
   return (
     <>
-      {!isAuthPage && !isHomePage && <AppHeader />}
-      {!isAuthPage && isHomePage && <HomeHeader />}
-      {isSessionSensitiveRoute && isAuthResolving ? (
+      {!isAuthPage && (isLandingPage ? <HomeHeader /> : <AppHeader />)}
+
+      {isSessionSensitiveRoute && isRefreshingAuthSession ? (
         <main className="flex h-screen items-center justify-center bg-[#0c0c0e]">
           <div className="flex flex-col items-center gap-5">
             <div className="relative h-24 w-24">
               <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-cyan-400" />
-              <div className="absolute inset-0 rounded-full border border-white/0.06" />
+              <div className="absolute inset-0 rounded-full border border-white/10" />
             </div>
-
             <span className="animate-pulse text-[11px] uppercase tracking-widest text-white/30">
               Loading
             </span>
@@ -101,13 +94,13 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       ) : (
         children
       )}
-      {!isAuthPage && <AiAssistantLauncher />}
+
+      {!isAuthPage && !isAuthChecking && !isRefreshingAuthSession && <AiAssistantLauncher />}
+
       <UserPreferencesModal
         open={shouldShowPreferencesModal}
         onOpenChange={(open) => {
-          if (!open) {
-            setPreferencesModalDismissed(true);
-          }
+          if (!open) setPreferencesModalDismissed(true);
         }}
       />
     </>

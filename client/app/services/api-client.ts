@@ -1,3 +1,5 @@
+import { setAuthSessionRefreshing } from "./auth-session-state";
+
 let refreshRequest: Promise<boolean> | null = null;
 
 export function buildApiUrl(path: string): string {
@@ -14,6 +16,8 @@ export async function apiFetch(path: string, init: RequestInit = {}) {
 export async function refreshAuthSession() {
   if (!refreshRequest) {
     refreshRequest = (async () => {
+      setAuthSessionRefreshing(true);
+
       try {
         const response = await apiFetch("/api/auth/refresh", {
           method: "POST",
@@ -29,6 +33,7 @@ export async function refreshAuthSession() {
       } catch {
         return false;
       } finally {
+        setAuthSessionRefreshing(false);
         refreshRequest = null;
       }
     })();

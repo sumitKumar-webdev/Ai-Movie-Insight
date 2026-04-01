@@ -3,6 +3,15 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { authenticatedFetch } from "@/app/services/api-client";
 
+type AuthPreferences = {
+  cinemas: string[];
+  genres: string[];
+  languages: string[];
+  moods: string[];
+  formats: string[];
+  onboardingCompleted: boolean;
+};
+
 export type AuthUser = {
   id: string;
   name: string;
@@ -12,14 +21,7 @@ export type AuthUser = {
   isVerified?: boolean;
   authProvider: string[];
   emailVerified: boolean;
-  preferences: {
-    cinemas: string[];
-    genres: string[];
-    languages: string[];
-    moods: string[];
-    formats: string[];
-    onboardingCompleted: boolean;
-  };
+  preferences: AuthPreferences;
 };
 
 export type AuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated";
@@ -29,15 +31,20 @@ export type AuthState = {
   status: AuthStatus;
 };
 
+type FetchCurrentUserResponse = {
+  data?: {
+    user?: AuthUser;
+  };
+};
+
 const initialState: AuthState = {
   user: null,
   status: "idle",
 };
 
-export const fetchCurrentUserThunk = createAsyncThunk<
-  AuthUser | null,
-  boolean | undefined
->("auth/fetchCurrentUser", async () => {
+export const fetchCurrentUserThunk = createAsyncThunk<AuthUser | null>(
+  "auth/fetchCurrentUser",
+  async () => {
   const response = await authenticatedFetch("/api/auth/profile", {
     method: "GET",
     cache: "no-store",
@@ -47,12 +54,11 @@ export const fetchCurrentUserThunk = createAsyncThunk<
     return null;
   }
 
-  const payload = (await response.json()) as {
-    data?: { user?: AuthUser };
-  };
+  const payload = (await response.json()) as FetchCurrentUserResponse;
 
   return payload.data?.user ?? null;
-});
+  },
+);
 
 const authSlice = createSlice({
   name: "auth",

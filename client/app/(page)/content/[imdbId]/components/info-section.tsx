@@ -1,10 +1,13 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
+import { Star } from "lucide-react";
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
 import CompactCount from "@/app/components/ui/compact-count";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { MovieDetails } from "@/app/models/service.modal";
 import { formatLabel } from "@/lib/resuable-component";
-import { Star } from "lucide-react";
-import Image from "next/image";
 
 type InfoSectionProps = {
   loading: boolean;
@@ -70,6 +73,8 @@ function MetaValueList({
 }
 
 const InfoSection = ({ loading, movie }: InfoSectionProps) => {
+  const [loadedBackdropSrc, setLoadedBackdropSrc] = useState("");
+  const [loadedPosterSrc, setLoadedPosterSrc] = useState("");
   const metaData = [formatLabel(movie?.type ?? ""), movie?.year, movie?.runtime]
     .filter(Boolean)
     .join(" • ");
@@ -86,7 +91,10 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
             fill
             priority
             sizes="100vw"
-            className="h-20 absolute inset-0 object-cover object-center opacity-70 md:mt-0"
+            onLoad={() => setLoadedBackdropSrc(movie.backdrop)}
+            className={`absolute inset-0 h-20 object-cover object-center transition-opacity duration-700 ease-out md:mt-0 ${
+              loadedBackdropSrc === movie.backdrop ? "opacity-70" : "opacity-0"
+            }`}
           />
         )
       )}
@@ -103,7 +111,10 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                 width={260}
                 height={320}
                 sizes="(max-width: 768px) 220px, 260px"
-                className="h-50 w-28 rounded-[1.35rem] border border-white/10 object-cover shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
+                onLoad={() => setLoadedPosterSrc(movie.poster)}
+                className={`h-50 w-28 rounded-[1.35rem] border border-white/10 object-cover shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition-opacity duration-500 ease-out sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)] ${
+                  loadedPosterSrc === movie.poster ? "opacity-100" : "opacity-0"
+                }`}
               />
             ) : (
               <div className="h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]">
@@ -155,9 +166,9 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                   </div>
                   <div>
                     <p className="text-white/50">IMDb</p>
-                    <div className="mt-1 space-y-1 flex gap-2">
+                    <div className="mt-1 flex gap-2 space-y-1">
                       <p className="flex items-center font-medium">
-                        <Star className="h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4 mr-1" />
+                        <Star className="mr-1 h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4" />
                         {movie?.rating}
                         <span className="text-white/60">/10</span>
                       </p>

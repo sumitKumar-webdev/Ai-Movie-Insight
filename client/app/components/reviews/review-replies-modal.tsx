@@ -18,7 +18,7 @@ import {
   getReviewReplies,
   likeReviewReply,
   saveReviewReply,
-} from "@/app/services/movie.service";
+} from "@/app/services/review.service";
 import { formatLabel } from "@/lib/resuable-component";
 import { Input } from "../ui/input";
 import RenderAvatar from "../avatar/render-avatar";

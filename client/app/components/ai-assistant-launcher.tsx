@@ -21,10 +21,13 @@ import { chatWithAssistant } from "@/app/services/movie.service";
 import {
   clearAuthState,
   fetchCurrentUser,
-  getAuthStoreState,
   useAuthStore,
 } from "@/app/store/store";
 import { brand } from "@/app/config/brand";
+import {
+  getFromSessionStorage,
+  saveToSessionStorage,
+} from "@/lib/saveToStorage/save-to-session-storage";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "movie_ai_assistant_session";
@@ -50,6 +53,7 @@ export default function AiAssistantLauncher() {
   const router = useRouter();
   const pathname = usePathname();
   const user = useAuthStore((auth) => auth.user);
+  const authStatus = useAuthStore((auth) => auth.status);
   const [open, setOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -67,21 +71,18 @@ export default function AiAssistantLauncher() {
   ]);
 
   useEffect(() => {
-    const stored = window.sessionStorage.getItem(STORAGE_KEY);
-    if (!stored) return;
+    const storedMessages = getFromSessionStorage<AssistantMessage[]>(
+      STORAGE_KEY,
+      [],
+    );
 
-    try {
-      const parsed = JSON.parse(stored) as AssistantMessage[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        setMessages(parsed);
-      }
-    } catch {
-      window.sessionStorage.removeItem(STORAGE_KEY);
+    if (Array.isArray(storedMessages) && storedMessages.length > 0) {
+      setMessages(storedMessages);
     }
   }, []);
 
   useEffect(() => {
-    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+    saveToSessionStorage(STORAGE_KEY, messages);
   }, [messages]);
 
   useEffect(() => {
@@ -106,17 +107,19 @@ export default function AiAssistantLauncher() {
   };
 
   const ensureAuthenticated = async () => {
-    if (getAuthStoreState().user?.id) {
+    if (authStatus === "authenticated" && user?.id) {
       return true;
     }
 
-    const sessionUser = await fetchCurrentUser();
-    if (!sessionUser?.id) {
+    if (authStatus === "unauthenticated") {
       promptLogin();
       return false;
     }
 
-    return true;
+    const sessionUser = await fetchCurrentUser();
+    if (sessionUser?.id) return true;
+    promptLogin();
+    return false;
   };
 
   const openAssistant = async () => {

@@ -8,12 +8,21 @@ type ProgressListener = (value: number | null) => void;
 const listeners = new Set<ProgressListener>();
 let isNavigating = false;
 let isPageLoading = false;
+let finishTimer: number | null = null;
 
 function emit(value: number | null) {
   listeners.forEach((listener) => listener(value));
 }
 
+function clearFinishTimer() {
+  if (finishTimer) {
+    window.clearTimeout(finishTimer);
+    finishTimer = null;
+  }
+}
+
 export function startRouteProgress() {
+  clearFinishTimer();
   isNavigating = true;
   emit(16);
 }
@@ -22,6 +31,7 @@ export function setRouteProgressLoading(value: boolean) {
   isPageLoading = value;
 
   if (value) {
+    clearFinishTimer();
     emit(16);
     return;
   }
@@ -32,6 +42,7 @@ export function setRouteProgressLoading(value: boolean) {
 }
 
 export function finishRouteProgress() {
+  clearFinishTimer();
   emit(100);
   window.setTimeout(() => emit(null), 220);
 }
@@ -86,14 +97,19 @@ export default function RouteProgressBar() {
     }
 
     isNavigating = false;
-    if (!isPageLoading) {
-      finishRouteProgress();
-    }
+
+    clearFinishTimer();
+    finishTimer = window.setTimeout(() => {
+      finishTimer = null;
+      if (!isPageLoading) {
+        finishRouteProgress();
+      }
+    }, 120);
   }, [pathname, searchParams]);
 
   return (
     <div
-      className={`pointer-events-none fixed inset-x-0 top-0 z-[200] h-[3px] transition-opacity duration-200 ${
+      className={`pointer-events-none fixed inset-x-0 top-0 z-600 h-0.75 transition-opacity duration-200 ${
         progress === null ? "opacity-0" : "opacity-100"
       }`}
     >

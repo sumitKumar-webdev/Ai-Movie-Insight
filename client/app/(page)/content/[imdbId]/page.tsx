@@ -17,8 +17,6 @@ import {
 import { MovieAiInsight, MovieDetails } from "@/app/models/service.modal";
 import {
   clearAuthState,
-  fetchCurrentUser,
-  getAuthStoreState,
   useAuthStore,
 } from "@/app/store/store";
 import { setRouteProgressLoading } from "@/app/components/ui/route-progress";
@@ -96,19 +94,6 @@ export default function MovieInsightPage() {
   useEffect(() => {
     setRouteProgressLoading(isPageLoading);
   }, [isPageLoading]);
-
-  const ensureAuthenticated = async () => {
-    if (getAuthStoreState().user?.id) {
-      return true;
-    }
-
-    const user = await fetchCurrentUser();
-    if (!user?.id) {
-      return false;
-    }
-
-    return true;
-  };
 
   if (error) {
     return (
@@ -227,7 +212,6 @@ export default function MovieInsightPage() {
               movieType={movie?.type ?? ""}
               posterUrl={movie?.poster ?? ""}
               currentUserId={currentUserId}
-              ensureAuthenticated={ensureAuthenticated}
               onUnauthorized={() => {
                 clearAuthState();
                 setAuthModalOpen(true);

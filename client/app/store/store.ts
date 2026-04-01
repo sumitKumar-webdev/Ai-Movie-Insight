@@ -44,6 +44,10 @@ export const fetchCurrentUser = async (force = false): Promise<AuthUser | null> 
       return authState.user;
     }
 
+    if (authState.status === "unauthenticated") {
+      return null;
+    }
+
     if (authState.status === "loading" && inFlightSessionRequest) {
       return inFlightSessionRequest;
     }
@@ -51,7 +55,7 @@ export const fetchCurrentUser = async (force = false): Promise<AuthUser | null> 
 
   inFlightSessionRequest = (async () => {
     try {
-      const user = await store.dispatch(fetchCurrentUserThunk(force)).unwrap();
+      const user = await store.dispatch(fetchCurrentUserThunk()).unwrap();
       return user ?? null;
     } catch {
       clearAuthState();

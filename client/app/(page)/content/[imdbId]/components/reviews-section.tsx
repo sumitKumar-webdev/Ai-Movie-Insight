@@ -14,13 +14,17 @@ import LimitTextarea from "@/app/components/limitTextarea/limit-textarea";
 import ReviewRepliesModal from "@/app/components/reviews/review-replies-modal";
 import ReviewShareModal from "@/app/components/reviews/review-share-modal";
 import DeleteConfirmModal from "@/app/modal/delete-confirm-modal";
-import { authenticatedFetch } from "@/app/services/api-client";
-import { getMovieReviews } from "@/app/services/movie.service";
 import { toast } from "@/app/Hooks/use-toast";
 import { useHandleAction } from "@/app/Hooks/use-handle-action";
 import { Review } from "@/app/models/service.modal";
 import ReviewCard from "@/app/components/cards/Review-card";
 import { ActionItem } from "@/app/components/actions/action-menu";
+import {
+  deleteReview,
+  getMovieReviews,
+  likeReview as likeReviewRequest,
+  saveReview,
+} from "@/app/services/review.service";
 
 type ReviewsSectionProps = {
   imdbId: string;
@@ -29,18 +33,8 @@ type ReviewsSectionProps = {
   movieType?: string;
   posterUrl?: string;
   currentUserId: string;
-  ensureAuthenticated: () => Promise<boolean>;
   onUnauthorized: () => void;
   onRefreshInsight: () => void;
-};
-
-type ReviewMutationResponse = {
-  message?: string;
-  status?: boolean;
-  data?: {
-    review?: Review;
-    reviewId?: string;
-  };
 };
 
 async function loadReviews(
@@ -69,7 +63,6 @@ export default function ReviewsSection({
   imdbId,
   movieTitle,
   currentUserId,
-  ensureAuthenticated,
   onUnauthorized,
   onRefreshInsight,
 }: ReviewsSectionProps) {
@@ -136,48 +129,37 @@ export default function ReviewsSection({
   const submitReview = async () => {
     const message = reviewInput.trim();
     if (!message || !imdbId) return;
-    const isAuthenticated = await ensureAuthenticated();
-    if (!isAuthenticated) {
+
+    if (!currentUserId) {
       onUnauthorized();
       return;
     }
 
     try {
       setSubmittingReview(true);
-      const response = await authenticatedFetch(
-        isEditingOwnReview && userReview?._id
-          ? `/api/reviews/${userReview._id}`
-          : "/api/reviews",
-        {
-          method: isEditingOwnReview ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message,
-            movieImdbId: imdbId,
-            movieTitle,
-          }),
-        },
-      );
+      const response = await saveReview({
+        reviewId: isEditingOwnReview ? userReview?._id : undefined,
+        message,
+        movieImdbId: imdbId,
+        movieTitle,
+      });
 
       if (response.status === 401) {
         onUnauthorized();
         return;
       }
 
-      const payload = (await response.json()) as ReviewMutationResponse;
       if (!response.ok) {
         toast({
-          title: payload.message ?? "Unable to save your review",
+          title: response.message ?? "Unable to save your review",
           variant: "destructive",
         });
         return;
       }
 
       setReviewInput("");
-      if (payload.data?.review) {
-        upsertReview(payload.data.review);
+      if (response.review) {
+        upsertReview(response.review);
       }
 
       toast({
@@ -200,27 +182,24 @@ export default function ReviewsSection({
       : userReview?._id;
 
     if (!targetReviewId) return;
-    const isAuthenticated = await ensureAuthenticated();
-    if (!isAuthenticated) {
+
+    if (!currentUserId) {
       onUnauthorized();
       return;
     }
 
     try {
       setSubmittingReview(true);
-      const response = await authenticatedFetch(`/api/reviews/${targetReviewId}`, {
-        method: "DELETE",
-      });
+      const response = await deleteReview(targetReviewId);
 
       if (response.status === 401) {
         onUnauthorized();
         return;
       }
 
-      const payload = (await response.json()) as ReviewMutationResponse;
       if (!response.ok) {
         toast({
-          title: payload.message ?? "Unable to delete your review",
+          title: response.message ?? "Unable to delete your review",
           variant: "destructive",
         });
         return;
@@ -241,30 +220,54 @@ export default function ReviewsSection({
   };
 
   const likeReview = async (reviewId: string) => {
-    const isAuthenticated = await ensureAuthenticated();
-    if (!isAuthenticated) {
+    if (!currentUserId) {
       onUnauthorized();
       return;
     }
 
-    const response = await authenticatedFetch(`/api/reviews/${reviewId}/likes`, {
-      method: "POST",
-    });
+    const currentReview = communityReviews.find((review) => review._id === reviewId);
+    if (!currentReview) {
+      return;
+    }
+
+    const nextLikedByUser = !Boolean(currentReview.likedByUser);
+    const nextLikeCount = Math.max(
+      0,
+      (currentReview.likeCount ?? 0) + (nextLikedByUser ? 1 : -1),
+    );
+
+    setCommunityReviews((previousReviews = []) =>
+      previousReviews.map((review) =>
+        review._id === reviewId
+          ? {
+              ...review,
+              likeCount: nextLikeCount,
+              likedByUser: nextLikedByUser,
+            }
+          : review,
+      ),
+    );
+
+    const response = await likeReviewRequest(reviewId);
 
     if (response.status === 401) {
+      setCommunityReviews((previousReviews = []) =>
+        previousReviews.map((review) =>
+          review._id === reviewId ? currentReview : review,
+        ),
+      );
       onUnauthorized();
       return;
     }
 
-    const payload = (await response.json()) as {
-      message?: string;
-      status?: boolean;
-      data?: { totalLikes?: number; likedByUser?: boolean };
-    };
-
     if (!response.ok) {
+      setCommunityReviews((previousReviews = []) =>
+        previousReviews.map((review) =>
+          review._id === reviewId ? currentReview : review,
+        ),
+      );
       toast({
-        title: payload.message ?? "Unable to update review like",
+        title: response.message ?? "Unable to update review like",
         variant: "destructive",
       });
       return;
@@ -275,9 +278,9 @@ export default function ReviewsSection({
         review._id === reviewId
           ? {
               ...review,
-              likeCount: payload.data?.totalLikes ?? review.likeCount ?? 0,
+              likeCount: response.data?.totalLikes ?? review.likeCount ?? 0,
               likedByUser:
-                payload.data?.likedByUser ?? review.likedByUser ?? false,
+                response.data?.likedByUser ?? review.likedByUser ?? false,
             }
           : review,
       ),
@@ -289,36 +292,23 @@ export default function ReviewsSection({
     setReviewInput(review.text ?? "");
   };
 
-  const selectedModalReview = useMemo(() => {
-    if (
-      typeof modalProps?.data === "object"
-      && modalProps.data !== null
-    ) {
-      return modalProps.data as Review;
-    }
-
-    return null;
-  }, [modalProps]);
+  const selectedModalReview = modalProps?.data as Review | null;
 
   useEffect(() => {
-    if (!modalProps?.actionValue) {
-      return;
-    }
-
-    if (modalProps.actionValue === "edit-review" && selectedModalReview) {
+    if (modalProps?.actionValue === "edit-review" && selectedModalReview) {
       startEditingReview(selectedModalReview);
       closeModal();
       return;
     }
 
-    if (modalProps.actionValue === "report-review") {
+    if (modalProps?.actionValue === "report-review") {
       toast({
         title: "This feature is still under development",
         variant: "default",
       });
       closeModal();
     }
-  }, [closeModal, modalProps, selectedModalReview]);
+  }, [closeModal, modalProps?.actionValue, selectedModalReview]);
 
   const getReviewMenuActions = (review: Review, isOwnReview: boolean): ActionItem[] => [
     {
@@ -386,7 +376,7 @@ export default function ReviewsSection({
                 void submitReview();
               }}
             >
-              <p className="mb-2 text-xs font-semibold tracking-[0.2em] text-cyan-200/70 uppercase">
+              <p className="mb-2 text-xs font-semibold tracking-[0.2em] text-brand-primary uppercase">
                 {isEditingOwnReview ? "Edit Your Review" : "Add Your Review"}
               </p>
               <p className="mb-4 text-sm text-white/60">

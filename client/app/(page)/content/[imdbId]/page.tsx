@@ -177,16 +177,17 @@ export default function MovieInsightPage() {
             </CardContent>
           </Card>
 
-          <CastCrewSection
+          {Boolean(movie?.cast.length) && <CastCrewSection
             loading={detailsLoading}
             title="Cast"
             people={movie?.cast ?? []}
-          />
-          <CastCrewSection
+          />}
+
+         {Boolean(movie?.crew.length) && <CastCrewSection
             loading={detailsLoading}
             title="Crew"
             people={movie?.crew ?? []}
-          />
+          />}
 
           <div className="xl:hidden">
             <AIInsightCard

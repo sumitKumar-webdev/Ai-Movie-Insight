@@ -66,7 +66,9 @@ export default function CompactMovieCard({
             {title}
           </h3>
           <div className="mt-2 flex items-center gap-2">
-            <span className="text-xs text-white/50">{releaseYear}</span>
+            {Boolean(releaseYear) && releaseYear !== 'undefined' && (
+              <span className="text-xs text-white/50">{releaseYear}</span>
+            )}
             <span className="rounded-full bg-white/6 px-2.5 py-1 text-[11px] text-white/68">
               {formatLabel(titleType)}
             </span>

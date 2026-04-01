@@ -20,7 +20,7 @@ function isAvailableValue(value?: string | null) {
   }
 
   const normalized = value.trim().toLowerCase();
-  return Boolean(normalized) && normalized !== "n/a" && normalized !== "unavailable";
+  return Boolean(normalized) && normalized !== "n/a" && normalized !== "unavailable" && normalized !== "unknown";
 }
 
 function normalizeMetaValues(values?: string | string[] | null) {

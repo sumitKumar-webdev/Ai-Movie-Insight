@@ -71,10 +71,21 @@ export default function Home() {
     };
   }, [debouncedQuery]);
 
+  const blurActiveElement = () => {
+    if (typeof document === "undefined") return;
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  };
+
   const navigateToMovie = (movie?: MovieSearchItem) => {
     if (!movie?.imdbId) return;
+    blurActiveElement();
     saveSelectedMovieToSearchHistory(movie);
-    router.push(`/content/${movie.imdbId}`);
+    requestAnimationFrame(() => {
+      router.push(`/content/${movie.imdbId}`);
+    });
   };
 
   return (

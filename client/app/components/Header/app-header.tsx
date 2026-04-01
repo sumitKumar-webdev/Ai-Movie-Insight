@@ -180,8 +180,19 @@ export default function AppHeader() {
     return () => cancelAnimationFrame(frame);
   }, [desktopSearchOpen]);
 
+  const blurActiveElement = () => {
+    if (typeof document === "undefined") return;
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+  };
+
   const navigateTo = (href: string) => {
-    router.push(href);
+    blurActiveElement();
+    requestAnimationFrame(() => {
+      router.push(href);
+    });
   };
 
   const navigateToMovie = (movie?: MovieSearchItem) => {

@@ -294,6 +294,39 @@
   animation: posterFallbackGradient 8s ease-in-out infinite;
 }
 
+@keyframes backdropFallbackGradient {
+  0% {
+    background-position: 0% 50%;
+    transform: scale(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    transform: scale(1.04);
+  }
+  100% {
+    background-position: 0% 50%;
+    transform: scale(1);
+  }
+}
+
+.backdrop-fallback-bg {
+  background:
+    radial-gradient(circle at 16% 18%, rgba(245, 158, 11, 0.22), transparent 24%),
+    radial-gradient(circle at 82% 22%, rgba(56, 189, 248, 0.24), transparent 26%),
+    radial-gradient(circle at 74% 78%, rgba(16, 185, 129, 0.18), transparent 24%),
+    radial-gradient(circle at 30% 72%, rgba(249, 115, 22, 0.15), transparent 20%),
+    linear-gradient(135deg, #05070c, #111827, #0b1220, #05070c);
+  background-size: 180% 180%;
+  animation: backdropFallbackGradient 14s ease-in-out infinite;
+}
+
+.backdrop-fallback-orbs {
+  background:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.1), transparent 12%),
+    radial-gradient(circle at 74% 26%, rgba(255, 255, 255, 0.08), transparent 14%),
+    radial-gradient(circle at 64% 74%, rgba(255, 255, 255, 0.06), transparent 12%);
+}
+
 @keyframes replyCountShimmer {
   0% {
     background-position: 200% 50%;
@@ -329,7 +362,9 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(calc(-50% - 0.75rem));
+    transform: translateX(
+      calc(-50% - (var(--movie-title-marquee-gap, 1.5rem) / 2))
+    );
   }
 }
 
@@ -340,9 +375,10 @@
 }
 
 .movie-title-marquee-track {
+  --movie-title-marquee-gap: 1.5rem;
   display: flex;
   width: max-content;
-  gap: 1.2rem;
+  gap: var(--movie-title-marquee-gap);
   animation: movieTitleMarquee 7s linear infinite;
   will-change: transform;
 }

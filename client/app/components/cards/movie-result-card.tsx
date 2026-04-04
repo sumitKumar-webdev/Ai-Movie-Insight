@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { Star } from "lucide-react";
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
+import HoverMarqueeText from "@/app/components/ui/hover-marquee-text";
 import { cn } from "@/lib/utils";
 import { formatLabel } from "@/lib/resuable-component";
 
@@ -40,25 +41,7 @@ export default function MovieResultCard({
   } = movie;
   const [posterError, setPosterError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const titleRef = useRef<HTMLSpanElement | null>(null);
-  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
   const hasPoster = Boolean(posterUrl) && posterUrl !== "N/A" && !posterError;
-
-  useEffect(() => {
-    const element = titleRef.current;
-    if (!element) return;
-
-    const syncOverflow = () => {
-      setIsTitleOverflowing(element.scrollWidth > element.clientWidth);
-    };
-
-    syncOverflow();
-    window.addEventListener("resize", syncOverflow);
-
-    return () => {
-      window.removeEventListener("resize", syncOverflow);
-    };
-  }, [title]);
 
   return (
     <div
@@ -142,25 +125,12 @@ export default function MovieResultCard({
 
       <div className="px-2 py-1.5">
         <div className="overflow-hidden">
-          <h3
-            className="text-[0.7rem] md:text-[0.9rem] font-semibold tracking-tight text-white"
-            title={title}
-          >
-            {isTitleOverflowing && isHovered ? (
-              <span className="movie-title-marquee">
-                <span className="movie-title-marquee-track">
-                  <span className="movie-title-marquee-item">{title}</span>
-                  <span className="movie-title-marquee-item">{title}</span>
-                </span>
-              </span>
-            ) : (
-              <span
-                ref={titleRef}
-                className="inline-block max-w-full whitespace-nowrap"
-              >
-                {title}
-              </span>
-            )}
+          <h3 className="text-[0.7rem] md:text-[0.9rem] font-semibold tracking-tight text-white">
+            <HoverMarqueeText
+              text={title}
+              hoverActive={isHovered}
+              className="text-[0.7rem] md:text-[0.9rem] font-semibold tracking-tight"
+            />
           </h3>
         </div>
         <div className="mt-1 flex items-center gap-2">

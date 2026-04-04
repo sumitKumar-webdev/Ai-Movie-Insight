@@ -4,6 +4,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import authRoutes from "./routes/auth.routes.js";
 import movieRoutes from "./routes/movie.routes.js";
+import nameRoutes from "./routes/name.routes.js";
 import reviewRoutes from "./routes/review.routes.js";
 import { connectToDatabase } from "./lib/db.js";
 import cookieParser from 'cookie-parser';
@@ -23,6 +24,7 @@ app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/movies", movieRoutes);
+app.use("/api/names", nameRoutes);
 app.use("/api/reviews", reviewRoutes);
 
 app.use((error, _req, res, _next) => {

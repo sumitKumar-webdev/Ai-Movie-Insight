@@ -81,6 +81,42 @@ export type PersonCredit = {
   characters: string[];
 };
 
+export type NameProfile = {
+  id: string;
+  name: string;
+  photo: string | null;
+  backdrop: string | null;
+  professions: string[];
+  biography: string;
+  birthDate: string | null;
+  birthLocation: string | null;
+  deathDate: string | null;
+  deathLocation: string | null;
+  isDeceased: boolean;
+};
+
+export type NameFilmographyItem = {
+  id: string;
+  categories: string[];
+  characters: string[];
+  episodeCount: number;
+  title: {
+    imdbId: string;
+    type: string;
+    title: string;
+    poster: string | null;
+    year: string;
+    endYear: string | null;
+    rating: number | null;
+  };
+};
+
+export type NameFilmographyResponse = {
+  credits: NameFilmographyItem[];
+  totalCount: number;
+  nextPageToken?: string;
+};
+
 export type MovieDetails = {
   imdbId: string;
   type: string;

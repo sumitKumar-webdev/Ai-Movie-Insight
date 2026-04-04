@@ -4,7 +4,9 @@ import { useState } from "react";
 import Image from "next/image";
 import { Star } from "lucide-react";
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
+import AnimatedBackdropFallback from "@/app/components/ui/animated-backdrop-fallback";
 import CompactCount from "@/app/components/ui/compact-count";
+import MetaValueList from "@/app/components/ui/meta-value-list";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { MovieDetails } from "@/app/models/service.modal";
 import { formatLabel } from "@/lib/resuable-component";
@@ -23,64 +25,6 @@ function isAvailableValue(value?: string | null) {
   return Boolean(normalized) && normalized !== "n/a" && normalized !== "unavailable" && normalized !== "unknown";
 }
 
-function normalizeMetaValues(values?: string | string[] | null) {
-  if (Array.isArray(values)) {
-    return values.map((value) => value.trim()).filter(isAvailableValue);
-  }
-
-  if (typeof values !== "string") {
-    return [];
-  }
-
-  return values
-    .split(",")
-    .map((value) => value.trim())
-    .filter(isAvailableValue);
-}
-
-function MetaValueList({
-  values,
-  label,
-}: {
-  values?: string | string[] | null;
-  label: string;
-}) {
-  const normalizedValues = normalizeMetaValues(values);
-
-  if (!normalizedValues.length) {
-    return null;
-  }
-
-  const [firstValue, ...remainingValues] = normalizedValues;
-
-  return (
-    <div className="group relative mt-1 flex flex-wrap items-center cursor-default gap-2">
-      <p className="font-medium">{firstValue ?? "N/A"}</p>
-      {Boolean(remainingValues.length) && (
-        <div>
-          <span className="inline-flex cursor-default text-[11px] font-medium text-white/80 sm:text-[12px]">
-            +{remainingValues.length}
-          </span>
-        </div>
-      )}
-      {Boolean(remainingValues.length) && (
-        <div className="pointer-events-none absolute bottom-[calc(100%+0.45rem)] left-0 z-50 min-w-40 rounded-xl border border-white/10 bg-[#080808]/96 px-3 py-2.5 text-[10px] text-white/75 opacity-0 shadow-[0_18px_45px_rgba(0,0,0,0.45)] transition-opacity duration-200 group-hover:opacity-100 sm:text-xs">
-          <p className="mb-1.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-white/50 sm:text-[9px]">
-            Remaining {label}
-          </p>
-          <ul className="space-y-1 leading-5">
-            {remainingValues.map((value) => (
-              <li key={value} className="font-medium text-white/80">
-                {value}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
 const InfoSection = ({ loading, movie }: InfoSectionProps) => {
   const [loadedBackdropSrc, setLoadedBackdropSrc] = useState("");
   const [loadedPosterSrc, setLoadedPosterSrc] = useState("");
@@ -92,7 +36,7 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
     <section className="relative overflow-hidden border-b border-white/10 min-h-100 sm:min-h-144 md:h-[78vh] md:min-h-155">
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
-      ) : (
+      ) : movie?.backdrop ? (
         movie?.backdrop && (
           <Image
             src={movie.backdrop}
@@ -106,6 +50,10 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
             }`}
           />
         )
+      ) : (
+        <AnimatedBackdropFallback
+          className="absolute inset-0"
+        />
       )}
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.1)_16%,rgba(0,0,0,0.34)_42%,rgba(0,0,0,0.8)_72%,rgba(0,0,0,1)_100%)] md:bg-[linear-gradient(to_bottom,rgba(0,0,0,0.18),rgba(0,0,0,0.72))]" />
       <div className="absolute inset-x-0 bottom-0">

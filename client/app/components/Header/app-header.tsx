@@ -133,9 +133,9 @@ export default function AppHeader() {
   const normalizedQuery = useMemo(() => query.trim(), [query]);
   const debouncedQuery = useDebounce(normalizedQuery, 400);
   const shouldShowDesktopSuggestions =
-    desktopSearchOpen && desktopSearchFocused && normalizedQuery.length >= 4;
+    desktopSearchOpen && desktopSearchFocused && normalizedQuery.length >= 2;
   const shouldShowMobileSuggestions =
-    mobileSearchOpen && mobileSearchFocused && normalizedQuery.length >= 4;
+    mobileSearchOpen && mobileSearchFocused && normalizedQuery.length >= 2;
   const isDetailPage = pathname?.startsWith("/content/");
   const shouldSearch = normalizedQuery.length >= 4
     && (desktopSearchOpen || mobileSearchOpen);

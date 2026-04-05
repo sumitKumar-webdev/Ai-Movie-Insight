@@ -189,6 +189,7 @@ export type ListTitlesParams = {
   maxAggregateRating?: number;
   sortBy?: TitleSortBy;
   sortOrder?: TitleSortOrder;
+  pageSize?: number;
   pageToken?: string;
 };
 

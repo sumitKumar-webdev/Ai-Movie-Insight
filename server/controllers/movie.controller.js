@@ -581,6 +581,7 @@ export async function listTitles(req, res) {
       maxAggregateRating: toOptionalNumber(req.query.maxAggregateRating),
       sortBy: typeof req.query.sortBy === "string" ? req.query.sortBy.trim() : undefined,
       sortOrder: typeof req.query.sortOrder === "string" ? req.query.sortOrder.trim() : undefined,
+      pageSize: toOptionalNumber(req.query.pageSize),
       pageToken: typeof req.query.pageToken === "string" ? req.query.pageToken.trim() : undefined,
     });
 

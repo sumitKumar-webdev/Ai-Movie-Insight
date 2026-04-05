@@ -129,6 +129,10 @@ export async function searchMoviesByQuery(query, options = {}) {
 
 export async function listImdbTitles(filters = {}) {
     const params = new URLSearchParams();
+    const pageSize =
+        typeof filters.pageSize === "number" && filters.pageSize >= 1 && filters.pageSize <= 50
+            ? filters.pageSize
+            : undefined;
 
     appendQueryValues(params, "types", Array.isArray(filters.types) ? filters.types : []);
     appendQueryValues(params, "genres", Array.isArray(filters.genres) ? filters.genres : []);
@@ -158,6 +162,7 @@ export async function listImdbTitles(filters = {}) {
         ["maxAggregateRating", filters.maxAggregateRating],
         ["sortBy", filters.sortBy],
         ["sortOrder", filters.sortOrder],
+        ["pageSize", pageSize],
         ["pageToken", filters.pageToken],
     ];
 

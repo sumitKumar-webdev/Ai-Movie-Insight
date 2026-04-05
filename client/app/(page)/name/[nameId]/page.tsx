@@ -24,8 +24,23 @@ import { getNameById, getNameFilmography } from "@/app/services/name.service";
 import { formatLabel } from "@/lib/resuable-component";
 import ExpandableText from "@/app/components/ExpandableText/ExpandableText";
 
-const FILMOGRAPHY_PAGE_SIZE = 10;
 const LOAD_MORE_THROTTLE_MS = 450;
+
+function getFilmographyPageSize(width: number) {
+  if (width >= 1280) {
+    return 10;
+  }
+
+  if (width >= 1024) {
+    return 12;
+  }
+
+  if (width >= 768) {
+    return 9;
+  }
+
+  return 10;
+}
 
 function mergeFilmographyItems(items: NameFilmographyItem[]) {
   const merged = new Map<string, NameFilmographyItem>();
@@ -318,6 +333,9 @@ export default function NameInsightPage() {
     undefined,
   );
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [filmographyPageSize, setFilmographyPageSize] = useState(() =>
+    typeof window === "undefined" ? 10 : getFilmographyPageSize(window.innerWidth),
+  );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const throttleTimeoutRef = useRef<number | null>(null);
@@ -328,6 +346,22 @@ export default function NameInsightPage() {
       if (throttleTimeoutRef.current) {
         window.clearTimeout(throttleTimeoutRef.current);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateFilmographyPageSize = () => {
+      const nextPageSize = getFilmographyPageSize(window.innerWidth);
+      setFilmographyPageSize((current) =>
+        current === nextPageSize ? current : nextPageSize,
+      );
+    };
+
+    updateFilmographyPageSize();
+    window.addEventListener("resize", updateFilmographyPageSize);
+
+    return () => {
+      window.removeEventListener("resize", updateFilmographyPageSize);
     };
   }, []);
 
@@ -370,7 +404,7 @@ export default function NameInsightPage() {
 
       try {
         const data = await getNameFilmography(nameId, {
-          pageSize: FILMOGRAPHY_PAGE_SIZE,
+          pageSize: filmographyPageSize,
         });
 
         setFilmography(mergeFilmographyItems(data.credits));
@@ -387,7 +421,7 @@ export default function NameInsightPage() {
       }
     };
     loadFirstPage();
-  }, [nameId]);
+  }, [filmographyPageSize, nameId]);
 
   useEffect(() => {
     setRouteProgressLoading(personLoading || filmographyLoading);
@@ -409,7 +443,7 @@ export default function NameInsightPage() {
 
       try {
         const data = await getNameFilmography(nameId, {
-          pageSize: FILMOGRAPHY_PAGE_SIZE,
+          pageSize: filmographyPageSize,
           pageToken: nextPageToken,
         });
 
@@ -463,7 +497,13 @@ export default function NameInsightPage() {
     return () => {
       observer.disconnect();
     };
-  }, [filmographyLoading, isFetchingMore, nameId, nextPageToken]);
+  }, [
+    filmographyLoading,
+    filmographyPageSize,
+    isFetchingMore,
+    nameId,
+    nextPageToken,
+  ]);
 
   if (personError) {
     return (
@@ -522,7 +562,7 @@ export default function NameInsightPage() {
             <CardContent className="space-y-5">
               {filmographyLoading ? (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {Array.from({ length: 5 }).map((_, index) => (
+                  {Array.from({ length: filmographyPageSize }).map((_, index) => (
                     <FilmographySkeleton
                       key={`filmography-skeleton-${index}`}
                     />

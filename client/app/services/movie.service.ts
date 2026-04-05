@@ -122,6 +122,9 @@ export async function listTitles(
   if (options.sortOrder) {
     params.set("sortOrder", options.sortOrder);
   }
+  if (typeof options.pageSize === "number") {
+    params.set("pageSize", String(options.pageSize));
+  }
   if (options.pageToken?.trim()) {
     params.set("pageToken", options.pageToken.trim());
   }

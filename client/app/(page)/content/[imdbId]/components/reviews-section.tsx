@@ -33,6 +33,8 @@ type ReviewsSectionProps = {
   movieType?: string;
   posterUrl?: string;
   currentUserId: string;
+  canWriteReview: boolean;
+  releaseStatusResolved: boolean;
   onUnauthorized: () => void;
   onRefreshInsight: () => void;
 };
@@ -63,6 +65,8 @@ export default function ReviewsSection({
   imdbId,
   movieTitle,
   currentUserId,
+  canWriteReview,
+  releaseStatusResolved,
   onUnauthorized,
   onRefreshInsight,
 }: ReviewsSectionProps) {
@@ -76,8 +80,15 @@ export default function ReviewsSection({
   useEffect(() => {
     setReviewInput("");
     setEditingReviewId(null);
+
+    if (!canWriteReview) {
+      setCommunityReviews([]);
+      setReviewsLoading(false);
+      return;
+    }
+
     void loadReviews(imdbId, setReviewsLoading, setCommunityReviews);
-  }, [imdbId]);
+  }, [canWriteReview, imdbId]);
 
   const filteredReviews = useMemo(
     () =>
@@ -128,7 +139,7 @@ export default function ReviewsSection({
 
   const submitReview = async () => {
     const message = reviewInput.trim();
-    if (!message || !imdbId) return;
+    if (!canWriteReview || !message || !imdbId) return;
 
     if (!currentUserId) {
       onUnauthorized();
@@ -369,7 +380,7 @@ export default function ReviewsSection({
         </CardHeader>
 
         <CardContent className="space-y-4 px-1">
-          {!reviewsLoading && shouldShowComposer && (
+          {!reviewsLoading && canWriteReview && shouldShowComposer && (
             <form
               onSubmit={(event) => {
                 event.preventDefault();
@@ -441,7 +452,15 @@ export default function ReviewsSection({
             </form>
           )}
 
-          {!reviewsLoading && orderedReviews.length > 0 ? (
+          {!releaseStatusResolved ? (
+            <p className="text-sm text-white/65">
+              Checking release status before opening reviews.
+            </p>
+          ) : !canWriteReview ? (
+            <p className="text-sm text-white/65">
+              Reviews will open once this title is released.
+            </p>
+          ) : orderedReviews.length > 0 ? (
             <div className="space-y-3">
               {orderedReviews.map((review) => {
                 const isOwnReview = Boolean(

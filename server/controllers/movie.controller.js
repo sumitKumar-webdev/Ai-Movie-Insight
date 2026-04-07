@@ -3,19 +3,25 @@ import {
   fetchImdbTitleById,
   fetchImdbTitleCredits,
   fetchImdbTitleReleaseDates,
+  fetchImdbTitleSeasons,
   fetchImdbTitleVideos,
+  fetchTmdbIdByImdbId,
   listImdbTitles,
   searchMoviesByQuery,
 } from "../lib/movie.js";
 import { chatWithMovieAssistant, getPersonalSuggestionAI } from "../lib/openai.js";
 import { getStoredMovieAiInsight } from "./movie-insight.controller.js";
 import User from "../models/User.js";
-import { INDUSTRY_TO_COUNTRY, INDUSTRY_TO_LANGUAGE, LANGUAGE_TO_CODE, MOOD_TO_RATING, MOOD_TO_SORT, FORMAT_TO_PARAMS, resolveInterestIdsFromPreferences } from "../lib/mapper.js";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
 const PERSONAL_SELECTION_MIN = 5;
 const PERSONAL_SELECTION_LIMIT = 8;
 const PERSONAL_SELECTION_TTL_DAYS = 7;
+const EMPTY_PERSONAL_SELECTION_PAYLOAD = {
+  items: [],
+  updatedAt: null,
+  refreshAfter: null,
+};
 
 function normalizeSuggestionQuery(value) {
   return String(value ?? "")
@@ -72,6 +78,12 @@ function normalizeSavedPersonalSelectionItems(value, limit = PERSONAL_SELECTION_
       return true;
     })
     .slice(0, limit);
+}
+
+function mergePersonalSelectionItems(...groups) {
+  return normalizeSavedPersonalSelectionItems(groups.flatMap((group) => (
+    Array.isArray(group) ? group : []
+  )), PERSONAL_SELECTION_LIMIT);
 }
 
 function toStringArray(value) {
@@ -166,10 +178,6 @@ function buildQuotaFallbackReply(userMessage) {
   return msg
     ? `admin ka ghee khatam h 30s baad try karna jab tak ye try kar lo: "${msg}" based kuch picks dekh lo.`
     : "admin ka ghee khatam h 30s baad try karna jab tak ye try kar lo.";
-}
-
-function hasEnoughPersonalSelectionItems(items) {
-  return normalizeSavedPersonalSelectionItems(items).length >= PERSONAL_SELECTION_MIN;
 }
 
 function isPersonalSelectionFresh(personalSelection) {
@@ -269,13 +277,40 @@ function getIndiaReleaseDetails(payload) {
   return { releaseDate, isReleased };
 }
 
+function fallbackReleaseFromYear(year) {
+  if (typeof year !== "number" || !Number.isFinite(year)) {
+    return { releaseDate: "N/A", isReleased: false };
+  }
+
+  const currentYear = new Date().getUTCFullYear();
+  return {
+    releaseDate: String(year),
+    isReleased: year <= currentYear,
+  };
+}
+
+function getPlaybackMedia(type) {
+  const normalized = String(type ?? "").trim().toLowerCase();
+  const isSeries = normalized.includes("tv") || normalized.includes("series");
+
+  return {
+    mediaType: isSeries ? "tv" : "movie",
+    season: isSeries ? 1 : null,
+    episode: isSeries ? 1 : null,
+  };
+}
+
 function formatMovieInsight(title, fallbackImdbId, options = {}) {
   const credits = Array.isArray(options.credits) ? options.credits : [];
   const cast = credits.length > 0 ? normalizeCredits(credits, "cast") : uniquePeople(title.stars);
   const crew = credits.length > 0 ? normalizeCredits(credits, "crew") : mergeCrew(title.directors, title.writers);
+  const tmdbId = typeof options.tmdbId === "number" && Number.isFinite(options.tmdbId)
+    ? options.tmdbId
+    : null;
 
   return {
     imdbId: title.id ?? fallbackImdbId,
+    tmdbId,
     title: title.primaryTitle ?? `Movie ${fallbackImdbId}`,
     year: (typeof options.year === "string" ? options.year.trim() : "") || String(title.startYear ?? "Unknown"),
     type: title.type,
@@ -293,68 +328,6 @@ function formatMovieInsight(title, fallbackImdbId, options = {}) {
     genres: Array.isArray(title.genres) ? title.genres : [],
     cast,
     crew,
-  };
-}
-
-// ─── Preference resolution ────────────────────────────────────────────────────
-
-function resolveListParamsFromPreferences(preferences) {
-  const rawIndustries = Array.isArray(preferences?.industries)
-    ? preferences.industries
-    : preferences?.cinemas;
-  const industries = normalizePreferenceList(rawIndustries, 6).map((i) => i.toLowerCase());
-  const languages = normalizePreferenceList(preferences?.languages, 6).map((l) => l.toLowerCase());
-  const genres = normalizePreferenceList(preferences?.genres, 6);
-  const moods = normalizePreferenceList(preferences?.moods, 4).map((m) => m.toLowerCase());
-  const formats = normalizePreferenceList(preferences?.formats, 4).map((f) => f.toLowerCase());
-  const currentYear = new Date().getUTCFullYear();
-  const interestIds = resolveInterestIdsFromPreferences({
-    ...preferences,
-    industries: rawIndustries,
-  }).slice(0, 8);
-
-  // Country codes from industries
-  const countryCodes = Array.from(new Set(
-    industries.flatMap((i) => INDUSTRY_TO_COUNTRY[i] ?? [])
-  )).slice(0, 5);
-
-  // Language codes: from explicit language prefs + industry-implied languages
-  const langCodesFromPrefs = languages.map((l) => LANGUAGE_TO_CODE[l]).filter(Boolean);
-  const langCodesFromIndustry = industries.flatMap((i) => INDUSTRY_TO_LANGUAGE[i] ?? []);
-  const languageCodes = Array.from(new Set([...langCodesFromPrefs, ...langCodesFromIndustry])).slice(0, 5);
-
-  // Mood → rating floor + sort signal
-  const moodRatings = moods.map((m) => MOOD_TO_RATING[m]).filter(Boolean);
-  const minAggregateRating = moodRatings.length ? Math.min(...moodRatings) : 6.0;
-  const moodSort = moods.map((m) => MOOD_TO_SORT[m]).find(Boolean);
-
-  // Format → year range + vote count signals
-  let startYear = currentYear - 3;
-  let endYear = currentYear + 1;
-  let minVoteCount = 250;
-  let maxVoteCount = undefined;
-
-  for (const format of formats) {
-    const p = FORMAT_TO_PARAMS[format];
-    if (!p) continue;
-    if (p.yearOffset !== undefined) startYear = Math.min(startYear, currentYear + p.yearOffset);
-    if (p.endYearOffset !== undefined) endYear = Math.min(endYear, currentYear + p.endYearOffset);
-    if (p.minVoteCount !== undefined) minVoteCount = Math.max(minVoteCount, p.minVoteCount);
-    if (p.maxVoteCount !== undefined) maxVoteCount = p.maxVoteCount;
-  }
-
-  return {
-    genres: genres.slice(0, 4),
-    interestIds,
-    countryCodes,
-    languageCodes,
-    minAggregateRating,
-    sortBy: moodSort ?? "SORT_BY_POPULARITY",
-    sortOrder: "DESC",
-    startYear,
-    endYear,
-    minVoteCount,
-    ...(maxVoteCount !== undefined && { maxVoteCount }),
   };
 }
 
@@ -386,40 +359,19 @@ async function collectSuggestionResults(queries, limit = 3) {
   return results;
 }
 
-async function resolveSearchHistoryGenres(searchHistory) {
-  const counts = new Map();
-
-  const payloads = await Promise.all(
-    searchHistory.map((item) => fetchImdbTitleGenresById(item.imdbId).catch(() => null)),
-  );
-
-  for (const movie of payloads) {
-    if (!movie) continue;
-    const localSeen = new Set();
-    for (const genre of movie.genres) {
-      const g = String(genre ?? "").trim();
-      if (!g || localSeen.has(g.toLowerCase())) continue;
-      localSeen.add(g.toLowerCase());
-      counts.set(g, (counts.get(g) ?? 0) + 1);
-    }
-  }
-
-  return Array.from(counts.entries())
-    .sort(([a, av], [b, bv]) => bv - av || a.localeCompare(b))
-    .map(([genre]) => genre);
-}
-
-function buildSearchQueriesFromPreferenceSignals(searchHistory, preferences, genres) {
+function buildSearchQueriesFromPreferenceSignals(searchHistory, preferences) {
   const titles = searchHistory.map((i) => String(i?.title ?? "").trim()).filter(Boolean).slice(0, 5);
   const prefGenres = normalizePreferenceList(preferences?.genres, 4);
   const prefLangs = normalizePreferenceList(preferences?.languages, 2);
   const prefMoods = normalizePreferenceList(preferences?.moods, 2);
-  const prefIndustries = normalizePreferenceList(preferences?.industries, 3);
+  const prefIndustries = normalizePreferenceList(
+    Array.isArray(preferences?.industries) ? preferences.industries : preferences?.cinemas,
+    3,
+  );
   const prefFormats = normalizePreferenceList(preferences?.formats, 2);
 
   return Array.from(new Set([
     ...titles,
-    ...genres.map((g) => `${g} movie`),
     ...prefGenres.map((g) => `${g} latest movie`),
     ...prefLangs.map((l) => `${l} movie`),
     ...prefMoods.map((m) => `${m} movie`),
@@ -463,85 +415,76 @@ function buildPersonalSelectionFallback(candidates, excludedMovieIds) {
   return normalizeSavedPersonalSelectionItems(selections, PERSONAL_SELECTION_LIMIT);
 }
 
-async function generateWeeklyPersonalSelection(user, searchHistory) {
-  const normalizedHistory = normalizeSearchHistoryList(searchHistory);
-  const historyGenres = await resolveSearchHistoryGenres(normalizedHistory);
-  const preferenceGenres = normalizePreferenceList(user?.preferences?.genres, 6);
-  const combinedGenres = Array.from(new Set(
-    [...historyGenres, ...preferenceGenres].map((g) => g.trim()).filter(Boolean)
-  )).slice(0, 4);
-
-  const excludedMovieIds = new Set(normalizedHistory.map((i) => i.imdbId));
+async function buildPreferencePersonalSelection(preferences, excludedMovieIds) {
   const currentYear = new Date().getUTCFullYear();
-
-  // Build rich params from ALL preferences
-  const listParams = resolveListParamsFromPreferences(user?.preferences ?? {});
-
-  // Fall back to history genres if no genre preference set
-  if (!listParams.genres.length) {
-    listParams.genres = combinedGenres;
-  }
-
+  const genres = normalizePreferenceList(preferences?.genres, 3);
   const { items } = await listImdbTitles({
-    ...listParams,
-    startYear: listParams.startYear ?? currentYear - 2,
+    types: ["MOVIE", "TV_MOVIE", "TV_SERIES"],
+    genres: genres.length ? genres : undefined,
+    startYear: currentYear - 10,
+    endYear: currentYear + 1,
+    minVoteCount: 100,
+    minAggregateRating: 6,
+    sortBy: "SORT_BY_POPULARITY",
+    sortOrder: "DESC",
   }).catch(() => ({ items: [] }));
 
-  const candidates = items.slice(0, 30)
-    .map((movie) => {
-      const imdbId = String(movie?.imdbId ?? "").trim().toLowerCase();
-      if (!imdbId || excludedMovieIds.has(imdbId)) return null;
-      return {
-        imdbId,
-        title: String(movie?.title ?? "").trim(),
-        year: String(movie?.year ?? "N/A").trim() || "N/A",
-        poster: typeof movie?.poster === "string" ? movie.poster.trim() : "",
-        type: typeof movie?.type === "string" ? movie.type.trim() : "movie",
-        genres: Array.isArray(movie?.genres) ? movie.genres : [],
-      };
-    })
-    .filter(Boolean);
+  return buildPersonalSelectionFallback(
+    items.slice(0, 40).map((movie) => ({
+      imdbId: String(movie?.imdbId ?? "").trim().toLowerCase(),
+      title: String(movie?.title ?? "").trim(),
+      year: String(movie?.year ?? "N/A").trim() || "N/A",
+      poster: typeof movie?.poster === "string" ? movie.poster.trim() : "",
+      type: typeof movie?.type === "string" ? movie.type.trim() : "movie",
+      genres: Array.isArray(movie?.genres) ? movie.genres : [],
+    })),
+    excludedMovieIds,
+  );
+}
 
-  // Try AI suggestions with full preferences
+async function generateWeeklyPersonalSelection(user, searchHistory) {
+  const normalizedHistory = normalizeSearchHistoryList(searchHistory);
+  const preferences = user?.preferences ?? {};
+  const excludedMovieIds = new Set(normalizedHistory.map((i) => i.imdbId));
+
+  let aiSelections = [];
   try {
     const suggestedTitles = await getPersonalSuggestionAI({
       searchHistory: normalizedHistory,
-      preferences: {
-        industries: normalizePreferenceList(user?.preferences?.industries, 6),
-        genres: normalizePreferenceList(user?.preferences?.genres, 6),
-        languages: normalizePreferenceList(user?.preferences?.languages, 6),
-        moods: normalizePreferenceList(user?.preferences?.moods, 6),
-        cinemas: normalizePreferenceList(user?.preferences?.cinemas, 6),
-        formats: normalizePreferenceList(user?.preferences?.formats, 6),
-      },
+      preferences,
       limit: PERSONAL_SELECTION_LIMIT,
     });
 
-    const selections = normalizeSavedPersonalSelectionItems(
+    aiSelections = normalizeSavedPersonalSelectionItems(
       await collectSuggestionResults(suggestedTitles, PERSONAL_SELECTION_LIMIT),
       PERSONAL_SELECTION_LIMIT,
     );
 
-    if (hasEnoughPersonalSelectionItems(selections)) return selections;
+    if (aiSelections.length >= PERSONAL_SELECTION_MIN) return aiSelections;
   } catch (error) {
     console.error("[movie:personalSelection:ai]", error instanceof Error ? error.message : error);
   }
 
-  // Fallback: preference signal search queries
-  const fallbackQueries = buildSearchQueriesFromPreferenceSignals(
-    normalizedHistory,
-    user?.preferences ?? {},
-    combinedGenres,
-  );
   const fallbackSelections = normalizeSavedPersonalSelectionItems(
-    await collectSuggestionResults(fallbackQueries, PERSONAL_SELECTION_LIMIT),
+    await collectSuggestionResults(
+      buildSearchQueriesFromPreferenceSignals(normalizedHistory, preferences),
+      PERSONAL_SELECTION_LIMIT,
+    ),
     PERSONAL_SELECTION_LIMIT,
   );
+  const preferenceSelections = await buildPreferencePersonalSelection(preferences, excludedMovieIds);
 
-  if (hasEnoughPersonalSelectionItems(fallbackSelections)) return fallbackSelections;
+  if (fallbackSelections.length >= PERSONAL_SELECTION_MIN) return fallbackSelections;
 
-  // Last resort: local candidates from listImdbTitles
-  return buildPersonalSelectionFallback(candidates, excludedMovieIds).slice(0, PERSONAL_SELECTION_LIMIT);
+  const mergedSelections = mergePersonalSelectionItems(
+    aiSelections,
+    fallbackSelections,
+    preferenceSelections,
+  );
+
+  if (mergedSelections.length > 0) return mergedSelections;
+
+  return preferenceSelections;
 }
 
 // ─── Route handlers ───────────────────────────────────────────────────────────
@@ -640,24 +583,29 @@ export async function getMovieByImdbId(req, res) {
     const imdbId = typeof req.params?.imdbId === "string" ? req.params.imdbId.trim().toLowerCase() : "";
     if (!IMDB_ID_REGEX.test(imdbId)) return res.status(400).json({ error: "Invalid IMDb ID" });
 
-    const [title, creditsPayload, videosPayload, releaseDatesPayload] = await Promise.all([
+    const [title, creditsPayload, videosPayload, releaseDatesPayload, tmdbId] = await Promise.all([
       fetchImdbTitleById(imdbId),
       fetchImdbTitleCredits(imdbId),
       fetchImdbTitleVideos(imdbId),
       fetchImdbTitleReleaseDates(imdbId),
+      fetchTmdbIdByImdbId(imdbId),
     ]);
 
     if (!title) return res.status(404).json({ error: "Movie not found" });
 
-    const { releaseDate, isReleased } = getIndiaReleaseDetails(releaseDatesPayload);
+    const indiaRelease = getIndiaReleaseDetails(releaseDatesPayload);
+    const releaseMeta = indiaRelease.releaseDate !== "N/A"
+      ? indiaRelease
+      : fallbackReleaseFromYear(title.startYear);
     const backdrop = getBackdropFromVideos(videosPayload) || title.primaryImage?.url || "";
 
     const insight = formatMovieInsight(title, imdbId, {
       year: String(title.startYear ?? "Unknown"),
-      releaseDate,
-      isReleased,
+      releaseDate: releaseMeta.releaseDate,
+      isReleased: releaseMeta.isReleased,
       backdrop,
       credits: Array.isArray(creditsPayload?.credits) ? creditsPayload.credits : [],
+      tmdbId,
     });
 
     return res.status(200).json({ data: insight });
@@ -682,22 +630,83 @@ export async function getMovieGenresByImdbId(req, res) {
   }
 }
 
-export async function getPersonalMovieSelection(req, res) {
+export async function getMoviePlayback(req, res) {
   try {
-    const user = req.user ? await User.findById(req.user._id) : null;
-    if (!user) return res.status(401).json({ error: "Unauthorized" });
+    const imdbId = typeof req.params?.imdbId === "string" ? req.params.imdbId.trim().toLowerCase() : "";
+    if (!IMDB_ID_REGEX.test(imdbId)) return res.status(400).json({ error: "Invalid IMDb ID" });
 
-    if (!isPersonalSelectionFresh(user.personalSelection)) {
-      const items = await generateWeeklyPersonalSelection(user, normalizeSearchHistoryList(req.body?.searchHistory));
+    const [title, tmdbId] = await Promise.all([
+      fetchImdbTitleById(imdbId),
+      fetchTmdbIdByImdbId(imdbId),
+    ]);
+    if (!title) return res.status(404).json({ error: "Movie not found" });
+    const playback = getPlaybackMedia(title?.type);
+
+    return res.status(200).json({
+      data: {
+        imdbId,
+        tmdbId,
+        mediaType: playback.mediaType,
+        season: playback.season,
+        episode: playback.episode,
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch playback";
+    return res.status(500).json({ error: message });
+  }
+}
+
+export async function getMovieSeasons(req, res) {
+  try {
+    const imdbId = typeof req.params?.imdbId === "string" ? req.params.imdbId.trim().toLowerCase() : "";
+    if (!IMDB_ID_REGEX.test(imdbId)) return res.status(400).json({ error: "Invalid IMDb ID" });
+
+    const seasons = await fetchImdbTitleSeasons(imdbId);
+
+    return res.status(200).json({ data: { imdbId, seasons } });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to fetch seasons";
+    return res.status(500).json({ error: message });
+  }
+}
+
+export async function getPersonalMovieSelection(req, res) {
+  const userId = req.user?._id;
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+  let user = null;
+  try {
+    user = await User.findById(userId);
+  } catch (error) {
+    console.error("[movie:personalSelection:user]", error instanceof Error ? error.stack || error.message : error);
+    return res.status(200).json({ data: { personalSelection: EMPTY_PERSONAL_SELECTION_PAYLOAD } });
+  }
+
+  if (!user) {
+    return res.status(200).json({ data: { personalSelection: EMPTY_PERSONAL_SELECTION_PAYLOAD } });
+  }
+
+  if (!isPersonalSelectionFresh(user.personalSelection)) {
+    try {
+      const items = await generateWeeklyPersonalSelection(user, req.body?.searchHistory);
       const updatedAt = new Date();
       user.personalSelection = { items, updatedAt, refreshAfter: new Date(updatedAt.getTime() + PERSONAL_SELECTION_TTL_DAYS * 86_400_000) };
       await user.save();
+    } catch (error) {
+      console.error("[movie:personalSelection:refresh]", error instanceof Error ? error.stack || error.message : error);
     }
+  }
 
-    return res.status(200).json({ data: { personalSelection: buildPersonalSelectionPayload(user.personalSelection) } });
+  try {
+    return res.status(200).json({
+      data: {
+        personalSelection: buildPersonalSelectionPayload(user.personalSelection),
+      },
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to fetch personal selections";
-    return res.status(500).json({ error: message });
+    console.error("[movie:personalSelection:payload]", error instanceof Error ? error.stack || error.message : error);
+    return res.status(200).json({ data: { personalSelection: EMPTY_PERSONAL_SELECTION_PAYLOAD } });
   }
 }
 

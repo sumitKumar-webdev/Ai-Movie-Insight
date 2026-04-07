@@ -223,10 +223,18 @@ Rules:
 
   console.log(parsed)
 
+  const seen = new Set();
+
   return Array.isArray(parsed?.titles)
     ? parsed.titles
-      .map((item) => String(item ?? "").trim().toLowerCase())
-      .filter(Boolean)
+      .map((item) => String(item ?? "").trim())
+      .filter((item) => {
+        if (!item) return false;
+        const key = item.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
       .slice(0, Math.max(1, limit))
     : [];
 }

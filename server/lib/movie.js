@@ -1,4 +1,7 @@
 const IMDB_API_BASE_URL = process.env.IMDB_API_BASE_URL || "https://api.imdbapi.dev";
+const TMDB_API_BASE_URL = process.env.TMDB_API_BASE_URL || "https://api.themoviedb.org/3";
+const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
+const TMDB_ACCESS_TOKEN = process.env.TMDB_ACCESS_TOKEN || "";
 const FETCH_TIMEOUT_MS = Number(process.env.IMDB_API_TIMEOUT_MS || "10000");
 
 export async function fetchJson(url) {
@@ -6,6 +9,20 @@ export async function fetchJson(url) {
         FETCH_TIMEOUT_MS > 0
             ? { cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) }
             : { cache: "no-store" };
+
+    const response = await fetch(url, options);
+    if (!response.ok) {
+        return null;
+    }
+
+    return response.json();
+}
+
+export async function fetchJsonWithHeaders(url, headers = {}) {
+    const options =
+        FETCH_TIMEOUT_MS > 0
+            ? { cache: "no-store", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS), headers }
+            : { cache: "no-store", headers };
 
     const response = await fetch(url, options);
     if (!response.ok) {
@@ -102,6 +119,96 @@ export async function fetchImdbTitleReleaseDates(imdbId) {
     return {
         releaseDates: collectedReleaseDates,
     };
+}
+
+export async function fetchImdbTitleSeasons(imdbId) {
+    const payload = await fetchJson(
+        `${IMDB_API_BASE_URL}/titles/${encodeURIComponent(imdbId)}/seasons`,
+    ).catch(() => null);
+
+    const seasons = Array.isArray(payload?.seasons) ? payload.seasons : [];
+
+    return seasons
+        .map((item) => {
+            const seasonValue =
+                typeof item?.season === "string" ? item.season.trim() : String(item?.season ?? "").trim();
+            const season = Number.parseInt(seasonValue, 10);
+            const episodeCount = Number(item?.episodeCount);
+
+            if (!Number.isFinite(season) || season < 1) {
+                return null;
+            }
+
+            return {
+                season,
+                episodeCount: Number.isFinite(episodeCount) && episodeCount > 0
+                    ? Math.floor(episodeCount)
+                    : 0,
+            };
+        })
+        .filter(Boolean)
+        .sort((a, b) => a.season - b.season);
+}
+
+function buildTmdbAuthHeaders() {
+    if (TMDB_ACCESS_TOKEN) {
+        return {
+            Accept: "application/json",
+            Authorization: `Bearer ${TMDB_ACCESS_TOKEN}`,
+        };
+    }
+
+    return {
+        Accept: "application/json",
+    };
+}
+
+export async function fetchTmdbIdByImdbId(imdbId) {
+    const normalizedImdbId = String(imdbId ?? "").trim().toLowerCase();
+    if (!normalizedImdbId) {
+        return null;
+    }
+    try {
+        if (!TMDB_ACCESS_TOKEN && !TMDB_API_KEY) {
+            console.warn("[movie:tmdb] Missing TMDB credentials");
+            return null;
+        }
+
+        const params = new URLSearchParams({
+            external_source: "imdb_id",
+        });
+
+        if (!TMDB_ACCESS_TOKEN && TMDB_API_KEY) {
+            params.set("api_key", TMDB_API_KEY);
+        }
+
+        const payload = await fetchJsonWithHeaders(
+            `${TMDB_API_BASE_URL}/find/${encodeURIComponent(normalizedImdbId)}?${params.toString()}`,
+            buildTmdbAuthHeaders(),
+        );
+
+        const movieMatch = Array.isArray(payload?.movie_results)
+            ? payload.movie_results.find((item) => Number.isFinite(Number(item?.id)))
+            : null;
+        if (movieMatch?.id) {
+            return Number(movieMatch.id);
+        }
+
+        const tvMatch = Array.isArray(payload?.tv_results)
+            ? payload.tv_results.find((item) => Number.isFinite(Number(item?.id)))
+            : null;
+        if (tvMatch?.id) {
+            return Number(tvMatch.id);
+        }
+
+        return null;
+    } catch (error) {
+        console.error(
+            `[movie:tmdb] Failed to resolve TMDB ID for IMDb ID ${normalizedImdbId}`,
+            error
+        );
+        return null;
+    }
 }
 
 export async function searchMoviesByQuery(query, options = {}) {

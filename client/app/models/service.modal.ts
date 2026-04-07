@@ -119,6 +119,7 @@ export type NameFilmographyResponse = {
 
 export type MovieDetails = {
   imdbId: string;
+  tmdbId?: number | null;
   type: string;
   title: string;
   year: string;
@@ -136,6 +137,19 @@ export type MovieDetails = {
   genres: string[];
   cast: PersonCredit[];
   crew: PersonCredit[];
+};
+
+export type MoviePlayback = {
+  imdbId: string;
+  tmdbId: number | null;
+  mediaType: "movie" | "tv";
+  season: number | null;
+  episode: number | null;
+};
+
+export type MovieSeason = {
+  season: number;
+  episodeCount: number;
 };
 
 export type MovieAiInsight = {

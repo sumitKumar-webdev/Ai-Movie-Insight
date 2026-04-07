@@ -13,8 +13,13 @@ import { Skeleton } from "@/app/components/ui/skeleton";
 import {
   getMovieAiInsightByImdbId,
   getMovieByImdbId,
+  getSeasonsByImdbId,
 } from "@/app/services/movie.service";
-import { MovieAiInsight, MovieDetails } from "@/app/models/service.modal";
+import {
+  MovieAiInsight,
+  MovieDetails,
+  MovieSeason,
+} from "@/app/models/service.modal";
 import {
   clearAuthState,
   useAuthStore,
@@ -40,10 +45,18 @@ export default function MovieInsightPage() {
   const [insightLoading, setInsightLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [insightError, setInsightError] = useState<string | null>(null);
+  const [seasons, setSeasons] = useState<MovieSeason[]>([]);
+  const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [refreshAI, setRefreshAI] = useState(false);
+  const [canWriteReview, setCanWriteReview] = useState(false);
   const currentUserId = useAuthStore((auth) => auth.user?.id ?? "");
   const isPageLoading = detailsLoading || insightLoading;
+
+  const isSeriesType = (type: string | undefined) => {
+    const normalized = String(type ?? "").toLowerCase();
+    return normalized.includes("tv") || normalized.includes("series");
+  };
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -54,9 +67,11 @@ export default function MovieInsightPage() {
 
       setDetailsLoading(true);
       setError(null);
+      setCanWriteReview(false);
       try {
         const movieResponse = await getMovieByImdbId(imdbId);
         setMovie(movieResponse);
+        setCanWriteReview(movieResponse?.isReleased === true);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Movie not found";
         setError(message);
@@ -66,6 +81,40 @@ export default function MovieInsightPage() {
     };
     fetchDetails();
   }, [imdbId]);
+
+  useEffect(() => {
+    if (!movie?.imdbId || !isSeriesType(movie.type)) {
+      setSeasons([]);
+      setSeasonsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchSeasons = async () => {
+      setSeasonsLoading(true);
+      try {
+        const seasonsResponse = await getSeasonsByImdbId(movie.imdbId);
+        if (!cancelled) {
+          setSeasons(seasonsResponse);
+        }
+      } catch {
+        if (!cancelled) {
+          setSeasons([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setSeasonsLoading(false);
+        }
+      }
+    };
+
+    void fetchSeasons();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [movie?.imdbId, movie?.type]);
 
   useEffect(() => {
     const fetchAiInsight = async () => {
@@ -131,7 +180,12 @@ export default function MovieInsightPage() {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      <InfoSection loading={detailsLoading} movie={movie} />
+      <InfoSection
+        loading={detailsLoading}
+        movie={movie}
+        seasons={seasons}
+        seasonsLoading={seasonsLoading}
+      />
 
       <section className="mx-auto grid w-full grid-cols-1 gap-6 px-2 py-8 md:px-12 xl:grid-cols-[1fr_450px]">
         <div className="max-w-4xl space-y-6">
@@ -205,7 +259,7 @@ export default function MovieInsightPage() {
             />
           </div>
 
-          {movie?.isReleased === true ? (
+          {movie ? (
             <ReviewsSection
               imdbId={imdbId}
               movieTitle={movie?.title ?? ""}
@@ -213,6 +267,8 @@ export default function MovieInsightPage() {
               movieType={movie?.type ?? ""}
               posterUrl={movie?.poster ?? ""}
               currentUserId={currentUserId}
+              canWriteReview={canWriteReview}
+              releaseStatusResolved={!detailsLoading}
               onUnauthorized={() => {
                 clearAuthState();
                 setAuthModalOpen(true);

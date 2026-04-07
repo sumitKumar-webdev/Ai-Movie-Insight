@@ -1,19 +1,23 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Image from "next/image";
-import { Star } from "lucide-react";
+import { Play, Star } from "lucide-react";
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
 import AnimatedBackdropFallback from "@/app/components/ui/animated-backdrop-fallback";
 import CompactCount from "@/app/components/ui/compact-count";
 import MetaValueList from "@/app/components/ui/meta-value-list";
 import { Skeleton } from "@/app/components/ui/skeleton";
-import { MovieDetails } from "@/app/models/service.modal";
+import { Button } from "@/app/components/ui/button";
+import { MovieDetails, MovieSeason } from "@/app/models/service.modal";
 import { formatLabel } from "@/lib/resuable-component";
+import PlaybackModal from "./playback-modal";
 
 type InfoSectionProps = {
   loading: boolean;
   movie: MovieDetails | null;
+  seasons: MovieSeason[];
+  seasonsLoading: boolean;
 };
 
 function isAvailableValue(value?: string | null) {
@@ -22,40 +26,72 @@ function isAvailableValue(value?: string | null) {
   }
 
   const normalized = value.trim().toLowerCase();
-  return Boolean(normalized) && normalized !== "n/a" && normalized !== "unavailable" && normalized !== "unknown";
+  return (
+    Boolean(normalized) &&
+    normalized !== "n/a" &&
+    normalized !== "unavailable" &&
+    normalized !== "unknown"
+  );
 }
 
-const InfoSection = ({ loading, movie }: InfoSectionProps) => {
+const InfoSection = ({
+  loading,
+  movie,
+  seasons,
+  seasonsLoading,
+}: InfoSectionProps) => {
   const [loadedBackdropSrc, setLoadedBackdropSrc] = useState("");
   const [loadedPosterSrc, setLoadedPosterSrc] = useState("");
+  const [playbackOpen, setPlaybackOpen] = useState(false);
   const metaData = [formatLabel(movie?.type ?? ""), movie?.year, movie?.runtime]
     .filter(isAvailableValue)
     .join(" • ");
+  const normalizedType = movie?.type?.toLowerCase() ?? "";
+  const canPlayFromBackdrop = Boolean(
+    !loading &&
+    movie?.isReleased === true &&
+    (normalizedType.includes("movie") ||
+      normalizedType.includes("tv") ||
+      normalizedType.includes("series")),
+  );
+  const isSeries =
+    normalizedType.includes("tv") || normalizedType.includes("series");
 
   return (
-    <section className="relative overflow-hidden border-b border-white/10 min-h-100 sm:min-h-144 md:h-[78vh] md:min-h-155">
+    <section className="relative min-h-100 overflow-hidden border-b border-white/10 sm:min-h-144 md:h-[78vh] md:min-h-155">
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
       ) : movie?.backdrop ? (
-        movie?.backdrop && (
-          <Image
-            src={movie.backdrop}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            onLoad={() => setLoadedBackdropSrc(movie.backdrop)}
-            className={`absolute inset-0 h-20 object-cover object-center transition-opacity duration-700 ease-out md:mt-0 ${
-              loadedBackdropSrc === movie.backdrop ? "opacity-70" : "opacity-0"
-            }`}
-          />
-        )
-      ) : (
-        <AnimatedBackdropFallback
-          className="absolute inset-0"
+        <Image
+          src={movie.backdrop}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          onLoad={() => setLoadedBackdropSrc(movie.backdrop)}
+          className={`absolute inset-0 h-20 object-cover object-center transition-opacity duration-700 ease-out md:mt-0 ${
+            loadedBackdropSrc === movie.backdrop ? "opacity-70" : "opacity-0"
+          }`}
         />
+      ) : (
+        <AnimatedBackdropFallback className="absolute inset-0" />
       )}
+
       <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.04)_0%,rgba(0,0,0,0.1)_16%,rgba(0,0,0,0.34)_42%,rgba(0,0,0,0.8)_72%,rgba(0,0,0,1)_100%)] md:bg-[linear-gradient(to_bottom,rgba(0,0,0,0.18),rgba(0,0,0,0.72))]" />
+
+      {canPlayFromBackdrop && movie ? (
+        <div className="absolute inset-x-0 top-0 z-10 mx-auto flex w-full max-w-7xl justify-end px-4 pt-4 sm:px-5 sm:pt-5 md:px-6 md:pt-6">
+          <Button
+            type="button"
+            onClick={() => setPlaybackOpen(true)}
+            className="rounded-full border border-white/15 bg-white/12 px-4 text-white shadow-[0_12px_40px_rgba(0,0,0,0.35)] backdrop-blur-md hover:bg-white/18 text-xs md:text-sm"
+          >
+            <Play className="fill-current" />
+            Play Now
+          </Button>
+        </div>
+      ) : null}
+
       <div className="absolute inset-x-0 bottom-0">
         <div className="mx-auto w-full max-w-7xl -translate-y-8 px-4 pb-3 sm:-translate-y-10 sm:px-5 sm:pb-4 md:translate-y-0 md:px-6 md:pb-10">
           <div className="grid grid-cols-[112px_1fr] items-end gap-4 sm:grid-cols-[140px_1fr] sm:gap-5 md:grid-cols-[260px_1fr] md:gap-6">
@@ -108,7 +144,11 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-[11px] leading-4 text-white/80 sm:text-sm md:grid-cols-4 md:gap-4">
+                <div
+                  className={`grid grid-cols-2 gap-x-4 gap-y-3 text-[11px] leading-4 text-white/80 sm:text-sm md:gap-4 ${
+                    isSeries ? "md:grid-cols-5" : "md:grid-cols-4"
+                  }`}
+                >
                   <div>
                     <p className="text-white/50">Country</p>
                     <MetaValueList values={movie?.country} label="countries" />
@@ -127,7 +167,9 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                       <p className="flex items-center font-medium">
                         <Star className="mr-1 h-3.5 w-3.5 fill-yellow-300 text-yellow-300 sm:h-4 sm:w-4" />
                         {movie?.rating}
-                        {movie?.rating != "N/A" && <span className="text-white/60">/10</span>}
+                        {movie?.rating != "N/A" && (
+                          <span className="text-white/60">/10</span>
+                        )}
                       </p>
                       <CompactCount
                         value={movie?.ratingCount}
@@ -136,12 +178,30 @@ const InfoSection = ({ loading, movie }: InfoSectionProps) => {
                       />
                     </div>
                   </div>
+                  {isSeries ? (
+                    <div>
+                      <p className="text-white/50">Seasons</p>
+                      <p className="mt-1 font-medium">
+                        {seasonsLoading ? "Loading..." : seasons.length || "N/A"}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+
+      {movie ? (
+        <PlaybackModal
+          movie={movie}
+          seasons={seasons}
+          seasonsLoading={seasonsLoading}
+          open={playbackOpen}
+          onOpenChange={setPlaybackOpen}
+        />
+      ) : null}
     </section>
   );
 };

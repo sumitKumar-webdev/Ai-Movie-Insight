@@ -4,6 +4,8 @@ import {
   ListTitlesParams,
   MovieAiInsight,
   MovieDetails,
+  MoviePlayback,
+  MovieSeason,
   MovieSearchItem,
   MovieTitleListResponse,
 } from "../models/service.modal";
@@ -84,6 +86,94 @@ export async function getMovieByImdbId(imdbId: string): Promise<MovieDetails> {
   } finally {
     movieDetailsRequests.delete(normalized);
   }
+}
+
+export async function getPlaybackByImdbId(
+  imdbId: string,
+): Promise<MoviePlayback> {
+  const normalized = imdbId.trim().toLowerCase();
+  if (!IMDB_ID_REGEX.test(normalized)) throw new Error("Invalid IMDb ID");
+
+  const response = await fetch(
+    buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}/playback`),
+    { cache: "no-store" },
+  );
+  const payload = (await response.json()) as {
+    data?: {
+      imdbId?: string;
+      tmdbId?: number | null;
+      mediaType?: "movie" | "tv";
+      season?: number | null;
+      episode?: number | null;
+    };
+    error?: string;
+  };
+
+  if (!response.ok || !payload.data) {
+    throw new Error(payload.error ?? "Playback not available");
+  }
+
+  return {
+    imdbId: typeof payload.data.imdbId === "string" ? payload.data.imdbId : normalized,
+    tmdbId:
+      typeof payload.data.tmdbId === "number" && Number.isFinite(payload.data.tmdbId)
+        ? payload.data.tmdbId
+        : null,
+    mediaType: payload.data.mediaType === "tv" ? "tv" : "movie",
+    season:
+      typeof payload.data.season === "number" && Number.isFinite(payload.data.season)
+        ? payload.data.season
+        : null,
+    episode:
+      typeof payload.data.episode === "number" && Number.isFinite(payload.data.episode)
+        ? payload.data.episode
+        : null,
+  };
+}
+
+export async function getSeasonsByImdbId(
+  imdbId: string,
+): Promise<MovieSeason[]> {
+  const normalized = imdbId.trim().toLowerCase();
+  if (!IMDB_ID_REGEX.test(normalized)) throw new Error("Invalid IMDb ID");
+
+  const response = await fetch(
+    buildApiUrl(`/api/movies/${encodeURIComponent(normalized)}/seasons`),
+    { cache: "no-store" },
+  );
+
+  const payload = (await response.json()) as {
+    data?: {
+      seasons?: Array<{ season?: string | number; episodeCount?: number }>;
+    };
+    error?: string;
+  };
+
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Failed to fetch seasons");
+  }
+
+  const seasons = Array.isArray(payload.data?.seasons) ? payload.data.seasons : [];
+
+  return seasons
+    .map((item) => {
+      const parsedSeason = Number.parseInt(String(item?.season ?? "").trim(), 10);
+      const parsedEpisodeCount = Number(item?.episodeCount);
+
+      if (!Number.isFinite(parsedSeason) || parsedSeason < 1) {
+        return null;
+      }
+
+      return {
+        season: parsedSeason,
+        episodeCount:
+          Number.isFinite(parsedEpisodeCount) && parsedEpisodeCount > 0
+            ? Math.floor(parsedEpisodeCount)
+            : 0,
+      };
+    })
+    .filter((item): item is MovieSeason => item !== null)
+    .sort((a, b) => a.season - b.season);
 }
 
 export async function listTitles(

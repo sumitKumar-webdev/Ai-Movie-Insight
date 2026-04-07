@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import MovieResultCard from "@/app/components/cards/movie-result-card";
 import { setRouteProgressLoading } from "@/app/components/ui/route-progress";
@@ -73,46 +73,39 @@ function buildInterestWeightMap(
   return interestWeights;
 }
 
-async function buildMovieMatchScoreMap(
-  movies: MovieSearchItem[],
+function getMovieMatchScore(
+  movie: MovieSearchItem,
   interestWeights: Map<string, number>,
 ) {
-  if (!movies.length || interestWeights.size === 0) {
-    return new Map<string, number>();
+  if (interestWeights.size === 0) {
+    return undefined;
   }
 
   const maxPossibleScore = Array.from(interestWeights.values()).reduce(
     (total, value) => total + value,
     0,
   );
+  const movieGenreSet = new Set(
+    (Array.isArray(movie.genres) ? movie.genres : [])
+      .map((genre) => genre.trim().toLowerCase())
+      .filter(Boolean),
+  );
 
-  const scoreMap = new Map<string, number>();
+  if (!movieGenreSet.size || maxPossibleScore <= 0) {
+    return undefined;
+  }
 
-  movies.forEach((movie) => {
-    const movieGenreSet = new Set(
-      (Array.isArray(movie.genres) ? movie.genres : [])
-        .map((genre) => genre.trim().toLowerCase())
-        .filter(Boolean),
-    );
-
-    if (!movieGenreSet.size) {
-      return;
-    }
-
-    let matchedWeight = 0;
-    movieGenreSet.forEach((genre) => {
-      matchedWeight += interestWeights.get(genre) ?? 0;
-    });
-
-    if (matchedWeight <= 0 || maxPossibleScore <= 0) {
-      return;
-    }
-
-    const percentage = Math.round((matchedWeight / maxPossibleScore) * 100);
-    scoreMap.set(movie.imdbId, Math.max(45, Math.min(98, percentage)));
+  let matchedWeight = 0;
+  movieGenreSet.forEach((genre) => {
+    matchedWeight += interestWeights.get(genre) ?? 0;
   });
 
-  return scoreMap;
+  if (matchedWeight <= 0) {
+    return undefined;
+  }
+
+  const percentage = Math.round((matchedWeight / maxPossibleScore) * 100);
+  return Math.max(45, Math.min(98, percentage));
 }
 
 function pickUniqueMovies(
@@ -222,9 +215,6 @@ export default function UserHomePage() {
     UserInterestedCategory[]
   >([]);
   const [interestMovies, setInterestMovies] = useState<MovieSearchItem[]>([]);
-  const [interestMovieScores, setInterestMovieScores] = useState<
-    Map<string, number>
-  >(new Map());
   const [personalSelectionMovies, setPersonalSelectionMovies] = useState<
     MovieSearchItem[]
   >([]);
@@ -235,82 +225,73 @@ export default function UserHomePage() {
   const [personalSelectionLoading, setPersonalSelectionLoading] =
     useState(true);
   const recentHistory = useMemo(() => getSelectedMovieSearchHistory(), []);
+  const lastHomeRequestKeyRef = useRef<string>("");
+  const preferencesRequestKey = useMemo(() => JSON.stringify({
+    userId: user?.id ?? "",
+    cinemas: user?.preferences?.cinemas ?? [],
+    formats: user?.preferences?.formats ?? [],
+    genres: user?.preferences?.genres ?? [],
+    languages: user?.preferences?.languages ?? [],
+    moods: user?.preferences?.moods ?? [],
+    recentHistory,
+  }), [
+    user?.id,
+    user?.preferences?.cinemas,
+    user?.preferences?.formats,
+    user?.preferences?.genres,
+    user?.preferences?.languages,
+    user?.preferences?.moods,
+    recentHistory,
+  ]);
+  const interestWeights = useMemo(
+    () => buildInterestWeightMap(interestCategories, user?.preferences?.genres ?? []),
+    [interestCategories, user?.preferences?.genres],
+  );
 
   useEffect(() => {
     const hydrateHomePage = async () => {
+      if (!user?.id) {
+        lastHomeRequestKeyRef.current = "";
+        setInterestCategories([]);
+        setInterestReleaseMovies([]);
+        setInterestMovies([]);
+        setPersonalSelectionMovies([]);
+        setProfileLoading(false);
+        setReleaseLoading(false);
+        setInterestLoading(false);
+        setPersonalSelectionLoading(false);
+        return;
+      }
+
+      if (lastHomeRequestKeyRef.current === preferencesRequestKey) {
+        return;
+      }
+      lastHomeRequestKeyRef.current = preferencesRequestKey;
+
       setProfileLoading(true);
       setReleaseLoading(true);
       setInterestLoading(true);
       setPersonalSelectionLoading(true);
 
+      const preferredGenres = user?.preferences?.genres ?? [];
+      let categories: UserInterestedCategory[] = [];
+      let interestSignals: string[] = [];
+      let excludedMovieIds = new Set<string>();
+
       try {
-        const categories = await getUserInterestedCategories(
-          user?.preferences?.genres ?? [],
-          6,
-        );
+        categories = await getUserInterestedCategories(preferredGenres, 6);
 
         setInterestCategories(categories);
         setProfileLoading(false);
 
-        const interestSignals = buildInterestSignals(
-          categories,
-          user?.preferences?.genres ?? [],
-        );
-        const interestWeights = buildInterestWeightMap(
-          categories,
-          user?.preferences?.genres ?? [],
-        );
-        const excludedMovieIds = new Set(
+        interestSignals = buildInterestSignals(categories, preferredGenres);
+        excludedMovieIds = new Set(
           recentHistory.map((movie) => movie.imdbId.trim().toLowerCase()),
         );
-
-        const [releaseResult, contentResult, personalResult] =
-          await Promise.allSettled([
-            loadInterestReleaseMovies(
-              interestSignals,
-              user?.preferences ?? {},
-              new Set(excludedMovieIds),
-            ),
-            loadInterestContentMovies(
-              interestSignals,
-              user?.preferences ?? {},
-              new Set(excludedMovieIds),
-            ),
-            getPersonalSelection(recentHistory),
-          ]);
-
-        if (releaseResult.status === "fulfilled") {
-          setInterestReleaseMovies(releaseResult.value);
-        } else {
-          setInterestReleaseMovies([]);
-        }
-        setReleaseLoading(false);
-
-        if (contentResult.status === "fulfilled") {
-          const movies = contentResult.value;
-          setInterestMovies(movies);
-          const contentScoreMap = await buildMovieMatchScoreMap(
-            movies,
-            interestWeights,
-          );
-          setInterestMovieScores(contentScoreMap);
-        } else {
-          setInterestMovies([]);
-          setInterestMovieScores(new Map());
-        }
-        setInterestLoading(false);
-
-        if (personalResult.status === "fulfilled") {
-          setPersonalSelectionMovies(personalResult.value.items ?? []);
-        } else {
-          setPersonalSelectionMovies([]);
-        }
-        setPersonalSelectionLoading(false);
       } catch {
         setInterestCategories([]);
         setInterestReleaseMovies([]);
         setInterestMovies([]);
-        setInterestMovieScores(new Map());
         setPersonalSelectionMovies([]);
         setProfileLoading(false);
         setReleaseLoading(false);
@@ -319,15 +300,61 @@ export default function UserHomePage() {
       } finally {
         setProfileLoading(false);
       }
+
+      loadInterestReleaseMovies(
+        interestSignals,
+        user?.preferences ?? {},
+        new Set(excludedMovieIds),
+      )
+        .then((movies) => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setInterestReleaseMovies(movies);
+        })
+        .catch(() => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setInterestReleaseMovies([]);
+        })
+        .finally(() => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setReleaseLoading(false);
+        });
+
+      loadInterestContentMovies(
+        interestSignals,
+        user?.preferences ?? {},
+        new Set(excludedMovieIds),
+      )
+        .then((movies) => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setInterestMovies(movies);
+        })
+        .catch(() => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setInterestMovies([]);
+        })
+        .finally(() => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setInterestLoading(false);
+        });
+
+      getPersonalSelection(recentHistory)
+        .then((result) => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setPersonalSelectionMovies(result.items ?? []);
+        })
+        .catch(() => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setPersonalSelectionMovies([]);
+        })
+        .finally(() => {
+          if (lastHomeRequestKeyRef.current !== preferencesRequestKey) return;
+          setPersonalSelectionLoading(false);
+        });
     };
     hydrateHomePage();
   }, [
-    recentHistory,
-    user?.preferences?.cinemas,
-    user?.preferences?.formats,
-    user?.preferences?.genres,
-    user?.preferences?.languages,
-    user?.preferences?.moods,
+    user?.id,
+    preferencesRequestKey,
   ]);
 
   const interestLanguages = useMemo(() => {
@@ -505,7 +532,7 @@ export default function UserHomePage() {
                           releaseYear: movie.year,
                           posterUrl: movie.poster,
                           titleType: movie.type,
-                          matchScore: interestMovieScores.get(movie.imdbId),
+                          matchScore: getMovieMatchScore(movie, interestWeights),
                         }}
                         className="border-white/10 bg-[#1a1a20] shadow-none"
                         onClick={() => router.push(`/content/${movie.imdbId}`)}

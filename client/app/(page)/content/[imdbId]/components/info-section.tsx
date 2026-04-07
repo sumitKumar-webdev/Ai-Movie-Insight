@@ -9,6 +9,7 @@ import CompactCount from "@/app/components/ui/compact-count";
 import MetaValueList from "@/app/components/ui/meta-value-list";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import { Button } from "@/app/components/ui/button";
+import PosterPreviewModal from "@/app/components/ui/poster-preview-modal";
 import { MovieDetails, MovieSeason } from "@/app/models/service.modal";
 import { formatLabel } from "@/lib/resuable-component";
 import PlaybackModal from "./playback-modal";
@@ -43,6 +44,7 @@ const InfoSection = ({
   const [loadedBackdropSrc, setLoadedBackdropSrc] = useState("");
   const [loadedPosterSrc, setLoadedPosterSrc] = useState("");
   const [playbackOpen, setPlaybackOpen] = useState(false);
+  const [posterPreviewOpen, setPosterPreviewOpen] = useState(false);
   const metaData = [formatLabel(movie?.type ?? ""), movie?.year, movie?.runtime]
     .filter(isAvailableValue)
     .join(" • ");
@@ -56,6 +58,9 @@ const InfoSection = ({
   );
   const isSeries =
     normalizedType.includes("tv") || normalizedType.includes("series");
+  const posterUrl = movie?.poster ?? "";
+  const canPreviewPoster =
+    !loading && Boolean(posterUrl) && posterUrl !== "N/A";
 
   return (
     <section className="relative min-h-100 overflow-hidden border-b border-white/10 sm:min-h-144 md:h-[78vh] md:min-h-155">
@@ -97,18 +102,28 @@ const InfoSection = ({
           <div className="grid grid-cols-[112px_1fr] items-end gap-4 sm:grid-cols-[140px_1fr] sm:gap-5 md:grid-cols-[260px_1fr] md:gap-6">
             {loading ? (
               <Skeleton className="h-50 w-28 rounded-[1.35rem] bg-white/12 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl" />
-            ) : movie?.poster && movie.poster !== "N/A" ? (
-              <Image
-                src={movie.poster}
-                alt={movie.title ?? ""}
-                width={260}
-                height={320}
-                sizes="(max-width: 768px) 220px, 260px"
-                onLoad={() => setLoadedPosterSrc(movie.poster)}
-                className={`h-50 w-28 rounded-[1.35rem] border border-white/10 object-cover shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition-opacity duration-500 ease-out sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)] ${
-                  loadedPosterSrc === movie.poster ? "opacity-100" : "opacity-0"
-                }`}
-              />
+            ) : canPreviewPoster ? (
+              <button
+                type="button"
+                onClick={() => setPosterPreviewOpen(true)}
+                className="group relative h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition duration-300 hover:shadow-[0_28px_70px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
+              >
+                <Image
+                  src={posterUrl}
+                  alt={movie?.title ?? ""}
+                  width={260}
+                  height={320}
+                  sizes="(max-width: 768px) 220px, 260px"
+                  onLoad={() => setLoadedPosterSrc(posterUrl)}
+                  className={`h-full w-full object-cover transition-all duration-500 ease-out group-hover:scale-[1.05] ${
+                    loadedPosterSrc === posterUrl ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+                <div className="pointer-events-none absolute inset-0 rounded-[1.35rem] bg-black/0 transition group-hover:bg-black/25 md:rounded-2xl" />
+                <div className="pointer-events-none absolute inset-x-3 bottom-2 text-[10px] font-medium text-white/90 opacity-0 transition group-hover:opacity-100 sm:text-xs">
+                  Click to view
+                </div>
+              </button>
             ) : (
               <div className="h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]">
                 <PosterFallback title={movie?.title} />
@@ -200,6 +215,15 @@ const InfoSection = ({
           seasonsLoading={seasonsLoading}
           open={playbackOpen}
           onOpenChange={setPlaybackOpen}
+        />
+      ) : null}
+
+      {canPreviewPoster ? (
+        <PosterPreviewModal
+          open={posterPreviewOpen}
+          onOpenChange={setPosterPreviewOpen}
+          imageUrl={posterUrl}
+          title={movie?.title ?? ""}
         />
       ) : null}
     </section>

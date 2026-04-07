@@ -25,7 +25,8 @@ function buildInitialPlayback(
   seasons: MovieSeason[],
 ): MoviePlayback {
   const mediaType =
-    movie.type.toLowerCase().includes("tv") || movie.type.toLowerCase().includes("series")
+    movie.type.toLowerCase().includes("tv") ||
+    movie.type.toLowerCase().includes("series")
       ? "tv"
       : "movie";
   const firstSeason = seasons[0];
@@ -34,7 +35,7 @@ function buildInitialPlayback(
     imdbId: movie.imdbId,
     tmdbId: movie.tmdbId ?? null,
     mediaType,
-    season: mediaType === "tv" ? firstSeason?.season ?? 1 : null,
+    season: mediaType === "tv" ? (firstSeason?.season ?? 1) : null,
     episode: mediaType === "tv" ? (firstSeason?.episodeCount ? 1 : null) : null,
   };
 }
@@ -43,12 +44,12 @@ function buildIframeSrc(playback: MoviePlayback): string {
   if (!playback.tmdbId) return "";
 
   if (playback.mediaType === "movie") {
-    return `https://player.videasy.net/movie/${playback.tmdbId}`;
+    return `https://player.videasy.net/movie/${playback.tmdbId}?color=${brandHex}`;
   }
 
   const season = Math.max(1, playback.season ?? 1);
   const episode = Math.max(1, playback.episode ?? 1);
-  return `https://player.videasy.net/tv/${playback.tmdbId}/${season}/${episode}`;
+  return `https://player.videasy.net/tv/${playback.tmdbId}/${season}/${episode}?color=${brandHex}`;
 }
 
 type DropdownOption = {
@@ -78,11 +79,16 @@ const PlaybackModal = ({
   const [playbackError, setPlaybackError] = useState<string | null>(null);
 
   const isSeries = playback.mediaType === "tv";
-  const selectedSeason = seasons.find((item) => item.season === (playback.season ?? -1));
+  const selectedSeason = seasons.find(
+    (item) => item.season === (playback.season ?? -1),
+  );
   const episodeCountForSelectedSeason = selectedSeason?.episodeCount ?? 0;
   const hasEpisodeData = episodeCountForSelectedSeason > 0;
   const episodeOptions = hasEpisodeData
-    ? Array.from({ length: episodeCountForSelectedSeason }, (_, index) => index + 1)
+    ? Array.from(
+        { length: episodeCountForSelectedSeason },
+        (_, index) => index + 1,
+      )
     : [];
   const seasonOptions: DropdownOption[] = seasons.map((item) => ({
     value: item.season,
@@ -108,12 +114,15 @@ const PlaybackModal = ({
         if (cancelled) return;
         if (data.mediaType === "tv") {
           const fallbackSeason = seasons[0];
-          const nextSeason = seasons.find((item) => item.season === data.season) ?? fallbackSeason;
+          const nextSeason =
+            seasons.find((item) => item.season === data.season) ??
+            fallbackSeason;
           const safeSeason = nextSeason?.season ?? data.season ?? 1;
           const maxEpisode = nextSeason?.episodeCount ?? 0;
-          const safeEpisode = maxEpisode > 0
-            ? Math.min(Math.max(1, data.episode ?? 1), maxEpisode)
-            : (data.episode ?? null);
+          const safeEpisode =
+            maxEpisode > 0
+              ? Math.min(Math.max(1, data.episode ?? 1), maxEpisode)
+              : (data.episode ?? null);
 
           setPlayback({
             ...data,
@@ -207,7 +216,8 @@ const PlaybackModal = ({
                 <div className="home-search-scroll grid max-h-[26vh] grid-cols-2 gap-1.5 overflow-y-auto pr-1 sm:max-h-[30vh] md:max-h-[36vh] md:grid-cols-1 md:space-y-1.5 md:gap-0">
                   {episodeOptions.length > 0 ? (
                     episodeOptions.map((episodeNumber) => {
-                      const isActive = (playback.episode ?? 1) === episodeNumber;
+                      const isActive =
+                        (playback.episode ?? 1) === episodeNumber;
                       return (
                         <button
                           key={episodeNumber}
@@ -239,7 +249,9 @@ const PlaybackModal = ({
                     })
                   ) : (
                     <p className="text-xs text-white/40">
-                      {seasonsLoading ? "Loading episodes..." : "Episodes unavailable"}
+                      {seasonsLoading
+                        ? "Loading episodes..."
+                        : "Episodes unavailable"}
                     </p>
                   )}
                 </div>
@@ -257,14 +269,14 @@ const PlaybackModal = ({
                 </div>
               ) : iframeSrc ? (
                 <div className="relative h-0 w-full pb-[48%]">
-                    <iframe
-                      key={iframeSrc}
-                      src={iframeSrc}
-                      className="absolute left-0 top-0 h-full w-full bg-black"
-                      frameBorder="0"
-                      allowFullScreen
-                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                    />
+                  <iframe
+                    key={iframeSrc}
+                    src={iframeSrc}
+                    className="absolute left-0 top-0 h-full w-full bg-black"
+                    frameBorder="0"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                  />
                 </div>
               ) : (
                 <div className="flex h-[30vh] flex-col items-center justify-center gap-2 px-6 text-center sm:h-[46vh] sm:px-8 md:h-[55vh]">
@@ -272,7 +284,8 @@ const PlaybackModal = ({
                     <Tv2 className="h-5 w-5" />
                   </div>
                   <p className="max-w-xs text-sm text-white/40">
-                    {playbackError ?? "Playback is not available for this title yet."}
+                    {playbackError ??
+                      "Playback is not available for this title yet."}
                   </p>
                 </div>
               )}
@@ -291,14 +304,14 @@ const PlaybackModal = ({
                 </div>
               ) : iframeSrc ? (
                 <div className="relative h-0 w-full pb-[48%]">
-                    <iframe
-                      key={iframeSrc}
-                      src={iframeSrc}
-                      className="absolute left-0 top-0 h-full w-full bg-black"
-                      frameBorder="0"
-                      allowFullScreen
-                      allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                    />
+                  <iframe
+                    key={iframeSrc}
+                    src={iframeSrc}
+                    className="absolute left-0 top-0 h-full w-full bg-black"
+                    frameBorder="0"
+                    allowFullScreen
+                    allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                  />
                 </div>
               ) : (
                 <div className="flex h-[38vh] flex-col items-center justify-center gap-2 px-8 text-center sm:h-[55vh]">
@@ -306,7 +319,8 @@ const PlaybackModal = ({
                     <Film className="h-5 w-5" />
                   </div>
                   <p className="max-w-xs text-sm text-white/40">
-                    {playbackError ?? "Playback is not available for this title yet."}
+                    {playbackError ??
+                      "Playback is not available for this title yet."}
                   </p>
                 </div>
               )}

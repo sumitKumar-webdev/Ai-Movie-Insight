@@ -13,6 +13,7 @@ import {
 import { Skeleton } from "@/app/components/ui/skeleton";
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
 import AnimatedBackdropFallback from "@/app/components/ui/animated-backdrop-fallback";
+import PosterPreviewModal from "@/app/components/ui/poster-preview-modal";
 import {
   startRouteProgress,
   setRouteProgressLoading,
@@ -84,8 +85,11 @@ function PersonHero({
   person: NameProfile | null;
 }) {
   const [loadedImageSrc, setLoadedImageSrc] = useState("");
+  const [photoPreviewOpen, setPhotoPreviewOpen] = useState(false);
   const hasBackdrop = Boolean(person?.backdrop);
-  const hasPhoto = Boolean(person?.photo);
+  const photoUrl = person?.photo ?? "";
+  const hasPhoto = Boolean(photoUrl);
+  const canPreviewPhoto = !loading && hasPhoto;
   const metaText = [
     person?.professions.length
       ? person.professions.map(formatLabel).join(" • ")
@@ -123,15 +127,25 @@ function PersonHero({
             <div>
               {loading ? (
                 <Skeleton className="h-50 w-28 rounded-[1.35rem] bg-white/12 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl" />
-              ) : hasPhoto ? (
-                <Image
-                  src={person?.photo ?? ""}
-                  alt={person?.name ?? ""}
-                  width={260}
-                  height={320}
-                  sizes="(max-width: 768px) 220px, 260px"
-                  className="h-50 w-28 rounded-[1.35rem] border border-white/10 object-cover shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
-                />
+              ) : canPreviewPhoto ? (
+                <button
+                  type="button"
+                  onClick={() => setPhotoPreviewOpen(true)}
+                  className="group relative h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition duration-300 hover:shadow-[0_28px_70px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
+                >
+                  <Image
+                    src={photoUrl}
+                    alt={person?.name ?? ""}
+                    width={260}
+                    height={320}
+                    sizes="(max-width: 768px) 220px, 260px"
+                    className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+                  />
+                  <div className="pointer-events-none absolute inset-0 rounded-[1.35rem] bg-black/0 transition group-hover:bg-black/25 md:rounded-2xl" />
+                  <div className="pointer-events-none absolute inset-x-3 bottom-2 text-[10px] font-medium text-white/90 opacity-0 transition group-hover:opacity-100 sm:text-xs">
+                    Click to view
+                  </div>
+                </button>
               ) : (
                 <div className="h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]">
                   <PosterFallback title={person?.name || "Photo unavailable"} />
@@ -214,6 +228,15 @@ function PersonHero({
           </div>
         </div>
       </div>
+
+      {canPreviewPhoto ? (
+        <PosterPreviewModal
+          open={photoPreviewOpen}
+          onOpenChange={setPhotoPreviewOpen}
+          imageUrl={photoUrl}
+          title={person?.name ?? ""}
+        />
+      ) : null}
     </section>
   );
 }

@@ -40,17 +40,19 @@ const AIInsightCard = ({
       ? releaseDate.trim()
       : "";
   return (
-    <Card className="border-white/10 bg-white/3 text-white">
+    <Card className="border-white/10 bg-white/3 -space-y-2 text-white">
       <CardHeader>
         {loading ? (
           <Skeleton className="h-8 w-28 bg-white/12" />
         ) : (
-          <CardTitle className="text-[1rem] md:text-[1.5rem] font-semibold flex items-baseline gap-0 tracking-tight text-white">
-            Cine{" "}
-            <span className="bg-[linear-gradient(180deg,#5ed8ff_0%,#1698ff_100%)] bg-clip-text font-bold text-transparent pr-1">
-              AI
-            </span>
-            Insight
+          <CardTitle className="text-xl md:text-2xl">
+            <h2 className="text-[1rem] md:text-[1.5rem] font-semibold flex items-baseline gap-0 tracking-tight text-whit">
+              Cine{" "}
+              <span className="bg-[linear-gradient(180deg,#5ed8ff_0%,#1698ff_100%)] bg-clip-text font-bold text-transparent pr-1">
+                AI
+              </span>
+              Insight
+            </h2>
           </CardTitle>
         )}
       </CardHeader>

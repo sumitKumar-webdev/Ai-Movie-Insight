@@ -12,6 +12,8 @@ import { brand } from "@/app/config/brand";
 type AIInsightCardProps = {
   loading: boolean;
   data: { sentiment: Sentiment; summary: string; confidence: number } | null;
+  isReleased?: boolean;
+  releaseDate?: string;
   error?: string | null;
 };
 
@@ -25,14 +27,31 @@ const sentimentTone = (sentiment: Sentiment): string => {
   return "bg-amber-500/15 text-amber-300 border-amber-400/30";
 };
 
-const AIInsightCard = ({ loading, data, error }: AIInsightCardProps) => {
+const AIInsightCard = ({
+  loading,
+  data,
+  isReleased,
+  releaseDate,
+  error,
+}: AIInsightCardProps) => {
+  const showUnreleased = isReleased === false;
+  const resolvedReleaseDate =
+    typeof releaseDate === "string" && releaseDate.trim() && releaseDate.trim() !== "N/A"
+      ? releaseDate.trim()
+      : "";
   return (
     <Card className="border-white/10 bg-white/3 text-white">
       <CardHeader>
         {loading ? (
           <Skeleton className="h-8 w-28 bg-white/12" />
         ) : (
-          <CardTitle className="text-xl md:text-2xl">{brand.insightTitle}</CardTitle>
+          <CardTitle className="text-[1rem] md:text-[1.5rem] font-semibold flex items-baseline gap-0 tracking-tight text-white">
+            Cine{" "}
+            <span className="bg-[linear-gradient(180deg,#5ed8ff_0%,#1698ff_100%)] bg-clip-text font-bold text-transparent pr-1">
+              AI
+            </span>
+            Insight
+          </CardTitle>
         )}
       </CardHeader>
       <CardContent className="space-y-4">
@@ -54,6 +73,16 @@ const AIInsightCard = ({ loading, data, error }: AIInsightCardProps) => {
           <div className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200">
             {error}
           </div>
+        ) : showUnreleased ? (
+          <>
+            <Badge className="rounded-full border border-white/15 bg-white/10 px-4 py-1 text-sm text-white/80">
+              Not Released Yet
+            </Badge>
+            <p className="text-sm leading-7 text-white/85">
+              This title has not released{resolvedReleaseDate ? ` (expected ${resolvedReleaseDate})` : ""}.
+              {` ${brand.name} will surface the full insight once reviews land after release.`}
+            </p>
+          </>
         ) : (
           <>
             <Badge

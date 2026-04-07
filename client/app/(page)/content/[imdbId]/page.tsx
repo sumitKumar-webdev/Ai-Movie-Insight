@@ -255,6 +255,8 @@ export default function MovieInsightPage() {
                     }
                   : null
               }
+              isReleased={movie?.isReleased}
+              releaseDate={movie?.releaseDate}
               error={insightError}
             />
           </div>
@@ -290,6 +292,8 @@ export default function MovieInsightPage() {
                   }
                 : null
             }
+            isReleased={movie?.isReleased}
+            releaseDate={movie?.releaseDate}
             error={insightError}
           />
         </div>

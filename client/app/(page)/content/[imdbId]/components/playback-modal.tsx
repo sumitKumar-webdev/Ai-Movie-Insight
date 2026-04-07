@@ -12,6 +12,14 @@ import {
 } from "@/app/models/service.modal";
 import { getPlaybackByImdbId } from "@/app/services/movie.service";
 
+const brandHex = "5ed8ff";
+const brandRgb = {
+  r: parseInt(brandHex.slice(0, 2), 16),
+  g: parseInt(brandHex.slice(2, 4), 16),
+  b: parseInt(brandHex.slice(4, 6), 16),
+};
+const brandRgbString = `${brandRgb.r}, ${brandRgb.g}, ${brandRgb.b}`;
+
 function buildInitialPlayback(
   movie: MovieDetails,
   seasons: MovieSeason[],
@@ -151,7 +159,13 @@ const PlaybackModal = ({
         onPointerDownOutside={(event) => event.preventDefault()}
       >
         <div className="flex items-center gap-3 border-b border-white/0.06 px-4 py-3 sm:px-5 sm:py-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-primary/10 text-brand-primary">
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+            style={{
+              backgroundColor: `rgba(${brandRgbString}, 0.1)`,
+              color: `rgb(${brandRgbString})`,
+            }}
+          >
             {isSeries ? (
               <Tv2 className="h-4 w-4" />
             ) : (
@@ -206,9 +220,18 @@ const PlaybackModal = ({
                           }
                           className={`flex h-9 w-full items-center rounded-md border px-2.5 text-left text-xs transition-colors sm:px-3 sm:text-sm ${
                             isActive
-                              ? "border-cyan-400/80 bg-cyan-400/15 text-cyan-100"
+                              ? "text-white"
                               : "border-white/10 bg-black/30 text-white/75 hover:border-white/25 hover:text-white"
                           }`}
+                          style={
+                            isActive
+                              ? {
+                                  borderColor: `rgba(${brandRgbString}, 0.8)`,
+                                  backgroundColor: `rgba(${brandRgbString}, 0.15)`,
+                                  color: `rgb(${brandRgbString})`,
+                                }
+                              : undefined
+                          }
                         >
                           Episode {episodeNumber}
                         </button>
@@ -226,7 +249,10 @@ const PlaybackModal = ({
             <div className="order-1 overflow-hidden rounded-xl border border-white/[0.07] bg-black shadow-[0_20px_60px_rgba(0,0,0,0.6)] md:order-2">
               {loadingPlayback ? (
                 <div className="flex h-[30vh] items-center justify-center gap-2.5 text-sm text-white/40 sm:h-[46vh] md:h-[55vh]">
-                  <LoaderCircle className="h-4 w-4 animate-spin text-red-500" />
+                  <LoaderCircle
+                    className="h-4 w-4 animate-spin"
+                    style={{ color: `rgb(${brandRgbString})` }}
+                  />
                   <span>Loading playback...</span>
                 </div>
               ) : iframeSrc ? (
@@ -257,7 +283,10 @@ const PlaybackModal = ({
             <div className="overflow-hidden rounded-xl border border-white/[0.07] bg-black shadow-[0_20px_60px_rgba(0,0,0,0.6)]">
               {loadingPlayback ? (
                 <div className="flex h-[38vh] items-center justify-center gap-2.5 text-sm text-white/40 sm:h-[55vh]">
-                  <LoaderCircle className="h-4 w-4 animate-spin text-red-500" />
+                  <LoaderCircle
+                    className="h-4 w-4 animate-spin"
+                    style={{ color: `rgb(${brandRgbString})` }}
+                  />
                   <span>Loading playback...</span>
                 </div>
               ) : iframeSrc ? (

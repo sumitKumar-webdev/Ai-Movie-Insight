@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -76,7 +76,7 @@ export default function MovieResultCard({
 
         <div className="relative aspect-[0.76] overflow-hidden bg-[#101014]">
           {hasPoster ? (
-            <Image
+            <Image unoptimized
               src={posterUrl}
               alt={title}
               fill
@@ -143,3 +143,5 @@ export default function MovieResultCard({
     </div>
   );
 }
+
+

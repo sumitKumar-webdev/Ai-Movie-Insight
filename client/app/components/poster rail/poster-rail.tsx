@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 
 export const PosterRail = ({
   reverse = false,
@@ -31,3 +31,5 @@ export const PosterRail = ({
     </div>
   );
 };
+
+

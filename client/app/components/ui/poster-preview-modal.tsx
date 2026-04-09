@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { XIcon } from "lucide-react";
@@ -31,7 +31,7 @@ export default function PosterPreviewModal({
         <div className="relative flex w-full items-center justify-center">
           <div className="relative h-[80vh] w-[min(92vw,32rem)] sm:w-[min(85vw,36rem)] md:w-[min(80vw,40rem)] lg:w-[min(70vw,44rem)]">
             {imageUrl ? (
-              <Image
+              <Image unoptimized
                 src={imageUrl}
                 alt={altText}
                 fill
@@ -55,3 +55,5 @@ export default function PosterPreviewModal({
     </Dialog>
   );
 }
+
+

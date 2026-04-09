@@ -67,7 +67,7 @@ const InfoSection = ({
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
       ) : movie?.backdrop ? (
-        <Image
+        <Image unoptimized
           src={movie.backdrop}
           alt=""
           fill
@@ -108,7 +108,7 @@ const InfoSection = ({
                 onClick={() => setPosterPreviewOpen(true)}
                 className="group relative h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition duration-300 hover:shadow-[0_28px_70px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
               >
-                <Image
+                <Image unoptimized
                   src={posterUrl}
                   alt={movie?.title ?? ""}
                   width={260}
@@ -231,3 +231,5 @@ const InfoSection = ({
 };
 
 export default InfoSection;
+
+

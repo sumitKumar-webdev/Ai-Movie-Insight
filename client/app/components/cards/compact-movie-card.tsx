@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -45,7 +45,7 @@ export default function CompactMovieCard({
       <div className="flex items-center gap-3 p-2">
         <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded bg-[#101014] sm:h-18 sm:w-13">
           {hasPoster ? (
-            <Image
+            <Image unoptimized
               src={posterUrl}
               alt={title}
               fill
@@ -78,3 +78,5 @@ export default function CompactMovieCard({
     </div>
   );
 }
+
+

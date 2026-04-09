@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
@@ -657,3 +657,5 @@ function UserPreferencesModalContent({
     </DialogContent>
   );
 }
+
+

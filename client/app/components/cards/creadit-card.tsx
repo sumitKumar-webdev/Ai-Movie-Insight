@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { PersonCredit } from "@/app/models/service.modal";
 import { startRouteProgress } from "@/app/components/ui/route-progress";
@@ -27,7 +27,7 @@ export const CreditCard = ({ person }: { person: PersonCredit }) => {
       className="group w-37.5 shrink-0 rounded-2xl border border-transparent p-3 text-center transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80"
     >
       {person.imageUrl ? (
-        <Image
+        <Image unoptimized
           src={person.imageUrl}
           alt={person.name}
           width={88}
@@ -50,3 +50,5 @@ export const CreditCard = ({ person }: { person: PersonCredit }) => {
     </button>
   );
 };
+
+

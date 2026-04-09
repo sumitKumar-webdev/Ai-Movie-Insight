@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -92,19 +92,19 @@ function PersonHero({
   const canPreviewPhoto = !loading && hasPhoto;
   const metaText = [
     person?.professions.length
-      ? person.professions.map(formatLabel).join(" • ")
+      ? person.professions.map(formatLabel).join(" â€¢ ")
       : "",
     person?.isDeceased ? "Deceased" : "",
   ]
     .filter(Boolean)
-    .join(" • ");
+    .join(" â€¢ ");
 
   return (
     <section className="relative overflow-hidden border-b border-white/10 min-h-100 sm:min-h-144 md:h-[78vh] md:min-h-155">
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
       ) : hasBackdrop ? (
-        <Image
+        <Image unoptimized
           src={person?.backdrop ?? ""}
           alt=""
           fill
@@ -133,7 +133,7 @@ function PersonHero({
                   onClick={() => setPhotoPreviewOpen(true)}
                   className="group relative h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition duration-300 hover:shadow-[0_28px_70px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
                 >
-                  <Image
+                  <Image unoptimized
                     src={photoUrl}
                     alt={person?.name ?? ""}
                     width={260}
@@ -269,7 +269,7 @@ function FilmographyCard({ item }: { item: NameFilmographyItem }) {
     >
       <div className="relative aspect-[0.72] overflow-hidden bg-[#101014]">
         {hasPoster ? (
-          <Image
+          <Image unoptimized
             src={item.title.poster ?? ""}
             alt={item.title.title}
             fill
@@ -628,3 +628,5 @@ export default function NameInsightPage() {
     </main>
   );
 }
+
+

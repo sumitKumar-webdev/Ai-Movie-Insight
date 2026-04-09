@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -25,7 +25,7 @@ export default function RenderAvatar({
           className,
         )}
       >
-        <Image
+        <Image unoptimized
           src={imageUrl}
           alt={`${name}'s avatar`}
           fill
@@ -55,3 +55,5 @@ export default function RenderAvatar({
     </div>
   );
 }
+
+

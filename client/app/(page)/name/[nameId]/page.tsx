@@ -97,7 +97,7 @@ function PersonHero({
     person?.isDeceased ? "Deceased" : "",
   ]
     .filter(Boolean)
-    .join(" â€¢ ");
+    .join(" • ");
 
   return (
     <section className="relative overflow-hidden border-b border-white/10 min-h-100 sm:min-h-144 md:h-[78vh] md:min-h-155">

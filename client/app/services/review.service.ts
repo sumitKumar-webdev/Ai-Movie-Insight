@@ -8,6 +8,7 @@ import { apiFetch, authenticatedFetch, buildApiUrl } from "./api-client";
 
 const IMDB_ID_REGEX = /^tt\d{7,8}$/i;
 const movieReviewsRequests = new Map<string, Promise<Review[]>>();
+const userReviewsRequests = new Map<string, Promise<Review[]>>();
 
 export async function getMovieReviews(imdbId: string): Promise<Review[]> {
   const normalized = imdbId.trim().toLowerCase();
@@ -42,6 +43,54 @@ export async function getMovieReviews(imdbId: string): Promise<Review[]> {
     return await request;
   } finally {
     movieReviewsRequests.delete(normalized);
+  }
+}
+
+export async function getUserReviews(
+  userId: string,
+  options: { limit?: number } = {},
+): Promise<Review[]> {
+  const normalized = userId.trim();
+  if (!normalized) return [];
+  const limit =
+    typeof options.limit === "number" && Number.isFinite(options.limit) && options.limit > 0
+      ? Math.floor(options.limit)
+      : 0;
+  const cacheKey = limit > 0 ? `${normalized}:${limit}` : normalized;
+
+  const existingRequest = userReviewsRequests.get(cacheKey);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = (async () => {
+    try {
+      const params = new URLSearchParams({ userId: normalized });
+      if (limit > 0) {
+        params.set("limit", String(limit));
+      }
+      const response = await apiFetch(
+        buildApiUrl(`/api/reviews?${params.toString()}`),
+        { cache: "no-store" },
+      );
+      if (!response.ok) return [];
+      const payload = (await response.json()) as {
+        data?: {
+          reviews?: Review[];
+        };
+      };
+      return Array.isArray(payload.data?.reviews) ? payload.data.reviews : [];
+    } catch {
+      return [];
+    }
+  })();
+
+  userReviewsRequests.set(cacheKey, request);
+
+  try {
+    return await request;
+  } finally {
+    userReviewsRequests.delete(cacheKey);
   }
 }
 

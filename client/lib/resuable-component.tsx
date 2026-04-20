@@ -35,3 +35,16 @@ export const formatRuntime = (runtimeSeconds?: number): string => {
   if (minutes === 0) return `${hours}h`;
   return `${hours}h ${minutes}m`;
 };
+
+export function formatDate(value: string) {
+  if (!value) return "Recently";
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Recently";
+
+  return parsed.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}

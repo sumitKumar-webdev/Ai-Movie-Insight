@@ -143,15 +143,31 @@ export const listReviews = async (req, res) => {
   try {
     const currentUserId = resolveCurrentUserId(req);
     const imdbId = typeof req.query.imdbId === "string" ? req.query.imdbId.trim() : "";
+    const userId = typeof req.query.userId === "string" ? req.query.userId.trim() : "";
+    const parsedLimit = Number.parseInt(String(req.query.limit ?? "").trim(), 10);
+    const limit = Number.isFinite(parsedLimit) && parsedLimit > 0
+      ? Math.min(parsedLimit, 50)
+      : 0;
+    const filter = {};
 
-    const filter = imdbId
-      ? { movieImdbId: { $regex: `^${escapeRegex(imdbId)}$`, $options: "i" } }
-      : {};
+    if (imdbId) {
+      filter.movieImdbId = { $regex: `^${escapeRegex(imdbId)}$`, $options: "i" };
+    }
 
-    const reviews = await Review.find(filter)
+    if (userId) {
+      filter.user = userId;
+    }
+
+    let reviewsQuery = Review.find(filter)
       .populate("user", "name username avatar is_verified")
       .sort({ createdAt: -1 })
       .lean();
+
+    if (limit > 0) {
+      reviewsQuery = reviewsQuery.limit(limit);
+    }
+
+    const reviews = await reviewsQuery;
 
     return successRes(res, 200, "Reviews fetched successfully", {
       reviews: reviews

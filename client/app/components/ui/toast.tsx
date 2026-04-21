@@ -7,18 +7,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-start justify-between gap-4 overflow-hidden rounded-[24px] border p-4 pr-12 shadow-[0_22px_60px_rgba(15,23,42,0.18)] ring-1 ring-black/5 backdrop-blur-xl transition-all before:absolute before:inset-x-0 before:top-0 before:h-px before:opacity-80 before:content-[''] after:absolute after:top-0 after:left-0 after:h-full after:w-1.5 after:rounded-full after:content-[''] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-right-full",
+  "group pointer-events-auto relative flex w-full items-start justify-between gap-3 overflow-hidden rounded-[1.15rem] border px-3.5 py-3 pr-11 text-white shadow-[0_18px_48px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all before:absolute before:inset-x-0 before:top-0 before:h-px before:content-[''] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0 data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-right-full",
   {
     variants: {
       variant: {
         default:
-          "border-sky-200/80 bg-[radial-gradient(circle_at_top_left,rgba(186,230,253,0.55),transparent_36%),linear-gradient(155deg,rgba(255,255,255,0.98),rgba(248,250,252,0.96))] text-slate-950 before:bg-white/80 after:bg-sky-400",
+          "border-cyan-300/18 bg-[radial-gradient(circle_at_top_left,rgba(94,216,255,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(22,152,255,0.12),transparent_38%),linear-gradient(180deg,rgba(12,18,27,0.97),rgba(6,10,16,0.94))] before:bg-cyan-200/14",
         success:
-          "border-emerald-200/80 bg-[radial-gradient(circle_at_top_left,rgba(167,243,208,0.52),transparent_36%),linear-gradient(155deg,rgba(255,255,255,0.98),rgba(240,253,244,0.96))] text-slate-950 before:bg-white/80 after:bg-emerald-400",
+          "border-emerald-300/18 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(52,211,153,0.12),transparent_38%),linear-gradient(180deg,rgba(12,18,27,0.97),rgba(6,10,16,0.94))] before:bg-emerald-200/14",
         destructive:
-          "border-rose-200/80 bg-[radial-gradient(circle_at_top_left,rgba(254,205,211,0.55),transparent_36%),linear-gradient(155deg,rgba(255,255,255,0.98),rgba(255,241,242,0.96))] text-slate-950 before:bg-white/80 after:bg-rose-400",
+          "border-rose-300/18 bg-[radial-gradient(circle_at_top_left,rgba(244,63,94,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(251,113,133,0.12),transparent_38%),linear-gradient(180deg,rgba(12,18,27,0.97),rgba(6,10,16,0.94))] before:bg-rose-200/14",
         warning:
-          "border-amber-200/80 bg-[radial-gradient(circle_at_top_left,rgba(253,230,138,0.55),transparent_36%),linear-gradient(155deg,rgba(255,251,235,0.98),rgba(255,247,237,0.96))] text-slate-950 before:bg-white/80 after:bg-amber-400",
+          "border-amber-300/18 bg-[radial-gradient(circle_at_top_left,rgba(245,158,11,0.2),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(251,191,36,0.12),transparent_38%),linear-gradient(180deg,rgba(12,18,27,0.97),rgba(6,10,16,0.94))] before:bg-amber-200/14",
       },
     },
     defaultVariants: {
@@ -28,14 +28,14 @@ const toastVariants = cva(
 );
 
 const iconWrapVariants = cva(
-  "mt-0.5 inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_10px_22px_rgba(15,23,42,0.08)]",
+  "mt-0.5 inline-flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl border bg-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
   {
     variants: {
       variant: {
-        default: "border-sky-200/90 bg-white/80 text-sky-600",
-        success: "border-emerald-200/90 bg-white/80 text-emerald-600",
-        destructive: "border-rose-200/90 bg-white/80 text-rose-500",
-        warning: "border-amber-200/90 bg-white/80 text-amber-500",
+        default: "border-cyan-300/22 bg-cyan-300/8 text-cyan-100",
+        success: "border-emerald-300/22 bg-emerald-300/8 text-emerald-100",
+        destructive: "border-rose-300/22 bg-rose-300/8 text-rose-100",
+        warning: "border-amber-300/22 bg-amber-300/8 text-amber-100",
       },
     },
     defaultVariants: {
@@ -57,7 +57,7 @@ function ToastViewport({
   return (
       <ToastPrimitive.Viewport
         className={cn(
-          "fixed top-0 right-0 z-400 flex max-h-screen w-full flex-col gap-3 p-4 sm:max-w-[28rem] sm:p-6",
+          "fixed top-3 right-0 z-400 flex max-h-screen w-full flex-col gap-2.5 p-3 sm:top-4 sm:max-w-[23rem] sm:p-4",
           className,
         )}
         {...props}
@@ -107,7 +107,7 @@ function ToastTitle({
 }: React.ComponentProps<typeof ToastPrimitive.Title>) {
   return (
     <ToastPrimitive.Title
-      className={cn("text-[0.95rem] font-semibold tracking-[-0.02em] text-slate-950", className)}
+      className={cn("text-[0.9rem] font-semibold tracking-[-0.02em] text-white", className)}
       {...props}
     />
   );
@@ -119,7 +119,7 @@ function ToastDescription({
 }: React.ComponentProps<typeof ToastPrimitive.Description>) {
   return (
     <ToastPrimitive.Description
-      className={cn("mt-1 text-sm leading-5 text-slate-600", className)}
+      className={cn("mt-0.5 text-[0.82rem] leading-5 text-white/64", className)}
       {...props}
     />
   );
@@ -132,7 +132,7 @@ function ToastClose({
   return (
     <ToastPrimitive.Close
       className={cn(
-        "absolute top-3 right-3 rounded-full border border-white/70 bg-white/70 p-1.5 text-slate-400 shadow-sm transition hover:bg-white hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300",
+        "absolute top-2.5 right-2.5 rounded-full border border-white/8 bg-white/5 p-1 text-white/42 transition hover:bg-white/10 hover:text-white/72 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20",
         className,
       )}
       toast-close=""

@@ -10,6 +10,8 @@ import { toast } from "@/app/Hooks/use-toast";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 import { useAuthSessionRefreshing } from "@/app/services/auth-session-state";
 
+const SLOW_AUTH_TOAST_DELAY_MS = 7000;
+
 function AppBootScreen() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#050505] text-white">
@@ -72,13 +74,19 @@ export default function ClientLayout({
       return;
     }
 
-    hasShownFreeTierLoadingToast.current = true;
-    toast({
-      title: "Waking up the server",
-      description: "This app runs on a free tier, so the first load can take up to 40 seconds.",
-      duration: 12000,
-      variant: "warning",
-    });
+    const timeoutId = window.setTimeout(() => {
+      hasShownFreeTierLoadingToast.current = true;
+      toast({
+        title: "Waking up the server",
+        description: "This app runs on a free tier, so the first load can take up to 40 seconds.",
+        duration: 12000,
+        variant: "warning",
+      });
+    }, SLOW_AUTH_TOAST_DELAY_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [authStatus, isRefreshingAuthSession, isSessionSensitiveRoute]);
 
   useEffect(() => {

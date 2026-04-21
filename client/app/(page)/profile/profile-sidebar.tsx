@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, Edit, Film, PencilLine, ShieldCheck } from "lucide-react";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
+import { Skeleton } from "@/app/components/ui/skeleton";
 import VerifiedBadge from "@/app/components/verified-badge";
 import { AuthUser } from "@/app/store/auth-slice";
 
@@ -54,6 +55,106 @@ function PreferenceTagList({
         <p className="mt-3 text-sm text-white/45">Nothing selected yet.</p>
       )}
     </div>
+  );
+}
+
+export function ProfileSidebarSkeleton() {
+  return (
+    <aside className={`${sidebarPanelClassName} h-fit min-w-0 overflow-hidden`}>
+      <div className="border-b border-white/8 bg-[#101010] p-4 sm:p-5">
+        <div className="flex justify-end">
+          <Skeleton className="h-9 w-9 rounded-md bg-white/8" />
+        </div>
+
+        <div className="mt-3 flex flex-col items-center text-center">
+          <Skeleton className="h-20 w-20 rounded-full bg-white/10 sm:h-22 sm:w-22 md:h-29 md:w-29" />
+          <div className="mt-4 flex items-center gap-2">
+            <Skeleton className="h-7 w-32 bg-white/10 sm:h-8 sm:w-40" />
+            <Skeleton className="h-5 w-5 rounded-full bg-white/10" />
+          </div>
+          <Skeleton className="mt-2 h-4 w-24 bg-white/8" />
+          <div className="mt-4 space-y-2">
+            <Skeleton className="h-4 w-56 max-w-full bg-white/8" />
+            <Skeleton className="h-4 w-48 max-w-full bg-white/8" />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-6">
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2].map((item) => (
+            <div
+              key={item}
+              className="rounded-[0.8rem] border border-white/8 bg-[#101010] p-4"
+            >
+              <Skeleton className="h-3 w-16 bg-white/8" />
+              <Skeleton className="mt-3 h-8 w-12 bg-white/10" />
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-[0.8rem] border border-white/8 bg-[#101010] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-md bg-white/8" />
+            <div className="space-y-2">
+              <Skeleton className="h-3 w-20 bg-white/8" />
+              <Skeleton className="h-4 w-32 bg-white/10" />
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-2">
+            <Skeleton className="h-4 w-full bg-white/8" />
+            <Skeleton className="h-4 w-11/12 bg-white/8" />
+          </div>
+
+          <div className="mt-4 space-y-3">
+            {[1, 2].map((item) => (
+              <div
+                key={item}
+                className="rounded-md border border-white/8 bg-black/18 px-3 py-2"
+              >
+                <Skeleton className="h-3 w-16 bg-white/8" />
+                <Skeleton className="mt-2 h-4 w-full bg-white/10" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+          <Skeleton className="h-10 rounded-md bg-white/8" />
+          <Skeleton className="h-10 rounded-md bg-white/8" />
+        </div>
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between gap-3 py-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-4 w-4 rounded-sm bg-white/8" />
+              <Skeleton className="h-4 w-28 bg-white/10" />
+            </div>
+            <Skeleton className="h-4 w-4 rounded-sm bg-white/8" />
+          </div>
+
+          <div className="mt-4 grid gap-3">
+            {[1, 2, 3].map((item) => (
+              <div
+                key={item}
+                className="rounded-[0.8rem] border border-white/8 bg-[linear-gradient(180deg,#101010,#0d0d0d)] p-4"
+              >
+                <Skeleton className="h-3 w-24 bg-white/8" />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[1, 2, 3].map((chip) => (
+                    <Skeleton
+                      key={chip}
+                      className="h-7 w-18 rounded-md bg-white/8"
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </aside>
   );
 }
 

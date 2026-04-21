@@ -203,7 +203,7 @@ export default function ProfilePage() {
                     ))}
                   </div>
                 )}
-                {visibleReviews.length > 0 && !reviewsLoading ? (
+                {visibleReviews.length > 0 ? (
                   <div className="space-y-4">
                     {visibleReviews.map((review, index) => (
                       <ReviewPreviewCard
@@ -212,7 +212,7 @@ export default function ProfilePage() {
                       />
                     ))}
                   </div>
-                ) : (
+                ) :  !reviewsLoading ? (
                   <div className="px-6 py-10 text-center">
                     <BadgePlus className="mx-auto h-8 w-8 text-white/65" />
                     <h3 className="mt-4 text-xl font-semibold text-white">
@@ -239,7 +239,7 @@ export default function ProfilePage() {
                       </Link>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             </section>
           </section>

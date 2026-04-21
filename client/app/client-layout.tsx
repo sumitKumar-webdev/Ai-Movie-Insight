@@ -10,7 +10,7 @@ import { toast } from "@/app/Hooks/use-toast";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 import { useAuthSessionRefreshing } from "@/app/services/auth-session-state";
 
-const SLOW_AUTH_TOAST_DELAY_MS = 7000;
+const SLOW_BOOT_SCREEN_TOAST_DELAY_MS = 6000;
 
 function AppBootScreen() {
   return (
@@ -65,12 +65,17 @@ export default function ClientLayout({
     }
   }, [authStatus, isSessionSensitiveRoute]);
 
-  useEffect(() => {
-    if (!isSessionSensitiveRoute || hasShownFreeTierLoadingToast.current) {
-      return;
-    }
+  const shouldShowBootScreen =
+    (isAuthPage && isAuthenticated) ||
+    (isLandingPage && isAuthenticated) ||
+    (isProtectedHomePage && isAuthChecking) ||
+    (isProtectedHomePage && authStatus === "unauthenticated");
 
-    if (authStatus !== "loading" && !isRefreshingAuthSession) {
+  const isBootScreenVisible =
+    shouldShowBootScreen || (isSessionSensitiveRoute && isRefreshingAuthSession);
+
+  useEffect(() => {
+    if (!isBootScreenVisible || hasShownFreeTierLoadingToast.current) {
       return;
     }
 
@@ -78,16 +83,17 @@ export default function ClientLayout({
       hasShownFreeTierLoadingToast.current = true;
       toast({
         title: "Waking up the server",
-        description: "This app runs on a free tier, so the first load can take up to 40 seconds.",
+        description:
+          "This app runs on a free tier, so the first load can take up to 40 seconds.",
         duration: 12000,
         variant: "warning",
       });
-    }, SLOW_AUTH_TOAST_DELAY_MS);
+    }, SLOW_BOOT_SCREEN_TOAST_DELAY_MS);
 
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [authStatus, isRefreshingAuthSession, isSessionSensitiveRoute]);
+  }, [isBootScreenVisible]);
 
   useEffect(() => {
     if (isAuthChecking) return;
@@ -109,12 +115,6 @@ export default function ClientLayout({
     isAuthenticated,
     router,
   ]);
-
-  const shouldShowBootScreen =
-    (isAuthPage && isAuthenticated) ||
-    (isLandingPage && isAuthenticated) ||
-    (isProtectedHomePage && isAuthChecking) ||
-    (isProtectedHomePage && authStatus === "unauthenticated");
 
   if (shouldShowBootScreen) {
     return <AppBootScreen />;

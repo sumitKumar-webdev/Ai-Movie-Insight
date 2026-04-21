@@ -92,7 +92,7 @@ function PersonHero({
   const canPreviewPhoto = !loading && hasPhoto;
   const metaText = [
     person?.professions.length
-      ? person.professions.map(formatLabel).join(" â€¢ ")
+      ? person.professions.map(formatLabel).join(" • ")
       : "",
     person?.isDeceased ? "Deceased" : "",
   ]

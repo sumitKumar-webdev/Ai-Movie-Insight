@@ -53,42 +53,6 @@ function ReviewPreviewCardSkeleton() {
   );
 }
 
-function ProfileReviewsSectionSkeleton() {
-  return (
-    <section className={`${panelClassName} overflow-hidden`}>
-      <div className="border-b border-white/8 bg-[#101010] px-4 py-4 sm:px-8 sm:py-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <Skeleton className="h-11 w-34 rounded-md bg-white/8" />
-            <Skeleton className="mt-4 h-9 w-64 max-w-full bg-white/10" />
-            <div className="mt-3 space-y-2">
-              <Skeleton className="h-4 w-full max-w-2xl bg-white/8" />
-              <Skeleton className="h-4 w-4/5 max-w-xl bg-white/8" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-4 p-4 sm:p-8">
-        {[1, 2, 3].map((item) => (
-          <ReviewPreviewCardSkeleton key={item} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ProfileSkeleton() {
-  return (
-    <main className="min-h-[calc(100vh-73px)] bg-[#050505] px-3 py-6 text-white sm:px-6 sm:py-10">
-      <div className="mx-auto grid w-full max-w-7xl gap-4 sm:gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <ProfileSidebarSkeleton />
-        <ProfileReviewsSectionSkeleton />
-      </div>
-    </main>
-  );
-}
-
 export default function ProfilePage() {
   const user = useAuthStore((auth) => auth.user);
   const status = useAuthStore((auth) => auth.status);
@@ -164,23 +128,19 @@ export default function ProfilePage() {
     0,
   );
 
+  const sidebarLoading = status === "idle" || status === "loading" || !user;
   const reviewsLoading =
-    status === "authenticated" &&
-    Boolean(activeUserId) &&
-    loadedReviewsUserId !== activeUserId;
-
-  const showProfileContentSkeleton = reviewsLoading;
+    sidebarLoading ||
+    (status === "authenticated" &&
+      Boolean(activeUserId) &&
+      loadedReviewsUserId !== activeUserId);
 
   const visibleReviews = useMemo(
     () => (reviewsLoading ? [] : userReviews.slice(0, 10)),
     [reviewsLoading, userReviews],
   );
 
-  if (status === "idle" || status === "loading") {
-    return <ProfileSkeleton />;
-  }
-
-  if (!user) {
+  if (status === "unauthenticated" && !user) {
     return null;
   }
 
@@ -188,13 +148,13 @@ export default function ProfilePage() {
     <>
       <main className="min-h-[calc(100vh-73px)] bg-[#050505] px-3 py-6 text-white sm:px-6 sm:py-10">
         <div className="mx-auto grid w-full max-w-7xl gap-4 sm:gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-          {showProfileContentSkeleton ? (
+          {sidebarLoading || !user ? (
             <ProfileSidebarSkeleton />
           ) : (
             <ProfileSidebar
               user={user}
               providerLabel={providerLabel}
-              userReviewsCount={userReviews.length}
+              userReviewsCount={reviewsLoading ? null : userReviews.length}
               totalPreferenceCount={totalPreferenceCount}
               preferenceSummary={preferenceSummary}
               onEditProfile={() => setProfileSettingsOpen(true)}
@@ -203,12 +163,19 @@ export default function ProfilePage() {
           )}
 
           <section className="min-w-0 space-y-4 sm:space-y-6">
-            {showProfileContentSkeleton ? (
-              <ProfileReviewsSectionSkeleton />
-            ) : (
-              <section className={`${panelClassName} overflow-hidden`}>
-                <div className="border-b border-white/8 bg-[#101010] px-4 py-4 sm:px-8 sm:py-5">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <section className={`${panelClassName} overflow-hidden`}>
+              <div className="border-b border-white/8 bg-[#101010] px-4 py-4 sm:px-8 sm:py-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                  {sidebarLoading || !user ? (
+                    <div>
+                      <Skeleton className="h-11 w-34 rounded-md bg-white/8" />
+                      <Skeleton className="mt-4 h-9 w-64 max-w-full bg-white/10" />
+                      <div className="mt-3 space-y-2">
+                        <Skeleton className="h-4 w-full max-w-2xl bg-white/8" />
+                        <Skeleton className="h-4 w-4/5 max-w-xl bg-white/8" />
+                      </div>
+                    </div>
+                  ) : (
                     <div>
                       <div className="inline-flex max-w-full items-center rounded-md border border-white/10 bg-[#141414] p-1">
                         <span className="inline-flex items-center gap-2 rounded-[0.45rem] bg-[#3b3b3b] px-4 py-2 text-sm font-medium text-white">
@@ -224,50 +191,57 @@ export default function ProfilePage() {
                         cards, and direct access back to each movie page.
                       </p>
                     </div>
-                  </div>
-                </div>
-
-                <div className="p-4 sm:p-8">
-                  {visibleReviews.length > 0 ? (
-                    <div className="space-y-4">
-                      {visibleReviews.map((review, index) => (
-                        <ReviewPreviewCard
-                          key={review._id || `${review.movie.imdbId}-${index}`}
-                          review={review}
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-[0.95rem] border border-dashed border-white/12 bg-[#0f0f0f] px-6 py-10 text-center">
-                      <BadgePlus className="mx-auto h-8 w-8 text-white/65" />
-                      <h3 className="mt-4 text-xl font-semibold text-white">
-                        No reviews posted yet
-                      </h3>
-                      <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-white/60">
-                        Once you write reviews on movie pages, they will appear
-                        here as quick-access cards so you can revisit the same
-                        title page in one tap.
-                      </p>
-                      <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                        <Link
-                          href="/"
-                          className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
-                        >
-                          Start exploring
-                        </Link>
-                        <Link
-                          href="/support"
-                          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
-                        >
-                          <Mail className="h-4 w-4" />
-                          Support
-                        </Link>
-                      </div>
-                    </div>
                   )}
                 </div>
-              </section>
-            )}
+              </div>
+
+              <div className="p-4 sm:p-8">
+                {reviewsLoading && (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((item) => (
+                      <ReviewPreviewCardSkeleton key={item} />
+                    ))}
+                  </div>
+                )}
+                {visibleReviews.length > 0 && !reviewsLoading ? (
+                  <div className="space-y-4">
+                    {visibleReviews.map((review, index) => (
+                      <ReviewPreviewCard
+                        key={review._id || `${review.movie.imdbId}-${index}`}
+                        review={review}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="px-6 py-10 text-center">
+                    <BadgePlus className="mx-auto h-8 w-8 text-white/65" />
+                    <h3 className="mt-4 text-xl font-semibold text-white">
+                      No reviews posted yet
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-white/60">
+                      Once you write reviews on movie pages, they will appear
+                      here as quick-access cards so you can revisit the same
+                      title page in one tap.
+                    </p>
+                    <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                      <Link
+                        href="/"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
+                      >
+                        Start exploring
+                      </Link>
+                      <Link
+                        href="/support"
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Support
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
           </section>
         </div>
       </main>
@@ -276,11 +250,13 @@ export default function ProfilePage() {
         open={preferencesModalOpen}
         onOpenChange={setPreferencesModalOpen}
       />
-      <ProfileSettingsModal
-        open={profileSettingsOpen}
-        onOpenChange={setProfileSettingsOpen}
-        user={user}
-      />
+      {user ? (
+        <ProfileSettingsModal
+          open={profileSettingsOpen}
+          onOpenChange={setProfileSettingsOpen}
+          user={user}
+        />
+      ) : null}
     </>
   );
 }

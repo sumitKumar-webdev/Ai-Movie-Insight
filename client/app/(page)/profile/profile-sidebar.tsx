@@ -20,7 +20,7 @@ type PreferenceSummaryItem = {
 type ProfileSidebarProps = {
   user: AuthUser;
   providerLabel: string;
-  userReviewsCount: number;
+  userReviewsCount: number | null;
   totalPreferenceCount: number;
   preferenceSummary: PreferenceSummaryItem[];
   onEditProfile: () => void;
@@ -62,20 +62,16 @@ export function ProfileSidebarSkeleton() {
   return (
     <aside className={`${sidebarPanelClassName} h-fit min-w-0 overflow-hidden`}>
       <div className="border-b border-white/8 bg-[#101010] p-4 sm:p-5">
-        <div className="flex justify-end">
-          <Skeleton className="h-9 w-9 rounded-md bg-white/8" />
-        </div>
-
+        <div className="h-9" />
         <div className="mt-3 flex flex-col items-center text-center">
           <Skeleton className="h-20 w-20 rounded-full bg-white/10 sm:h-22 sm:w-22 md:h-29 md:w-29" />
           <div className="mt-4 flex items-center gap-2">
             <Skeleton className="h-7 w-32 bg-white/10 sm:h-8 sm:w-40" />
-            <Skeleton className="h-5 w-5 rounded-full bg-white/10" />
           </div>
           <Skeleton className="mt-2 h-4 w-24 bg-white/8" />
           <div className="mt-4 space-y-2">
             <Skeleton className="h-4 w-56 max-w-full bg-white/8" />
-            <Skeleton className="h-4 w-48 max-w-full bg-white/8" />
+            <Skeleton className="h-4 w-56 max-w-full bg-white/8" />
           </div>
         </div>
       </div>
@@ -168,6 +164,7 @@ export default function ProfileSidebar({
   onEditInterests,
 }: ProfileSidebarProps) {
   const [isTasteProfileOpen, setIsTasteProfileOpen] = useState(false);
+  const hasUserReviewsCount = typeof userReviewsCount === "number";
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -234,9 +231,13 @@ export default function ProfileSidebar({
             <p className="text-[10px] font-semibold tracking-[0.22em] text-white/40 uppercase">
               Reviews
             </p>
-            <p className="mt-2 text-2xl font-semibold text-white">
-              {userReviewsCount}
-            </p>
+            {hasUserReviewsCount ? (
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {userReviewsCount}
+              </p>
+            ) : (
+              <Skeleton className="mt-2 h-8 w-12 bg-white/10" />
+            )}
           </div>
           <div className="rounded-[0.8rem] border border-white/8 bg-[#101010] p-4">
             <p className="text-[10px] font-semibold tracking-[0.22em] text-white/40 uppercase">

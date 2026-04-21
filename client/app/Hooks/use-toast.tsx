@@ -3,7 +3,7 @@
 export type AppToast = {
   title: string;
   description?: string;
-  variant?: "default" | "success" | "destructive";
+  variant?: "default" | "success" | "destructive" | "warning";
   duration?: number;
 };
 

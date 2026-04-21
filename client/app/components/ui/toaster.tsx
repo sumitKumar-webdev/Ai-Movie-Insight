@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Toast,
+  ToastClose,
   ToastDescription,
   ToastIcon,
   ToastProvider,
@@ -62,13 +63,14 @@ export function Toaster() {
             }
           }}
         >
-          <div className="flex items-start gap-3">
+          <div className="flex min-w-0 items-start gap-3.5">
             <ToastIcon variant={item.variant} />
-            <div className="grid -space-y-1.5">
+            <div className="min-w-0 flex-1">
               <ToastTitle>{item.title}</ToastTitle>
               {item.description ? <ToastDescription>{item.description}</ToastDescription> : null}
             </div>
           </div>
+          <ToastClose />
         </Toast>
       ))}
       <ToastViewport />

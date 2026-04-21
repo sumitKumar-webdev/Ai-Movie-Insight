@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AppHeader from "@/app/components/Header/app-header";
 import HomeHeader from "./components/Header/home-header";
 import AiAssistantLauncher from "@/app/components/ai-assistant-launcher";
 import UserPreferencesModal from "./modal/user-preferences-modal";
+import { toast } from "@/app/Hooks/use-toast";
 import { fetchCurrentUser, useAuthStore } from "@/app/store/store";
 import { useAuthSessionRefreshing } from "@/app/services/auth-session-state";
 
@@ -39,6 +40,7 @@ export default function ClientLayout({
 
   const [preferencesModalDismissed, setPreferencesModalDismissed] =
     useState(false);
+  const hasShownFreeTierLoadingToast = useRef(false);
 
   const isAuthPage = pathname?.startsWith("/auth/");
   const isLandingPage = pathname === "/";
@@ -60,6 +62,24 @@ export default function ClientLayout({
       fetchCurrentUser();
     }
   }, [authStatus, isSessionSensitiveRoute]);
+
+  useEffect(() => {
+    if (!isSessionSensitiveRoute || hasShownFreeTierLoadingToast.current) {
+      return;
+    }
+
+    if (authStatus !== "loading" && !isRefreshingAuthSession) {
+      return;
+    }
+
+    hasShownFreeTierLoadingToast.current = true;
+    toast({
+      title: "Waking up the server",
+      description: "This app runs on a free tier, so the first load can take up to 40 seconds.",
+      duration: 12000,
+      variant: "warning",
+    });
+  }, [authStatus, isRefreshingAuthSession, isSessionSensitiveRoute]);
 
   useEffect(() => {
     if (isAuthChecking) return;

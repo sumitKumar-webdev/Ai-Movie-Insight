@@ -9,7 +9,7 @@ export default function ProfileNotFoundState({
   return (
     <main className="box-border min-h-[calc(100vh-73px)] bg-[#050505] px-3 py-6 text-white sm:px-6 sm:py-10">
       <div className="mx-auto flex min-h-[calc(100vh-73px-3rem)] w-full max-w-3xl items-center justify-center sm:min-h-[calc(100vh-73px-5rem)]">
-        <section className="w-full bg-[#0a0a0a] px-6 py-12 text-center shadow-[0_18px_44px_rgba(0,0,0,0.28)] sm:px-10">
+        <section className="w-full px-6 py-12 text-center shadow-[0_18px_44px_rgba(0,0,0,0.28)] sm:px-10">
           <BadgePlus className="mx-auto h-8 w-8 text-white/60" />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-white">
             Profile not found

@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, Edit, Film, PencilLine, ShieldCheck } from "lucide-react";
+import {
+  ChevronDown,
+  Edit,
+  Film,
+  Maximize,
+  PencilLine,
+  ShieldCheck,
+} from "lucide-react";
 import RenderAvatar from "@/app/components/avatar/render-avatar";
+import PosterPreviewModal from "@/app/components/ui/poster-preview-modal";
 import { Skeleton } from "@/app/components/ui/skeleton";
 import VerifiedBadge from "@/app/components/verified-badge";
 import { AuthUser, PublicProfileUser } from "@/app/store/auth-slice";
@@ -170,9 +178,11 @@ export default function ProfileSidebar({
   onEditInterests,
 }: ProfileSidebarProps) {
   const [isTasteProfileOpen, setIsTasteProfileOpen] = useState(false);
+  const [isAvatarPreviewOpen, setIsAvatarPreviewOpen] = useState(false);
   const hasUserReviewsCount = typeof userReviewsCount === "number";
   const displayName = user.name || user.username || "User";
   const privateUser = isOwnProfile && "email" in user ? user : null;
+  const canPreviewAvatar = Boolean(user.avatar);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1024px)");
@@ -210,11 +220,30 @@ export default function ProfileSidebar({
         ) : null}
 
         <div className="flex flex-col items-center text-center">
-          <RenderAvatar
-            name={displayName}
-            imageUrl={user.avatar}
-            className="h-20 w-20 rounded-full border border-white/12 bg-white/8 sm:h-22 sm:w-22 md:h-29 md:w-29"
-          />
+          {canPreviewAvatar ? (
+            <button
+              type="button"
+              onClick={() => setIsAvatarPreviewOpen(true)}
+              className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80"
+              aria-label={`View ${displayName}'s profile picture`}
+            >
+              <RenderAvatar
+                name={displayName}
+                imageUrl={user.avatar}
+                className="h-20 w-20 rounded-full border border-white/12 bg-white/8 transition duration-300 group-hover:scale-[1.03] group-hover:border-white/22 sm:h-22 sm:w-22 md:h-29 md:w-29"
+              />
+
+              <span className="pointer-events-none absolute inset-0 rounded-full bg-black/0 transition group-hover:bg-black/20" />
+
+              <Maximize className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 opacity-0 transition group-hover:opacity-100" />
+            </button>
+          ) : (
+            <RenderAvatar
+              name={displayName}
+              imageUrl={user.avatar}
+              className="h-20 w-20 rounded-full border border-white/12 bg-white/8 sm:h-22 sm:w-22 md:h-29 md:w-29"
+            />
+          )}
 
           <div className="mt-4 flex min-w-0 max-w-full items-center justify-center gap-2">
             <h1 className="truncate text-xl font-semibold tracking-tight text-white sm:text-2xl">
@@ -255,7 +284,11 @@ export default function ProfileSidebar({
               {isOwnProfile ? "Taste" : "Status"}
             </p>
             <p className="mt-2 text-2xl font-semibold text-white">
-              {isOwnProfile ? totalPreferenceCount : user.isVerified ? "Verified" : "Public"}
+              {isOwnProfile
+                ? totalPreferenceCount
+                : user.isVerified
+                  ? "Verified"
+                  : "Public"}
             </p>
           </div>
         </div>
@@ -271,7 +304,9 @@ export default function ProfileSidebar({
                   Account
                 </p>
                 <p className="mt-0.5 text-sm font-medium text-white/88">
-                  {privateUser?.emailVerified ? "Verified access" : "Verification pending"}
+                  {privateUser?.emailVerified
+                    ? "Verified access"
+                    : "Verification pending"}
                 </p>
               </div>
             </div>
@@ -293,13 +328,17 @@ export default function ProfileSidebar({
                 <p className="text-[10px] font-semibold tracking-[0.16em] text-cyan-100/45 uppercase">
                   Email
                 </p>
-                <p className="mt-1 break-all text-white/74">{privateUser?.email ?? ""}</p>
+                <p className="mt-1 break-all text-white/74">
+                  {privateUser?.email ?? ""}
+                </p>
               </div>
             </div>
           </div>
         ) : null}
 
-        <div className={`mt-4 grid gap-3 ${isOwnProfile ? "sm:grid-cols-2 lg:grid-cols-1" : ""}`}>
+        <div
+          className={`mt-4 grid gap-3 ${isOwnProfile ? "sm:grid-cols-2 lg:grid-cols-1" : ""}`}
+        >
           {isOwnProfile && onEditInterests ? (
             <button
               type="button"
@@ -363,6 +402,15 @@ export default function ProfileSidebar({
           </div>
         ) : null}
       </div>
+      {canPreviewAvatar ? (
+        <PosterPreviewModal
+          open={isAvatarPreviewOpen}
+          onOpenChange={setIsAvatarPreviewOpen}
+          imageUrl={user.avatar ?? ""}
+          altText={`${displayName}'s profile picture`}
+          title={displayName}
+        />
+      ) : null}
     </aside>
   );
 }

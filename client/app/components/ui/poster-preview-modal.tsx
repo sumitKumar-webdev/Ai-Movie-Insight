@@ -9,6 +9,7 @@ type PosterPreviewModalProps = {
   onOpenChange: (open: boolean) => void;
   imageUrl: string;
   title?: string;
+  altText?: string;
 };
 
 export default function PosterPreviewModal({
@@ -16,8 +17,9 @@ export default function PosterPreviewModal({
   onOpenChange,
   imageUrl,
   title,
+  altText,
 }: PosterPreviewModalProps) {
-  const altText = title ? `${title} poster` : "Poster preview";
+  const imageAltText = altText ?? (title ? `${title} poster` : "Poster preview");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -33,7 +35,7 @@ export default function PosterPreviewModal({
             {imageUrl ? (
               <Image unoptimized
                 src={imageUrl}
-                alt={altText}
+                alt={imageAltText}
                 fill
                 sizes="(max-width: 768px) 92vw, (max-width: 1200px) 70vw, 640px"
                 className="object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.6)]"

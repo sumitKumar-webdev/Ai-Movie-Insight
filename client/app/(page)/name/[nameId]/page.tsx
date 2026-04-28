@@ -24,6 +24,7 @@ import { NameFilmographyItem, NameProfile } from "@/app/models/service.modal";
 import { getNameById, getNameFilmography } from "@/app/services/name.service";
 import { formatLabel } from "@/lib/resuable-component";
 import ExpandableText from "@/app/components/ExpandableText/ExpandableText";
+import { Maximize } from "lucide-react";
 
 const LOAD_MORE_THROTTLE_MS = 450;
 
@@ -104,7 +105,8 @@ function PersonHero({
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
       ) : hasBackdrop ? (
-        <Image unoptimized
+        <Image
+          unoptimized
           src={person?.backdrop ?? ""}
           alt=""
           fill
@@ -133,7 +135,8 @@ function PersonHero({
                   onClick={() => setPhotoPreviewOpen(true)}
                   className="group relative h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition duration-300 hover:shadow-[0_28px_70px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
                 >
-                  <Image unoptimized
+                  <Image
+                    unoptimized
                     src={photoUrl}
                     alt={person?.name ?? ""}
                     width={260}
@@ -142,9 +145,7 @@ function PersonHero({
                     className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
                   />
                   <div className="pointer-events-none absolute inset-0 rounded-[1.35rem] bg-black/0 transition group-hover:bg-black/25 md:rounded-2xl" />
-                  <div className="pointer-events-none absolute inset-x-3 bottom-2 text-[10px] font-medium text-white/90 opacity-0 transition group-hover:opacity-100 sm:text-xs">
-                    Click to view
-                  </div>
+                  <Maximize className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 opacity-0 transition group-hover:opacity-100" />
                 </button>
               ) : (
                 <div className="h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]">
@@ -269,7 +270,8 @@ function FilmographyCard({ item }: { item: NameFilmographyItem }) {
     >
       <div className="relative aspect-[0.72] overflow-hidden bg-[#101014]">
         {hasPoster ? (
-          <Image unoptimized
+          <Image
+            unoptimized
             src={item.title.poster ?? ""}
             alt={item.title.title}
             fill
@@ -303,7 +305,7 @@ function FilmographyCard({ item }: { item: NameFilmographyItem }) {
         </div>
 
         <div className="space-y-1.5">
-          {(roleText !== "Actor" && roleText !== "Self") && (
+          {roleText !== "Actor" && roleText !== "Self" && (
             <p className="line-clamp-2 text-sm font-medium text-white/78">
               {roleText}
             </p>
@@ -357,7 +359,9 @@ export default function NameInsightPage() {
   );
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [filmographyPageSize, setFilmographyPageSize] = useState(() =>
-    typeof window === "undefined" ? 10 : getFilmographyPageSize(window.innerWidth),
+    typeof window === "undefined"
+      ? 10
+      : getFilmographyPageSize(window.innerWidth),
   );
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -585,11 +589,13 @@ export default function NameInsightPage() {
             <CardContent className="space-y-5">
               {filmographyLoading ? (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {Array.from({ length: filmographyPageSize }).map((_, index) => (
-                    <FilmographySkeleton
-                      key={`filmography-skeleton-${index}`}
-                    />
-                  ))}
+                  {Array.from({ length: filmographyPageSize }).map(
+                    (_, index) => (
+                      <FilmographySkeleton
+                        key={`filmography-skeleton-${index}`}
+                      />
+                    ),
+                  )}
                 </div>
               ) : filmography.length ? (
                 <>
@@ -628,5 +634,3 @@ export default function NameInsightPage() {
     </main>
   );
 }
-
-

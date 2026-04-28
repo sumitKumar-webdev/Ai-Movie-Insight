@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Play, Star } from "lucide-react";
+import { Maximize, Play, Star } from "lucide-react";
 import PosterFallback from "@/app/components/PosterFallback/poster-fallback";
 import AnimatedBackdropFallback from "@/app/components/ui/animated-backdrop-fallback";
 import CompactCount from "@/app/components/ui/compact-count";
@@ -67,7 +67,8 @@ const InfoSection = ({
       {loading ? (
         <Skeleton className="absolute inset-0 rounded-none bg-white/10" />
       ) : movie?.backdrop ? (
-        <Image unoptimized
+        <Image
+          unoptimized
           src={movie.backdrop}
           alt=""
           fill
@@ -108,7 +109,8 @@ const InfoSection = ({
                 onClick={() => setPosterPreviewOpen(true)}
                 className="group relative h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] transition duration-300 hover:shadow-[0_28px_70px_rgba(0,0,0,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/80 sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]"
               >
-                <Image unoptimized
+                <Image
+                  unoptimized
                   src={posterUrl}
                   alt={movie?.title ?? ""}
                   width={260}
@@ -120,9 +122,7 @@ const InfoSection = ({
                   }`}
                 />
                 <div className="pointer-events-none absolute inset-0 rounded-[1.35rem] bg-black/0 transition group-hover:bg-black/25 md:rounded-2xl" />
-                <div className="pointer-events-none absolute inset-x-3 bottom-2 text-[10px] font-medium text-white/90 opacity-0 transition group-hover:opacity-100 sm:text-xs">
-                  Click to view
-                </div>
+                <Maximize className="pointer-events-none absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 opacity-0 transition group-hover:opacity-100" />
               </button>
             ) : (
               <div className="h-50 w-28 overflow-hidden rounded-[1.35rem] border border-white/10 shadow-[0_24px_60px_rgba(0,0,0,0.52)] sm:h-56 sm:w-35 md:h-85 md:w-60 md:rounded-2xl md:border-white/20 md:shadow-[0_25px_55px_rgba(0,0,0,0.55)]">
@@ -197,7 +197,9 @@ const InfoSection = ({
                     <div>
                       <p className="text-white/50">Seasons</p>
                       <p className="mt-1 font-medium">
-                        {seasonsLoading ? "Loading..." : seasons.length || "N/A"}
+                        {seasonsLoading
+                          ? "Loading..."
+                          : seasons.length || "N/A"}
                       </p>
                     </div>
                   ) : null}
@@ -231,5 +233,3 @@ const InfoSection = ({
 };
 
 export default InfoSection;
-
-

@@ -43,10 +43,10 @@ export default function HoverMarqueeText({
       >
         <span className="block movie-title-marquee">
           <span className="movie-title-marquee-track">
-            <span className={cn("movie-title-marquee-item", className)}>
+            <span className={cn("movie-title-marquee-item text-white", className)}>
               {text}
             </span>
-            <span className={cn("movie-title-marquee-item", className)}>
+            <span className={cn("movie-title-marquee-item text-white", className)}>
               {text}
             </span>
           </span>
@@ -59,7 +59,7 @@ export default function HoverMarqueeText({
     <span
       ref={textRef}
       className={cn(
-        "inline-block max-w-full whitespace-nowrap align-top",
+        "inline-block max-w-full whitespace-nowrap align-top text-white",
         className,
         wrapperClassName,
       )}

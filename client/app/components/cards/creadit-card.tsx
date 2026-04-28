@@ -40,10 +40,10 @@ export const CreditCard = ({ person }: { person: PersonCredit }) => {
         </div>
       )}
       <div className="mt-3 min-w-0">
-        <p className="line-clamp-2 text-sm font-semibold leading-5 text-white transition-colors duration-300 group-hover:text-cyan-100 md:text-base">
+        <p className="line-clamp-2 text-sm font-semibold leading-5 text-white/60 transition-colors duration-300 group-hover:text-white md:text-base">
           {person.name}
         </p>
-        <p className="mt-1 line-clamp-2 text-xs text-white/60 transition-colors duration-300 group-hover:text-white/75 md:text-sm">
+        <p className="mt-1 line-clamp-2 text-xs text-white/60 transition-colors duration-300 group-hover:text-white md:text-sm">
           {subtitle}
         </p>
       </div>

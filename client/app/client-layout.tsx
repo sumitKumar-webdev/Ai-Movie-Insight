@@ -85,7 +85,7 @@ export default function ClientLayout({
         title: "Waking up the server",
         description:
           "This app runs on a free tier, so the first load can take up to 40 seconds.",
-        duration: 12000,
+        duration: 120000,
         variant: "warning",
       });
     }, SLOW_BOOT_SCREEN_TOAST_DELAY_MS);

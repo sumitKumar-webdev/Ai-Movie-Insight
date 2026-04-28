@@ -24,6 +24,11 @@ export type AuthUser = {
   preferences: AuthPreferences;
 };
 
+export type PublicProfileUser = Pick<
+  AuthUser,
+  "id" | "name" | "username" | "avatar" | "isVerified"
+>;
+
 export type AuthStatus = "idle" | "loading" | "authenticated" | "unauthenticated";
 
 export type AuthState = {

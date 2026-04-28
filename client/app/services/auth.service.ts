@@ -1,4 +1,4 @@
-import { AuthUser } from "@/app/store/auth-slice";
+import { AuthUser, PublicProfileUser } from "@/app/store/auth-slice";
 import { apiFetch, authenticatedFetch } from "./api-client";
 
 type loginProps = {
@@ -121,5 +121,55 @@ export const saveProfile = async (payload: UpdateProfilePayload) => {
     ok: res.ok,
     message: data.message ?? data.error ?? "Failed to save profile",
     user: data.data?.user ?? null,
+  };
+};
+
+export const getPublicProfileByUsername = async (username: string) => {
+  const normalizedUsername = username.trim();
+  const res = await apiFetch(
+    `/api/auth/profile/${encodeURIComponent(normalizedUsername)}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+  );
+
+  const data = (await res.json()) as {
+    message?: string;
+    error?: string;
+    data?: {
+      user?: PublicProfileUser;
+    };
+  };
+
+  return {
+    ok: res.ok,
+    message: data.message ?? data.error ?? "Failed to load profile",
+    user: data.data?.user ?? null,
+  };
+};
+
+export const searchPublicProfiles = async (query: string) => {
+  const normalizedQuery = query.trim();
+  const res = await apiFetch(
+    `/api/auth/profiles/search?q=${encodeURIComponent(normalizedQuery)}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    },
+  );
+
+  const data = (await res.json()) as {
+    message?: string;
+    error?: string;
+    data?: {
+      users?: PublicProfileUser[];
+    };
+  };
+
+  return {
+    ok: res.ok,
+    message: data.message ?? data.error ?? "Failed to search profiles",
+    users: Array.isArray(data.data?.users) ? data.data.users : [],
   };
 };

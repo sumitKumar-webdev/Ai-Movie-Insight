@@ -1,7 +1,11 @@
 import User from "../models/User.js";
 import { sendUsernameChangedEmail } from "../lib/email.js";
 import { errorRes, successRes } from "../lib/res.js";
-import { isValidUsername, sanitizeUser } from "../lib/user-profile.js";
+import { isValidUsername, sanitizePublicUser, sanitizeUser } from "../lib/user-profile.js";
+
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export const getProfile = async (req, res) => {
   try {
@@ -16,6 +20,91 @@ export const getProfile = async (req, res) => {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch profile";
+    return errorRes(res, 500, message);
+  }
+};
+
+export const getPublicProfile = async (req, res) => {
+  try {
+    const username = String(req.params?.username ?? "").trim();
+
+    if (!username) {
+      return errorRes(res, 400, "username is required");
+    }
+
+    if (!isValidUsername(username)) {
+      return errorRes(
+        res,
+        400,
+        "Username must be 3 to 20 characters and use only letters, numbers, or underscores",
+      );
+    }
+
+    const user = await User.findOne({
+      username: {
+        $regex: `^${escapeRegex(username)}$`,
+        $options: "i",
+      },
+    });
+
+    if (!user) {
+      return errorRes(res, 404, "Profile not found");
+    }
+
+    return successRes(res, 200, "Profile fetched successfully", {
+      user: sanitizePublicUser(user),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch profile";
+    return errorRes(res, 500, message);
+  }
+};
+
+export const searchPublicProfiles = async (req, res) => {
+  try {
+    const query = String(req.query.q ?? "").trim();
+
+    if (query.length < 2) {
+      return successRes(res, 200, "Profiles fetched successfully", {
+        users: [],
+      });
+    }
+
+    const matcher = {
+      $regex: escapeRegex(query),
+      $options: "i",
+    };
+
+    const users = await User.find({
+      username: { $exists: true, $ne: null, ...matcher },
+    })
+      .select("name username avatar is_verified")
+      .limit(8)
+      .lean();
+
+    const normalizedQuery = query.toLowerCase();
+    const sanitizedUsers = users
+      .map((user) => sanitizePublicUser(user))
+      .sort((left, right) => {
+        const leftUsername = left.username.toLowerCase();
+        const rightUsername = right.username.toLowerCase();
+        const leftStartsWith = leftUsername.startsWith(normalizedQuery);
+        const rightStartsWith = rightUsername.startsWith(normalizedQuery);
+
+        if (leftStartsWith !== rightStartsWith) {
+          return leftStartsWith ? -1 : 1;
+        }
+
+        return leftUsername.localeCompare(rightUsername);
+      });
+
+    return successRes(res, 200, "Profiles fetched successfully", {
+      users: sanitizedUsers,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to search profiles";
     return errorRes(res, 500, message);
   }
 };

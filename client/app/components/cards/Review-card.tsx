@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { Heart, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import CompactCount, { formatCompactCount } from "@/app/components/ui/compact-count";
@@ -9,6 +10,7 @@ import RenderAvatar from "../avatar/render-avatar";
 import ActionButton, { ActionItem } from "@/app/components/actions/action-menu";
 import { HandleAction } from "@/app/models/action.model";
 import VerifiedBadge from "../verified-badge";
+import { getProfileHref } from "@/lib/profile";
 
 type ReviewCardProps = {
   review: Review;
@@ -50,6 +52,9 @@ export default function ReviewCard({
   const reviewText = typeof review.text === "string" ? review.text.trim() : "";
   const resolvedMenuActions = menuActions ?? [];
   const replyCountLabel = formatCompactCount(totalReplies);
+  const normalizedUsername = review.user?.username?.trim() ?? "";
+  const profileHref = getProfileHref(normalizedUsername);
+  const canOpenProfile = Boolean(normalizedUsername);
 
   const triggerAction = (item?: ActionItem | null) => {
     if (!item) return;
@@ -79,25 +84,50 @@ export default function ReviewCard({
     >
       <CardContent className="flex flex-col gap-5 px-0 py-5">
         <div className="flex w-full items-center justify-between gap-4">
-          <div className="flex max-w-[75%] items-center gap-3">
-            <RenderAvatar
-              name={review.user?.username ?? review.user?.name ?? "User"}
-              imageUrl={review.user?.imageUrl}
-            />
-            <div className="min-w-0">
-              <div className="flex min-w-0 items-center gap-1.5 text-sm text-[#E2E2E2] md:text-base">
-                <p className="truncate font-semibold hover:text-white">
-                  {review.user?.username}
-                </p>
-                {review.user?.isVerified && (
-                  <VerifiedBadge className="h-4 w-4 shrink-0" />
-                )}
+          {canOpenProfile ? (
+            <Link
+              href={profileHref}
+              className="flex max-w-[75%] items-center gap-3 transition hover:opacity-90"
+            >
+              <RenderAvatar
+                name={review.user?.username ?? review.user?.name ?? "User"}
+                imageUrl={review.user?.imageUrl}
+              />
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-1.5 text-sm text-[#E2E2E2] md:text-base">
+                  <p className="truncate font-semibold hover:text-white">
+                    {review.user?.username ?? review.user?.name}
+                  </p>
+                  {review.user?.isVerified && (
+                    <VerifiedBadge className="h-4 w-4 shrink-0" />
+                  )}
+                </div>
+                <div className="flex items-center text-xs text-[#C6C6C6]">
+                  <span className="truncate">{reviewDate}</span>
+                </div>
               </div>
-              <div className="flex items-center text-xs text-[#C6C6C6]">
-                <span className="truncate">{reviewDate}</span>
+            </Link>
+          ) : (
+            <div className="flex max-w-[75%] items-center gap-3">
+              <RenderAvatar
+                name={review.user?.username ?? review.user?.name ?? "User"}
+                imageUrl={review.user?.imageUrl}
+              />
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-1.5 text-sm text-[#E2E2E2] md:text-base">
+                  <p className="truncate font-semibold transition-colors duration-200 text-white/40 hover:text-white">
+                    {review.user?.username ?? review.user?.name}
+                  </p>
+                  {review.user?.isVerified && (
+                    <VerifiedBadge className="h-4 w-4 shrink-0" />
+                  )}
+                </div>
+                <div className="flex items-center text-xs text-[#C6C6C6]">
+                  <span className="truncate">{reviewDate}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <ActionButton
             config={resolvedMenuActions}

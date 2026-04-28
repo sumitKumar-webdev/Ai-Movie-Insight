@@ -3,6 +3,9 @@ const TMDB_API_BASE_URL = process.env.TMDB_API_BASE_URL || "https://api.themovie
 const TMDB_API_KEY = process.env.TMDB_API_KEY || "";
 const TMDB_ACCESS_TOKEN = process.env.TMDB_ACCESS_TOKEN || "";
 const FETCH_TIMEOUT_MS = Number(process.env.IMDB_API_TIMEOUT_MS || "10000");
+const TITLE_CACHE_TTL_MS = Number(process.env.IMDB_TITLE_CACHE_TTL_MS || "300000");
+const imdbTitleCache = new Map();
+const imdbTitleRequests = new Map();
 
 export async function fetchJson(url) {
     const options =
@@ -42,15 +45,43 @@ function appendQueryValues(params, key, values) {
 }
 
 export async function fetchImdbTitleById(imdbId) {
-    const data = await fetchJson(
-        `${IMDB_API_BASE_URL}/titles/${encodeURIComponent(imdbId)}`,
-    ).catch(() => null);
-
-    if (!data?.id) {
+    const normalizedImdbId = String(imdbId ?? "").trim().toLowerCase();
+    if (!normalizedImdbId) {
         return null;
     }
 
-    return data;
+    const cachedEntry = imdbTitleCache.get(normalizedImdbId);
+    if (cachedEntry && cachedEntry.expiresAt > Date.now()) {
+        return cachedEntry.value;
+    }
+
+    const existingRequest = imdbTitleRequests.get(normalizedImdbId);
+    if (existingRequest) {
+        return existingRequest;
+    }
+
+    const request = fetchJson(
+        `${IMDB_API_BASE_URL}/titles/${encodeURIComponent(normalizedImdbId)}`,
+    )
+        .catch(() => null)
+        .then((data) => {
+            const resolved = data?.id ? data : null;
+
+            if (resolved) {
+                imdbTitleCache.set(normalizedImdbId, {
+                    value: resolved,
+                    expiresAt: Date.now() + TITLE_CACHE_TTL_MS,
+                });
+            }
+
+            return resolved;
+        })
+        .finally(() => {
+            imdbTitleRequests.delete(normalizedImdbId);
+        });
+
+    imdbTitleRequests.set(normalizedImdbId, request);
+    return request;
 }
 
 export async function fetchImdbTitleGenresById(imdbId) {

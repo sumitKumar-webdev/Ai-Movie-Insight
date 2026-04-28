@@ -3,64 +3,152 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Film, Search, UserRound, X } from "lucide-react";
 import BrandWordmark from "@/app/components/brand/wordmark";
 import { Input } from "@/app/components/ui/input";
 import CompactMovieCard from "@/app/components/cards/compact-movie-card";
+import CompactUserCard from "@/app/components/cards/compact-user-card";
 import MovieResultCardSkeleton from "@/app/components/skeleton-loader/movie-result-card-skeleton";
+import UserResultCardSkeleton from "@/app/components/skeleton-loader/user-result-card-skeleton";
 import useDebounce from "@/app/Hooks/use-debounce";
 import { searchMovies } from "@/app/services/movie.service";
+import { PublicProfileUser } from "@/app/store/auth-slice";
 import { MovieSearchItem } from "@/app/models/service.modal";
 import { startRouteProgress } from "@/app/components/ui/route-progress";
 import HeaderProfileMenu from "@/app/components/Header/header-profile-menu";
 import { saveSelectedMovieToSearchHistory } from "@/lib/saveToStorage/search-selection-history";
+import { searchPublicProfiles } from "@/app/services/auth.service";
+import { getProfileHref } from "@/lib/profile";
+
+type SearchScope = "content" | "users";
 
 type SearchSuggestionsProps = {
+  scope: SearchScope;
+  onScopeChange: (scope: SearchScope) => void;
   loading: boolean;
   normalizedQuery: string;
   debouncedQuery: string;
-  results: MovieSearchItem[];
+  movieResults: MovieSearchItem[];
+  userResults: PublicProfileUser[];
   onSelectMovie: (movie: MovieSearchItem) => void;
+  onSelectUser: (user: PublicProfileUser) => void;
   className: string;
   cardClassName: string;
 };
 
+function SearchScopeSwitch({
+  scope,
+  onScopeChange,
+}: {
+  scope: SearchScope;
+  onScopeChange: (scope: SearchScope) => void;
+}) {
+  const options: Array<{
+    value: SearchScope;
+    label: string;
+    icon: typeof Film;
+  }> = [
+    { value: "content", label: "Movies", icon: Film },
+    { value: "users", label: "Users", icon: UserRound },
+  ];
+
+  return (
+    <div className="mb-3 grid grid-cols-2 gap-2 rounded-[1.1rem] border border-white/8 bg-[#0b0b0b] p-1.5">
+      {options.map((option) => {
+        const Icon = option.icon;
+        const active = scope === option.value;
+
+        return (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onScopeChange(option.value)}
+            className={`inline-flex min-h-9 md:min-h-10 items-center justify-center gap-2 rounded-[0.9rem] px-2 md:px-3 py-1 md:py-2 text-xs md:text-sm font-medium transition ${
+              active
+                ? "bg-white text-black shadow-[0_10px_24px_rgba(255,255,255,0.12)]"
+                : "text-white/62 hover:bg-white/6 hover:text-white"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            <span>{option.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function SearchSuggestions({
+  scope,
+  onScopeChange,
   loading,
   normalizedQuery,
   debouncedQuery,
-  results,
+  movieResults,
+  userResults,
   onSelectMovie,
+  onSelectUser,
   className,
   cardClassName,
 }: SearchSuggestionsProps) {
+  const minQueryLength = 2;
+  const showLoading = loading || debouncedQuery !== normalizedQuery;
+
   return (
     <div className={className} onMouseDown={(event) => event.preventDefault()}>
-      {loading || debouncedQuery !== normalizedQuery ? (
-        <div className="space-y-2">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <MovieResultCardSkeleton key={item} />
-          ))}
+      <SearchScopeSwitch scope={scope} onScopeChange={onScopeChange} />
+      {normalizedQuery.length < minQueryLength ? (
+        <div className="rounded-[1.15rem] border border-dashed border-white/10 bg-[#0b0b0b] px-4 py-5 text-sm text-white/52">
+          Type at least {minQueryLength} characters to search{" "}
+          {scope === "content" ? "movies" : "users"}.
         </div>
-      ) : results.length > 0 ? (
+      ) : showLoading ? (
         <div className="space-y-2">
-          {results.map((movie) => (
-            <CompactMovieCard
-              key={movie.imdbId}
-              movie={{
-                imdbId: movie.imdbId,
-                title: movie.title,
-                releaseYear: movie.year,
-                posterUrl: movie.poster,
-                titleType: movie.type,
-              }}
-              className={cardClassName}
-              onClick={() => onSelectMovie(movie)}
-            />
-          ))}
+          {scope === "content"
+            ? [1, 2, 3, 4, 5].map((item) => (
+                <MovieResultCardSkeleton key={item} />
+              ))
+            : [1, 2, 3, 4].map((item) => <UserResultCardSkeleton key={item} />)}
         </div>
+      ) : scope === "content" ? (
+        movieResults.length > 0 ? (
+          <div className="space-y-2">
+            {movieResults.map((movie) => (
+              <CompactMovieCard
+                key={movie.imdbId}
+                movie={{
+                  imdbId: movie.imdbId,
+                  title: movie.title,
+                  releaseYear: movie.year,
+                  posterUrl: movie.poster,
+                  titleType: movie.type,
+                }}
+                className={cardClassName}
+                onClick={() => onSelectMovie(movie)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-[1.15rem] border border-white/8 bg-[#0b0b0b] px-3 py-4 text-sm text-white/55">
+            No matching movie found.
+          </p>
+        )
       ) : (
-        <p className="px-3 py-4 text-sm text-white/55">No matching movie found.</p>
+        userResults.length > 0 ? (
+          <div className="space-y-2">
+            {userResults.map((user) => (
+              <CompactUserCard
+                key={user.id || user.username}
+                user={user}
+                onClick={() => onSelectUser(user)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="rounded-[1.15rem] border border-white/8 bg-[#0b0b0b] px-3 py-4 text-sm text-white/55">
+            No matching user found.
+          </p>
+        )
       )}
     </div>
   );
@@ -69,6 +157,7 @@ function SearchSuggestions({
 type SearchInputShellProps = {
   inputRef: React.RefObject<HTMLInputElement | null>;
   query: string;
+  placeholder: string;
   setQuery: (query: string) => void;
   onFocus: () => void;
   onBlur: () => void;
@@ -80,6 +169,7 @@ type SearchInputShellProps = {
 function SearchInputShell({
   inputRef,
   query,
+  placeholder,
   setQuery,
   onFocus,
   onBlur,
@@ -89,7 +179,7 @@ function SearchInputShell({
 }: SearchInputShellProps) {
   return (
     <div className={wrapperClassName} onClick={() => inputRef.current?.focus()}>
-      <Search className="h-5 w-5 shrink-0 text-white/45" />
+      <Search className="h-4 md:h-5 w-5 shrink-0 text-white/45" />
       <div className="relative flex-1">
         <Input
           ref={inputRef}
@@ -107,7 +197,7 @@ function SearchInputShell({
               onSubmit();
             }
           }}
-          placeholder="Search movies..."
+          placeholder={placeholder}
           className="h-full border-0 bg-transparent px-3 text-sm text-white shadow-none placeholder:text-white/35 focus-visible:ring-0"
         />   
       </div>
@@ -123,7 +213,9 @@ export default function AppHeader() {
   const desktopInputRef = useRef<HTMLInputElement | null>(null);
   const mobileInputRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<MovieSearchItem[]>([]);
+  const [searchScope, setSearchScope] = useState<SearchScope>("content");
+  const [movieResults, setMovieResults] = useState<MovieSearchItem[]>([]);
+  const [userResults, setUserResults] = useState<PublicProfileUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [desktopSearchOpen, setDesktopSearchOpen] = useState(false);
   const [desktopSearchFocused, setDesktopSearchFocused] = useState(false);
@@ -133,16 +225,21 @@ export default function AppHeader() {
   const normalizedQuery = useMemo(() => query.trim(), [query]);
   const debouncedQuery = useDebounce(normalizedQuery, 400);
   const shouldShowDesktopSuggestions =
-    desktopSearchOpen && desktopSearchFocused && normalizedQuery.length >= 2;
+    desktopSearchOpen && desktopSearchFocused;
   const shouldShowMobileSuggestions =
-    mobileSearchOpen && mobileSearchFocused && normalizedQuery.length >= 2;
+    mobileSearchOpen && mobileSearchFocused;
   const isDetailPage = pathname?.startsWith("/content/");
-  const shouldSearch = normalizedQuery.length >= 4
+  const minQueryLength = 2;
+  const shouldSearch = normalizedQuery.length >= minQueryLength
     && (desktopSearchOpen || mobileSearchOpen);
 
   useEffect(() => {
-    if (!shouldSearch || debouncedQuery.length < 4) {
-      setResults([]);
+    if (!shouldSearch || debouncedQuery.length < minQueryLength) {
+      if (searchScope === "content") {
+        setMovieResults([]);
+      } else {
+        setUserResults([]);
+      }
       setLoading(false);
       return;
     }
@@ -150,11 +247,19 @@ export default function AppHeader() {
     const fetchResults = async () => {
       try {
         setLoading(true);
-        const response = await searchMovies(debouncedQuery, {
-          signal: controller.signal,
-        });
+        if (searchScope === "content") {
+          const response = await searchMovies(debouncedQuery, {
+            signal: controller.signal,
+          });
+          if (!controller.signal.aborted) {
+            setMovieResults(response);
+          }
+          return;
+        }
+
+        const response = await searchPublicProfiles(debouncedQuery);
         if (!controller.signal.aborted) {
-          setResults(response);
+          setUserResults(response.users);
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -166,7 +271,7 @@ export default function AppHeader() {
     return () => {
       controller.abort();
     };
-  }, [debouncedQuery, shouldSearch]);
+  }, [debouncedQuery, minQueryLength, searchScope, shouldSearch]);
 
   useEffect(() => {
     if (!mobileSearchOpen) return;
@@ -202,15 +307,36 @@ export default function AppHeader() {
     setDesktopSearchOpen(false);
     setMobileSearchOpen(false);
     setQuery("");
-    setResults([]);
+    setMovieResults([]);
+    setUserResults([]);
     saveSelectedMovieToSearchHistory(movie);
     startRouteProgress();
     navigateTo(`/content/${movie.imdbId}`);
   };
 
+  const navigateToUser = (user?: PublicProfileUser) => {
+    if (!user?.username) return;
+    setDesktopSearchFocused(false);
+    setMobileSearchFocused(false);
+    setDesktopSearchOpen(false);
+    setMobileSearchOpen(false);
+    setQuery("");
+    setMovieResults([]);
+    setUserResults([]);
+    startRouteProgress();
+    navigateTo(getProfileHref(user.username));
+  };
+
   const navigateToFirstResult = () => {
-    if (results[0]) {
-      navigateToMovie(results[0]);
+    if (searchScope === "content") {
+      if (movieResults[0]) {
+        navigateToMovie(movieResults[0]);
+      }
+      return;
+    }
+
+    if (userResults[0]) {
+      navigateToUser(userResults[0]);
     }
   };
 
@@ -268,6 +394,11 @@ export default function AppHeader() {
                 <SearchInputShell
                   inputRef={desktopInputRef}
                   query={query}
+                  placeholder={
+                    searchScope === "content"
+                      ? "Search movies..."
+                      : "Search users..."
+                  }
                   setQuery={setQuery}
                   onFocus={() => setDesktopSearchFocused(true)}
                   onBlur={syncDesktopFocusState}
@@ -281,11 +412,15 @@ export default function AppHeader() {
 
                 {shouldShowDesktopSuggestions && (
                   <SearchSuggestions
+                    scope={searchScope}
+                    onScopeChange={setSearchScope}
                     loading={loading}
                     normalizedQuery={normalizedQuery}
                     debouncedQuery={debouncedQuery}
-                    results={results}
+                    movieResults={movieResults}
+                    userResults={userResults}
                     onSelectMovie={navigateToMovie}
+                    onSelectUser={navigateToUser}
                     className="absolute right-0 top-[calc(100%+0.55rem)] z-260 max-h-80 w-full overflow-y-auto rounded-[1.4rem] border border-white/10 bg-[#050505] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.72)] home-search-scroll"
                     cardClassName="bg-[#101010] hover:bg-[#171717]"
                   />
@@ -358,6 +493,11 @@ export default function AppHeader() {
             <SearchInputShell
               inputRef={mobileInputRef}
               query={query}
+              placeholder={
+                searchScope === "content"
+                  ? "Search movies..."
+                  : "Search users..."
+              }
               setQuery={setQuery}
               onFocus={() => setMobileSearchFocused(true)}
               onBlur={syncMobileFocusState}
@@ -367,11 +507,15 @@ export default function AppHeader() {
 
             {shouldShowMobileSuggestions && (
               <SearchSuggestions
+                scope={searchScope}
+                onScopeChange={setSearchScope}
                 loading={loading}
                 normalizedQuery={normalizedQuery}
                 debouncedQuery={debouncedQuery}
-                results={results}
+                movieResults={movieResults}
+                userResults={userResults}
                 onSelectMovie={navigateToMovie}
+                onSelectUser={navigateToUser}
                 className="absolute left-0 right-0 top-[calc(100%+0.55rem)] z-230 max-h-80 overflow-y-auto rounded-none border-y border-white/10 bg-[#050505] p-2 shadow-[0_24px_80px_rgba(0,0,0,0.72)] home-search-scroll sm:rounded-4xl"
                 cardClassName="bg-[#101010] hover:bg-[#171717]"
               />

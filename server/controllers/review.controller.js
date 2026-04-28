@@ -20,6 +20,33 @@ function resolveCurrentUserId(req) {
   return payload?.userId ? String(payload.userId) : null;
 }
 
+function getMovieMetaFromTitle(title) {
+  return {
+    posterUrl: title?.primaryImage?.url?.trim() || "",
+    movieYear: title?.startYear ? String(title.startYear) : "",
+    movieType: title?.type?.trim() || "",
+  };
+}
+
+async function buildReviewMovieMetaMap(reviews) {
+  const imdbIds = Array.from(
+    new Set(
+      (Array.isArray(reviews) ? reviews : [])
+        .map((review) => String(review?.movieImdbId ?? "").trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+
+  const entries = await Promise.all(
+    imdbIds.map(async (imdbId) => {
+      const title = await fetchImdbTitleById(imdbId).catch(() => null);
+      return [imdbId, getMovieMetaFromTitle(title)];
+    }),
+  );
+
+  return new Map(entries);
+}
+
 
 function formatReply(reply, options = {}) {
   const reviewId = String(options.reviewId ?? "");
@@ -60,6 +87,7 @@ function formatReply(reply, options = {}) {
 function formatReview(review, options = {}) {
   const includeReplies = options.includeReplies === true;
   const currentUserId = options.currentUserId ? String(options.currentUserId) : null;
+  const movieMeta = options.movieMeta ?? {};
   const replies = Array.isArray(review?.replies) ? review.replies : [];
   const userId = resolveUserId(review?.user);
   const userName = review.user?.name?.trim() || review.user?.username?.trim() || "User";
@@ -88,6 +116,9 @@ function formatReview(review, options = {}) {
       imdbId: review?.movieImdbId ?? "",
       title: review?.movieTitle ?? "",
     },
+    posterUrl: movieMeta.posterUrl || undefined,
+    movieYear: movieMeta.movieYear || undefined,
+    movieType: movieMeta.movieType || undefined,
     replies: includeReplies
       ? replies.map((reply) =>
         formatReply(reply, {
@@ -168,10 +199,15 @@ export const listReviews = async (req, res) => {
     }
 
     const reviews = await reviewsQuery;
+    const movieMetaMap = await buildReviewMovieMetaMap(reviews);
 
     return successRes(res, 200, "Reviews fetched successfully", {
       reviews: reviews
-        .map((review) => formatReview(review, { currentUserId }))
+        .map((review) =>
+          formatReview(review, {
+            currentUserId,
+            movieMeta: movieMetaMap.get(String(review?.movieImdbId ?? "").trim().toLowerCase()),
+          }))
         .filter((review) => review.text),
     });
   } catch (error) {

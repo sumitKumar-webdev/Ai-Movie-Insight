@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   EllipsisVertical,
   Flag,
@@ -21,6 +22,7 @@ import RenderAvatar from "@/app/components/avatar/render-avatar";
 import { formatLabel } from "@/lib/resuable-component";
 import { cn } from "@/lib/utils";
 import VerifiedBadge from "@/app/components/verified-badge";
+import { getProfileHref } from "@/lib/profile";
 
 type ReviewThreadItemProps = {
   review: Review | ReviewReply;
@@ -82,6 +84,8 @@ export default function ReviewThreadItem({
     : normalizedUsername
       ? toHandle(normalizedUsername)
       : "";
+  const profileHref = getProfileHref(normalizedUsername);
+  const canOpenProfile = Boolean(normalizedUsername);
   const reviewText = typeof review.text === "string" ? review.text.trim() : "";
   const reviewDate = formatReviewDate(review.date, variant === "review" ? "long" : "short");
   const likes = review.likeCount ?? 0;
@@ -106,20 +110,40 @@ export default function ReviewThreadItem({
     >
       {isReply ? (
         <div className="flex items-start gap-3">
-          <RenderAvatar
-            name={review.user?.name || "User"}
-            imageUrl={imageUrl}
-            className="h-8 w-8"
-            initialsClassName="text-xs"
-          />
+          {canOpenProfile ? (
+            <Link href={profileHref} className="shrink-0">
+              <RenderAvatar
+                name={review.user?.name || "User"}
+                imageUrl={imageUrl}
+                className="h-8 w-8"
+                initialsClassName="text-xs"
+              />
+            </Link>
+          ) : (
+            <RenderAvatar
+              name={review.user?.name || "User"}
+              imageUrl={imageUrl}
+              className="h-8 w-8"
+              initialsClassName="text-xs"
+            />
+          )}
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-center">
-                  <p className="truncate text-sm font-semibold text-[#ffffff]">
-                    {primaryLabel}
-                  </p>
+                  {canOpenProfile ? (
+                    <Link
+                      href={profileHref}
+                      className="truncate text-sm font-semibold text-[#ffffff] transition hover:text-white/80"
+                    >
+                      {primaryLabel}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm font-semibold text-[#ffffff]">
+                      {primaryLabel}
+                    </p>
+                  )}
                   {review.user?.isVerified ? <VerifiedBadge className="ml-1 h-3.5 w-3.5 shrink-0" /> : null}
                 </div>
 
@@ -203,25 +227,54 @@ export default function ReviewThreadItem({
         </div>
       ) : (
         <>
-          <RenderAvatar
-            name={review.user?.name || "User"}
-            imageUrl={imageUrl}
-            className="h-14 w-14"
-            initialsClassName="text-sm"
-          />
+          {canOpenProfile ? (
+            <Link href={profileHref} className="shrink-0">
+              <RenderAvatar
+                name={review.user?.name || "User"}
+                imageUrl={imageUrl}
+                className="h-14 w-14"
+                initialsClassName="text-sm"
+              />
+            </Link>
+          ) : (
+            <RenderAvatar
+              name={review.user?.name || "User"}
+              imageUrl={imageUrl}
+              className="h-14 w-14"
+              initialsClassName="text-sm"
+            />
+          )}
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate text-lg font-semibold tracking-[-0.01em] text-white">
-                  {primaryLabel}
-                </p>
+                {canOpenProfile ? (
+                  <Link
+                    href={profileHref}
+                    className="truncate text-lg font-semibold tracking-[-0.01em] text-white transition hover:text-white/80"
+                  >
+                    {primaryLabel}
+                  </Link>
+                ) : (
+                  <p className="truncate text-lg font-semibold tracking-[-0.01em] text-white">
+                    {primaryLabel}
+                  </p>
+                )}
                 {review.user?.isVerified ? <VerifiedBadge className="ml-1 inline-block h-4 w-4 align-[-2px]" /> : null}
 
                 {secondaryLabel ? (
-                  <p className="mt-0.5 truncate text-sm text-white/60">
-                    {secondaryLabel}
-                  </p>
+                  canOpenProfile ? (
+                    <Link
+                      href={profileHref}
+                      className="mt-0.5 block truncate text-sm text-white/60 transition hover:text-white/80"
+                    >
+                      {secondaryLabel}
+                    </Link>
+                  ) : (
+                    <p className="mt-0.5 truncate text-sm text-white/60">
+                      {secondaryLabel}
+                    </p>
+                  )
                 ) : null}
               </div>
 

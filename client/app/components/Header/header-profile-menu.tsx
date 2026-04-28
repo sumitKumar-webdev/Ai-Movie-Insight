@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/app/components/ui/dropdown-menu";
 import { logoutUser, useAuthStore } from "@/app/store/store";
+import { getProfileHref } from "@/lib/profile";
 
 type HeaderProfileMenuProps = {
   triggerClassName?: string;
@@ -79,7 +80,7 @@ export default function HeaderProfileMenu({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onSelect={() => navigateTo("/profile")}
+              onSelect={() => navigateTo(getProfileHref(user.username))}
               className="gap-2"
             >
               <User className="h-4 w-4" />

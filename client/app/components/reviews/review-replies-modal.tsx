@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Heart, Loader2, MessageCircle, Send, Trash2 } from "lucide-react";
 import {
@@ -20,6 +21,7 @@ import {
   saveReviewReply,
 } from "@/app/services/review.service";
 import { formatLabel } from "@/lib/resuable-component";
+import { getProfileHref } from "@/lib/profile";
 import { Input } from "../ui/input";
 import RenderAvatar from "../avatar/render-avatar";
 import VerifiedBadge from "../verified-badge";
@@ -263,23 +265,46 @@ export default function ReviewRepliesModal({
                 </div>
               ) : selectedReview ? (
                 <div className="space-y-2 md:space-y-4">
-                  <div className="flex max-w-[75%] items-center gap-3">
-                    <RenderAvatar
-                      name={selectedReview.user?.name || "User"}
-                      imageUrl={selectedReview.user?.imageUrl}
-                    />
-                    <div className="min-w-0 -space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-white text-lg">
-                          {formatLabel(selectedReview.user?.name || "User")}
-                        </h4>
-                        {selectedReview.user?.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0" />}
+                  {selectedReview.user?.username?.trim() ? (
+                    <Link
+                      href={getProfileHref(selectedReview.user.username)}
+                      className="flex max-w-[75%] items-center gap-3 transition hover:opacity-90"
+                    >
+                      <RenderAvatar
+                        name={selectedReview.user?.name || "User"}
+                        imageUrl={selectedReview.user?.imageUrl}
+                      />
+                      <div className="min-w-0 -space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-lg font-semibold text-white">
+                            {formatLabel(selectedReview.user?.name || "User")}
+                          </h4>
+                          {selectedReview.user?.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0" />}
+                        </div>
+                        <p className="text-sm text-[#A0A0A0]">
+                          @{selectedReview.user?.username}
+                        </p>
                       </div>
-                      <p className="text-sm text-[#A0A0A0]">
-                        @{selectedReview.user?.username}
-                      </p>
+                    </Link>
+                  ) : (
+                    <div className="flex max-w-[75%] items-center gap-3">
+                      <RenderAvatar
+                        name={selectedReview.user?.name || "User"}
+                        imageUrl={selectedReview.user?.imageUrl}
+                      />
+                      <div className="min-w-0 -space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-lg font-semibold text-white">
+                            {formatLabel(selectedReview.user?.name || "User")}
+                          </h4>
+                          {selectedReview.user?.isVerified && <VerifiedBadge className="h-4 w-4 shrink-0" />}
+                        </div>
+                        <p className="text-sm text-[#A0A0A0]">
+                          @{selectedReview.user?.username}
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   <p className="text-sm leading-7 text-white/88">
                     {selectedReview.text || "No review text provided."}
@@ -328,33 +353,54 @@ export default function ReviewRepliesModal({
                       return (
                         <div
                           key={reply._id ?? `${reply.user?.username || reply.user?.name}-${reply.date}`}
-                          
                           className="flex flex-col gap-2"
                         >
                           <div className="flex items-start gap-3">
-                            <RenderAvatar
-                              name={reply.user?.username ?? reply.user?.name ?? "User"}
-                              imageUrl={reply.user?.imageUrl}
-                              className="h-8 w-8 md:h-8 md:w-8"
-                              initialsClassName="font-medium text-xs md:text-sm"
-                            />
+                            {reply.user?.username?.trim() ? (
+                              <Link href={getProfileHref(reply.user.username)} className="shrink-0">
+                                <RenderAvatar
+                                  name={reply.user?.username ?? reply.user?.name ?? "User"}
+                                  imageUrl={reply.user?.imageUrl}
+                                  className="h-8 w-8 md:h-8 md:w-8"
+                                  initialsClassName="font-medium text-xs md:text-sm"
+                                />
+                              </Link>
+                            ) : (
+                              <RenderAvatar
+                                name={reply.user?.username ?? reply.user?.name ?? "User"}
+                                imageUrl={reply.user?.imageUrl}
+                                className="h-8 w-8 md:h-8 md:w-8"
+                                initialsClassName="font-medium text-xs md:text-sm"
+                              />
+                            )}
 
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-2">
                                 <div className="min-w-0 flex-1">
                                   <div className="mb-1 flex items-center">
-                                    <p className="truncate text-sm font-semibold text-[#FFFFFF]">
-                                      {reply.user?.username?.trim() ||
-                                        formatLabel(reply.user?.name || "User")}
-                                    </p>
+                                    {reply.user?.username?.trim() ? (
+                                      <Link
+                                        href={getProfileHref(reply.user.username)}
+                                        className="truncate text-sm font-semibold text-[#FFFFFF] transition hover:text-white/80"
+                                      >
+                                        {reply.user?.username?.trim()}
+                                      </Link>
+                                    ) : (
+                                      <p className="truncate text-sm font-semibold text-[#FFFFFF]">
+                                        {formatLabel(reply.user?.name || "User")}
+                                      </p>
+                                    )}
                                     {reply.user?.isVerified ? <VerifiedBadge className="ml-1 h-3.5 w-3.5 shrink-0" /> : null}
                                   </div>
 
                                   <div className="mb-2 wrap-break-word text-sm leading-4.25 text-[#C6C6C6]">
                                     {Boolean(reply.replyToUsername) && (
-                                      <span className="mr-1 font-medium text-blue-400">
+                                      <Link
+                                        href={getProfileHref(reply.replyToUsername)}
+                                        className="mr-1 font-medium text-blue-400 transition hover:text-blue-300"
+                                      >
                                         @{reply.replyToUsername}
-                                      </span>
+                                      </Link>
                                     )}
                                     <span>{reply.text}</span>
                                   </div>

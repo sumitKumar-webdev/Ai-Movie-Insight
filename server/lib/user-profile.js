@@ -27,6 +27,16 @@ export function sanitizeUser(user) {
   };
 }
 
+export function sanitizePublicUser(user) {
+  return {
+    id: String(user._id),
+    name: user.name,
+    username: user.username ?? "",
+    avatar: user.avatar ?? "",
+    isVerified: Boolean(user.is_verified),
+  };
+}
+
 export function isValidUsername(value) {
   return USERNAME_PATTERN.test(String(value ?? "").trim());
 }

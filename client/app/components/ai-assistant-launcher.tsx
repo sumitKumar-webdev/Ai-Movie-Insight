@@ -332,8 +332,8 @@ export default function AiAssistantLauncher() {
           className="fixed overflow-hidden right-4 bottom-4 z-330 inline-flex items-center rounded-full border border-white/12 bg-[#0b1018]/90 p-2 text-left text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] ring-1 ring-white/8 backdrop-blur-xl transition hover:border-brand-primary-soft hover:bg-[#0c1017] sm:right-6 sm:bottom-6 sm:gap-1 sm:z-100"
           aria-label="Open AI assistant"
         >
-          <AiAvatar />
-          <span className="hidden flex-col leading-tight min-[420px]:flex">
+          <AiAvatar className="relative z-10" />
+          <span className="hidden flex-col leading-tight min-[430px]:flex">
             <span className="text-brand-primary-muted text-[9px] font-medium tracking-[0.24em] uppercase">
               {brand.assistantEyebrow}
             </span>

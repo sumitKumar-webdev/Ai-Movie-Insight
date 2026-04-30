@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LoaderCircle, Tv2, Film } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/app/components/ui/dialog";
+import HoverMarqueeText from "@/app/components/ui/hover-marquee-text";
 import SelectDropdown from "@/app/components/ui/select-dropdown";
 import { formatLabel } from "@/lib/resuable-component";
 import {
@@ -167,7 +168,7 @@ const PlaybackModal = ({
         contentWrapperClassName="items-center justify-center p-3 sm:p-5"
         onPointerDownOutside={(event) => event.preventDefault()}
       >
-        <div className="flex items-center gap-3 border-b border-white/0.06 px-4 py-3 sm:px-5 sm:py-4">
+        <div className="flex items-center gap-3 border-b border-white/0.06 px-4 py-3 pr-12 sm:px-5 sm:py-4 sm:pr-14">
           <div
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
             style={{
@@ -182,8 +183,13 @@ const PlaybackModal = ({
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <DialogTitle className="truncate text-base font-semibold leading-tight text-white sm:text-lg">
-              {movie.title}
+            <DialogTitle className="min-w-0 overflow-hidden pr-2 text-base font-semibold leading-tight text-white sm:text-lg">
+              <HoverMarqueeText
+                text={movie.title}
+                hoverActive
+                className="text-base font-semibold leading-tight sm:text-lg"
+               wrapperClassName="block w-full"
+              />
             </DialogTitle>
             <p className="mt-0.5 text-xs text-white/40">
               {formatLabel(movie.type)} · {movie.year}

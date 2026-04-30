@@ -15,7 +15,6 @@ export const CreditCard = ({ person }: { person: PersonCredit }) => {
 
   const handleNavigate = () => {
     if (!person.id) return;
-
     startRouteProgress();
     router.push(`/name/${person.id}`);
   };

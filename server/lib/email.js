@@ -64,9 +64,8 @@ export async function sendTemplateEmail(email, name, message, template, options 
       html: payload.html,
       text: payload.text,
     });
-
-    if (response?.error) {
-      throw new Error(response.error.message || "Resend email delivery failed");
+    if (response?.name === "validation_error") {
+      throw new Error(response.message || "Resend email delivery failed");
     }
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown email delivery error";

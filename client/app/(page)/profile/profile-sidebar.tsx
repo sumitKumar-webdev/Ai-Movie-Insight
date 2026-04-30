@@ -340,21 +340,24 @@ export default function ProfileSidebar({
           className={`mt-4 grid gap-3 ${isOwnProfile ? "sm:grid-cols-2 lg:grid-cols-1" : ""}`}
         >
           {isOwnProfile && onEditInterests ? (
-            <button
-              type="button"
-              onClick={onEditInterests}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
-            >
-              <PencilLine className="h-4 w-4" />
-              Edit interests
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={onEditInterests}
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
+              >
+                <PencilLine className="h-4 w-4" />
+                Edit interests
+              </button>
+
+              <Link
+                href="/"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
+              >
+                Discover movies
+              </Link>
+            </>
           ) : null}
-          <Link
-            href="/"
-            className="inline-flex min-h-10 items-center justify-center rounded-md border border-white/10 bg-[#141414] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#191919]"
-          >
-            Discover movies
-          </Link>
         </div>
 
         {isOwnProfile ? (

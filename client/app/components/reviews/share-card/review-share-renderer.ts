@@ -350,7 +350,7 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   const reviewFont       = "400 38px sans-serif";
   const reviewLineHeight = 50;
   const reviewMaxWidth   = CARD_W - 96;
-  const dividerToTextGap = 30;
+  const dividerToTextGap = 54;
   const maxFooterRuleY   = oy + CARD_H - 28;
   const footerTextOffset = 12;
   const footerPadding    = 28;
@@ -366,7 +366,7 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   const minTitleTopY = oy + 48;
   const titleBottomDefaultY = baseTitleTopY + titleHeight;
   const avatarGapFromTitle = 80;
-  const dividerGapFromAvatar = 22;
+  const dividerGapFromAvatar = 32;
   const titleToDivider = avatarGapFromTitle + 60 + dividerGapFromAvatar;
   const defaultDividerY = titleBottomDefaultY + titleToDivider;
 
@@ -472,7 +472,7 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   context.fillText(userMeta, nameX, avatarY + 84);
 
   // ── Divider ──────────────────────────────────────────────────────────────
-  context.fillStyle = "rgba(255,255,255,0.065)";
+  context.fillStyle = "rgba(255,255,255,0.20)";
   context.fillRect(ox + 48, dividerY, CARD_W - 96, 2);
 
   // ── Review text ──────────────────────────────────────────────────────────
@@ -491,14 +491,26 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   });
 
   // ── Footer ───────────────────────────────────────────────────────────────
-  context.fillStyle = "rgba(255,255,255,0.06)";
-  context.fillRect(ox + 48, footerRuleY, CARD_W - 96, 2);
-
+  const footerText = "CineAI";
   context.font      = "600 30px sans-serif";
-  context.fillStyle = "rgba(255,255,255,0.18)";
+  const footerTextWidth = context.measureText(footerText).width;
+  const footerTextGap = 32;
+  const footerTextX = ox + CARD_W / 2;
+  const footerLineY = footerRuleY + 1;
+  const footerLabelY = footerLineY;
+  const footerLineLeftEnd = footerTextX - footerTextWidth / 2 - footerTextGap;
+  const footerLineRightStart = footerTextX + footerTextWidth / 2 + footerTextGap;
+
+  context.fillStyle = "rgba(255,255,255,0.20)";
+  context.fillRect(ox + 48, footerLineY, footerLineLeftEnd - (ox + 48), 2);
+  context.fillRect(footerLineRightStart, footerLineY, ox + CARD_W - 48 - footerLineRightStart, 2);
+
+  context.fillStyle = "rgba(255,255,255,0.20)";
   context.textAlign = "center";
-  context.fillText("CineAI", ox + CARD_W / 2, footerTextY);
+  context.textBaseline = "middle";
+  context.fillText(footerText, footerTextX, footerLabelY);
   context.textAlign = "start";
+  context.textBaseline = "alphabetic";
 
   context.restore(); // end card clip
 

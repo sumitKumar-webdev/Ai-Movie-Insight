@@ -8,10 +8,10 @@ export const SHARE_CARD_HEIGHT = 1920;
 // Story canvas dimensions — card is inset and centered
 const STORY_CANVAS_WIDTH  = 1080;
 const STORY_CANVAS_HEIGHT = 1920;
-const CARD_INSET_X = 52;
-const CARD_INSET_Y = 96;
-const CARD_W = STORY_CANVAS_WIDTH  - CARD_INSET_X * 2; // 976
-const CARD_H = STORY_CANVAS_HEIGHT - CARD_INSET_Y * 2; // 1728
+const CARD_INSET_X = 140;
+const CARD_INSET_Y = 220;
+const CARD_W = STORY_CANVAS_WIDTH  - CARD_INSET_X * 2; // 800
+const CARD_H = STORY_CANVAS_HEIGHT - CARD_INSET_Y * 2; // 1480
 const CARD_RADIUS = 0; // sharp edges
 
 const VERIFIED_BADGE_SVG_DATA_URL = `data:image/svg+xml;utf8,${encodeURIComponent(

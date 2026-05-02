@@ -330,13 +330,14 @@ export default function ReviewRepliesModal({
             <section className="flex min-h-0 flex-col px-4 py-4 lg:overflow-hidden sm:px-2 sm:py-3">
               <div className="min-h-0 flex-1 home-search-scroll pr-0 lg:overflow-y-auto lg:overscroll-contain sm:pr-1">
                 {loading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map((item) => (
-                      <Skeleton
-                        key={item}
-                        className="h-10 rounded-xl bg-white/10"
-                      />
-                    ))}
+                  <div className="flex min-h-72 flex-col items-center justify-center gap-3 text-center text-white/70">
+                    <Loader2 className="h-5 w-5 animate-spin text-white/70" />
+                    <p className="text-sm font-medium text-white/85">
+                      Loading replies…
+                    </p>
+                    <p className="max-w-xs text-xs leading-5 text-white/60">
+                      Please wait while we fetch the latest conversation.
+                    </p>
                   </div>
                 ) : replies.length > 0 ? (
                   <div className="space-y-3">

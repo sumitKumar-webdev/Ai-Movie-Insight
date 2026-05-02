@@ -49,7 +49,6 @@ export default function ReviewCard({
       : Array.isArray(review.replies)
         ? review.replies.length
         : 0;
-  const reviewText = typeof review.text === "string" ? review.text.trim() : "";
   const resolvedMenuActions = menuActions ?? [];
   const replyCountLabel = formatCompactCount(totalReplies);
   const normalizedUsername = review.user?.username?.trim() ?? "";
@@ -138,7 +137,7 @@ export default function ReviewCard({
         </div>
 
         <div className="relative">
-          <ExpandableText limit={200} text={reviewText} />
+          <ExpandableText limit={200} text={review.text} />
         </div>
 
         <div className="flex items-center justify-between">

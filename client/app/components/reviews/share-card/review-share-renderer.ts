@@ -152,31 +152,53 @@ function loadVerifiedBadgeImage() {
   return verifiedBadgeImagePromise;
 }
 
+function normalizeReviewText(text: string) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n\s*\n+/g, "\n\n")
+    .replace(/[ \t]+$/gm, "");
+}
+
 function fitTextToWidth(
   context: CanvasRenderingContext2D,
   text: string,
   maxWidth: number,
   maxLines: number,
 ) {
-  const words = text.split(/\s+/).filter(Boolean);
+  const paragraphs = text.split(/\r\n|\r|\n/);
   const lines: string[] = [];
-  let current = "";
 
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
-    if (context.measureText(candidate).width <= maxWidth) {
-      current = candidate;
+  for (let pIndex = 0; pIndex < paragraphs.length && lines.length < maxLines; pIndex += 1) {
+    const paragraph = paragraphs[pIndex];
+    const words = paragraph.split(/\s+/).filter(Boolean);
+    let current = "";
+
+    if (words.length === 0) {
+      if (lines.length < maxLines) {
+        lines.push("");
+      }
       continue;
     }
-    if (current) lines.push(current);
-    current = word;
-    if (lines.length >= maxLines) break;
+
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (context.measureText(candidate).width <= maxWidth) {
+        current = candidate;
+        continue;
+      }
+      if (current) lines.push(current);
+      if (lines.length >= maxLines) break;
+      current = word;
+    }
+
+    if (current && lines.length < maxLines) {
+      lines.push(current);
+    }
   }
 
-  if (current && lines.length < maxLines) lines.push(current);
-
+  const allWords = text.split(/\s+/).filter(Boolean);
   const consumedWords = lines.join(" ").split(/\s+/).filter(Boolean).length;
-  if (consumedWords < words.length && lines.length > 0) {
+  if (consumedWords < allWords.length && lines.length > 0) {
     let truncated = lines[lines.length - 1] ?? "";
     while (truncated && context.measureText(`${truncated}...`).width > maxWidth) {
       truncated = truncated.slice(0, -1).trimEnd();
@@ -270,7 +292,7 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   const oy = CARD_INSET_Y;
 
   // ── Poster ───────────────────────────────────────────────────────────────
-  const posterHeight = Math.round(CARD_H * 0.55);
+  const posterHeight = Math.round(CARD_H * 0.50);
   if (poster) {
     context.save();
     context.filter = "brightness(0.82) saturate(1.06) contrast(1.02)";
@@ -324,53 +346,60 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   // ── Type • Year ──────────────────────────────────────────────────────────
   const movieType = (review.content?.type?.trim() || "Movie").toUpperCase();
   const movieYear = (review.content?.year?.trim() || "Unknown").toUpperCase();
-  context.font      = "600 28px sans-serif";
-  context.fillStyle = "rgba(92,224,255,0.56)";
-  context.fillText(`${movieType} • ${movieYear}`, ox + 48, oy + 900);
-
-  // ── Title ────────────────────────────────────────────────────────────────
-  drawMultilineText(context, review.content?.title?.trim() || "Untitled", {
-    x:          ox + 48,
-    y:          oy + 990,
-    maxWidth:   780,
-    maxLines:   3,
-    lineHeight: 98,
-    font:       "700 96px serif",
-    color:      "#ffffff",
-  });
+  const reviewText       = normalizeReviewText(review.text?.trim() || "");
+  const reviewFont       = "400 38px sans-serif";
+  const reviewLineHeight = 50;
+  const reviewMaxWidth   = CARD_W - 96;
+  const dividerToTextGap = 30;
+  const maxFooterRuleY   = oy + CARD_H - 28;
+  const footerTextOffset = 12;
+  const footerPadding    = 28;
 
   const titleText = review.content?.title?.trim() || "Untitled";
   context.save();
-  context.font = "700 96px serif";
+  context.font = "700 90px serif";
   const titleLines = fitTextToWidth(context, titleText, 780, 3);
   context.restore();
-  const titleBottomY         = oy + 957 + (Math.max(titleLines.length, 1) - 1) * 94 + 18;
-  const avatarGapFromTitle   = 80;
-  const dividerGapFromAvatar = 24;
-  const baseDividerY         = titleBottomY + avatarGapFromTitle + 88 + dividerGapFromAvatar;
 
-  // ── Review text layout ───────────────────────────────────────────────────
-  const reviewText       = (review.text?.trim() || "").slice(0, 1050);
-  const reviewFont       = "400 38px sans-serif";
-  const reviewLineHeight = 58;
-  const reviewMaxWidth   = CARD_W - 96;
-  const dividerToTextGap = 52;
-  const minFooterRuleY   = oy + 1652;
-  const maxFooterRuleY   = oy + 1840;
-  const footerTextOffset = 56;
+  const titleHeight = (Math.max(titleLines.length, 1) - 1) * 80 + 18;
+  const baseTitleTopY = oy + posterHeight - 56;
+  const minTitleTopY = oy + 48;
+  const titleBottomDefaultY = baseTitleTopY + titleHeight;
+  const avatarGapFromTitle = 80;
+  const dividerGapFromAvatar = 22;
+  const titleToDivider = avatarGapFromTitle + 60 + dividerGapFromAvatar;
+  const defaultDividerY = titleBottomDefaultY + titleToDivider;
 
   context.font = reviewFont;
-  const provisionalLines  = fitTextToWidth(context, reviewText, reviewMaxWidth, 40);
+  const provisionalLines  = fitTextToWidth(context, reviewText, reviewMaxWidth, 200);
   const reviewTextHeight  = Math.max(provisionalLines.length, 1) * reviewLineHeight;
-  const baseAvailableHeight = maxFooterRuleY - (baseDividerY + dividerToTextGap) - 40;
-  const overlayShift = Math.min(Math.max(reviewTextHeight - baseAvailableHeight, 0), 320);
-  const dividerY     = baseDividerY - overlayShift;
-  const reviewTextY  = dividerY + dividerToTextGap;
-  const footerRuleY  = Math.min(
-    Math.max(reviewTextY + reviewTextHeight + 88, minFooterRuleY),
-    maxFooterRuleY,
-  );
+  const minReviewAreaHeight = reviewLineHeight * 6;
+  const effectiveReviewTextHeight = Math.max(reviewTextHeight, minReviewAreaHeight);
+
+  const desiredDividerY = maxFooterRuleY - effectiveReviewTextHeight - footerPadding - dividerToTextGap;
+  const minDividerY = defaultDividerY - (baseTitleTopY - minTitleTopY);
+  const dividerY = Math.max(minDividerY, desiredDividerY);
+
+  const titleTopY = baseTitleTopY + (dividerY - defaultDividerY);
+  const typeYearY = titleTopY - 72;
+  const reviewTextY = dividerY + dividerToTextGap;
+  const footerRuleY = Math.min(reviewTextY + effectiveReviewTextHeight + footerPadding, maxFooterRuleY);
   const footerTextY = footerRuleY + footerTextOffset;
+
+  context.font      = "600 26px sans-serif";
+  context.fillStyle = "rgba(92,224,255,0.56)";
+  context.fillText(`${movieType} • ${movieYear}`, ox + 48, typeYearY);
+
+  // ── Title ────────────────────────────────────────────────────────────────
+  drawMultilineText(context, titleText, {
+    x:          ox + 48,
+    y:          titleTopY,
+    maxWidth:   780,
+    maxLines:   3,
+    lineHeight: 80,
+    font:       "700 80px serif",
+    color:      "#ffffff",
+  });
 
   // ── Avatar ───────────────────────────────────────────────────────────────
   const avatarSize = 104;
@@ -449,7 +478,7 @@ async function renderPreparedReviewShareCardToJpegBlob(review: ReviewShareCardPa
   // ── Review text ──────────────────────────────────────────────────────────
   const availableLines = Math.max(
     1,
-    Math.floor((footerRuleY - reviewTextY - 40) / reviewLineHeight),
+    Math.floor((footerRuleY - reviewTextY - 24) / reviewLineHeight),
   );
   drawMultilineText(context, reviewText, {
     x:          ox + 48,

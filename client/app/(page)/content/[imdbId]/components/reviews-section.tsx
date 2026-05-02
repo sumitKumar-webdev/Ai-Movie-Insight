@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Flag, Pencil, Share2, Trash2 } from "lucide-react";
+import { Flag, Loader2, Pencil, Share2, Trash2 } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -106,18 +106,21 @@ export default function ReviewsSection({
     [currentUserId, filteredReviews],
   );
 
-  const orderedReviews = useMemo(() => {
-    if (!userReview?._id) return filteredReviews;
-
-    return [
-      userReview,
-      ...filteredReviews.filter((review) => review._id !== userReview._id),
-    ];
-  }, [filteredReviews, userReview]);
-
   const isEditingOwnReview = Boolean(
     userReview?._id && editingReviewId === userReview._id,
   );
+
+  const orderedReviews = useMemo(() => {
+    const restReviews = filteredReviews.filter(
+      (review) => review._id !== userReview?._id,
+    );
+
+    if (!userReview?._id) return filteredReviews;
+    if (isEditingOwnReview) return restReviews;
+
+    return [userReview, ...restReviews];
+  }, [filteredReviews, userReview, isEditingOwnReview]);
+
   const shouldShowComposer = !userReview || isEditingOwnReview;
 
   const upsertReview = (nextReview: Review) => {
@@ -439,13 +442,16 @@ export default function ReviewsSection({
                     }
                     className="rounded-full bg-white px-5 text-black hover:bg-cyan-50"
                   >
-                    {submittingReview
-                      ? isEditingOwnReview
-                        ? "Saving..."
-                        : "Posting..."
-                      : isEditingOwnReview
-                        ? "Update Review"
-                        : "Post Review"}
+                    {submittingReview ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {isEditingOwnReview ? "Saving..." : "Posting..."}
+                      </>
+                    ) : isEditingOwnReview ? (
+                      "Update Review"
+                    ) : (
+                      "Post Review"
+                    )}
                   </Button>
                 </div>
               </div>
